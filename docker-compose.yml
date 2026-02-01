@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  thinkai-db:
+    image: mysql:8.0
+    container_name: thinkai-mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: thinkai_db      # Tên DB dự án
+      MYSQL_ROOT_PASSWORD: root       # Pass root (chỉ dùng cho Local Dev)
+      MYSQL_USER: dev_user            # User phụ (optional)
+      MYSQL_PASSWORD: thinkai123
+    ports:
+      - "3306:3306"                   # Map port ra ngoài để Workbench/Java kết nối
+    volumes:
+      - mysql_data:/var/lib/mysql     # Quan trọng: Giữ dữ liệu không bị mất khi tắt Docker
+    command: --default-authentication-plugin=mysql_native_password
+
+volumes:
+  mysql_data:
