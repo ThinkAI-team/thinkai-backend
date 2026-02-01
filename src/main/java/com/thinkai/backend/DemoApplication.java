@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.thinkai.backend;
 
 import org.springframework.boot.*;
 import org.springframework.boot.autoconfigure.*;
