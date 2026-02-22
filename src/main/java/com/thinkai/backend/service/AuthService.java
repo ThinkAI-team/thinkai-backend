@@ -30,8 +30,11 @@ public class AuthService {
             throw new ApiException("Mật khẩu xác nhận không khớp", HttpStatus.BAD_REQUEST);
         }
 
-        // 2. Check duplicate email
-        if (userRepository.existsByEmail(request.getEmail())) {
+        // 2. Normalize email
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+
+        // 3. Check duplicate email
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw new ApiException("Email đã được sử dụng", HttpStatus.CONFLICT);
         }
 
@@ -39,7 +42,7 @@ public class AuthService {
         String fullName = request.getFirstName().trim() + " " + request.getLastName().trim();
 
         User user = User.builder()
-                .email(request.getEmail().trim().toLowerCase())
+                .email(normalizedEmail)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(fullName)
                 .role(User.Role.STUDENT)
