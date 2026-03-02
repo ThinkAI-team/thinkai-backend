@@ -1,6 +1,7 @@
 package com.thinkai.backend.controller;
 
 import com.thinkai.backend.dto.AuthResponse;
+import com.thinkai.backend.dto.LoginRequest;
 import com.thinkai.backend.dto.RegisterRequest;
 import com.thinkai.backend.service.AuthService;
 import jakarta.validation.Valid;
@@ -20,4 +21,11 @@ public class AuthController {
         AuthResponse response = authService.register(request);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
+    }
 }
+

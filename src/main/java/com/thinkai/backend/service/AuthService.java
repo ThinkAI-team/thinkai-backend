@@ -1,6 +1,7 @@
 package com.thinkai.backend.service;
 
 import com.thinkai.backend.dto.AuthResponse;
+import com.thinkai.backend.dto.LoginRequest;
 import com.thinkai.backend.dto.RegisterRequest;
 import com.thinkai.backend.entity.User;
 import com.thinkai.backend.exception.ApiException;
@@ -61,4 +62,37 @@ public class AuthService {
                 .role(user.getRole().name())
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    public AuthResponse login(LoginRequest request) {
+        // 1. Find user by email (generic error for security)
+        User user = userRepository.findByEmail(request.getEmail().trim().toLowerCase())
+                .orElseThrow(() -> new ApiException(
+                        "Email hoặc mật khẩu không đúng", HttpStatus.UNAUTHORIZED));
+
+        // 2. Check account active
+        if (!user.getIsActive()) {
+            throw new ApiException("Tài khoản đã bị khóa", HttpStatus.FORBIDDEN);
+        }
+
+        // 3. Verify password (same generic error)
+        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new ApiException("Email hoặc mật khẩu không đúng", HttpStatus.UNAUTHORIZED);
+        }
+
+        // 4. Generate JWT
+        String token = jwtUtil.generateToken(user.getEmail(), Map.of(
+                "role", user.getRole().name(),
+                "fullName", user.getFullName()
+        ));
+
+        // 5. Return response
+        return AuthResponse.builder()
+                .token(token)
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole().name())
+                .build();
+    }
 }
+
