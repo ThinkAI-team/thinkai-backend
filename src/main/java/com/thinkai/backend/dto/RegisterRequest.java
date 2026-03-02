@@ -11,9 +11,11 @@ import lombok.*;
 public class RegisterRequest {
 
     @NotBlank(message = "Họ không được để trống")
+    @Size(max = 50, message = "Họ tối đa 50 ký tự")
     private String firstName;
 
     @NotBlank(message = "Tên không được để trống")
+    @Size(max = 50, message = "Tên tối đa 50 ký tự")
     private String lastName;
 
     @NotBlank(message = "Email không được để trống")
