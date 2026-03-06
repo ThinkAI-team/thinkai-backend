@@ -1,0 +1,15 @@
+package com.thinkai.backend.repository;
+
+import com.thinkai.backend.entity.Course;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface CourseRepository extends JpaRepository<Course, Long> {
+
+    // Đếm khóa học đã publish
+    long countByIsPublished(Boolean isPublished);
+
+    // Đếm khóa học theo status
+    long countByStatus(Course.Status status);
+}
