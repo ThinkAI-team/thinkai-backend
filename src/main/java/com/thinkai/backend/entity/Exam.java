@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "exams")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -16,6 +17,9 @@ public class Exam {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "course_id", nullable = false)
+    private Long courseId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "exam_type", nullable = false)
@@ -53,4 +57,3 @@ public class Exam {
         createdAt = LocalDateTime.now();
     }
 }
-
