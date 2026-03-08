@@ -23,6 +23,15 @@ docker compose up -d
 # 3. Chờ MySQL sẵn sàng (~10 giây)
 docker logs thinkai-mysql --tail 10
 
+# Set JAVA_HOME nếu khi chạy Chạy Spring Boot ./mvnw spring-boot:run báo lỗi 
+# Error: JAVA_HOME is set to an invalid directory. 
+# JAVA_HOME = "C:\Program Files\Android\Android Studio\jre" 
+# Please set the JAVA_HOME variable in your environment to match the 
+# location of your Java installation. 
+
+$env:JAVA_HOME="C:\Program Files\Java\jdk-25.0.2"
+
+
 # 4. Chạy Spring Boot
 ./mvnw spring-boot:run
 ```
