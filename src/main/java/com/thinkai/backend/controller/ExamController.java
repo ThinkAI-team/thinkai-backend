@@ -58,4 +58,14 @@ public class ExamController {
         ExamResultResponse response = examService.getExamResult(attemptId);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Feature #5: Lịch sử thi.
+     * GET /exams/history?userId={userId}
+     */
+    @GetMapping("/exams/history")
+    public ResponseEntity<List<ExamHistoryDto>> getExamHistory(@RequestParam Long userId) {
+        List<ExamHistoryDto> history = examService.getExamHistory(userId);
+        return ResponseEntity.ok(history);
+    }
 }
