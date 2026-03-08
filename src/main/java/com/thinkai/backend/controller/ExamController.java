@@ -2,7 +2,10 @@ package com.thinkai.backend.controller;
 
 import com.thinkai.backend.dto.ExamDto;
 import com.thinkai.backend.dto.ExamStartResponse;
+import com.thinkai.backend.dto.ExamSubmitRequest;
+import com.thinkai.backend.dto.ExamSubmitResponse;
 import com.thinkai.backend.service.ExamService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,16 +31,28 @@ public class ExamController {
     /**
      * Feature #2: Bắt đầu làm bài thi.
      * POST /exams/{examId}/start
-     *
-     * @param examId ID của bài thi
-     * @param userId ID của user (tạm thời truyền qua param, sau sẽ lấy từ JWT)
-     * @return ExamStartResponse chứa thông tin phiên thi và danh sách câu hỏi
      */
     @PostMapping("/exams/{examId}/start")
     public ResponseEntity<ExamStartResponse> startExam(
             @PathVariable Long examId,
             @RequestParam Long userId) {
         ExamStartResponse response = examService.startExam(examId, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Feature #3: Nộp bài thi.
+     * POST /exams/{examId}/submit
+     *
+     * @param examId  ID của bài thi (dùng để xác định context)
+     * @param request Body chứa attemptId + danh sách câu trả lời
+     * @return ExamSubmitResponse chứa kết quả chấm điểm
+     */
+    @PostMapping("/exams/{examId}/submit")
+    public ResponseEntity<ExamSubmitResponse> submitExam(
+            @PathVariable Long examId,
+            @Valid @RequestBody ExamSubmitRequest request) {
+        ExamSubmitResponse response = examService.submitExam(request);
         return ResponseEntity.ok(response);
     }
 }
