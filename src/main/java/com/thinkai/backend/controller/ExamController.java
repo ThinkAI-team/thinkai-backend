@@ -1,9 +1,6 @@
 package com.thinkai.backend.controller;
 
-import com.thinkai.backend.dto.ExamDto;
-import com.thinkai.backend.dto.ExamStartResponse;
-import com.thinkai.backend.dto.ExamSubmitRequest;
-import com.thinkai.backend.dto.ExamSubmitResponse;
+import com.thinkai.backend.dto.*;
 import com.thinkai.backend.service.ExamService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -43,16 +40,22 @@ public class ExamController {
     /**
      * Feature #3: Nộp bài thi.
      * POST /exams/{examId}/submit
-     *
-     * @param examId  ID của bài thi (dùng để xác định context)
-     * @param request Body chứa attemptId + danh sách câu trả lời
-     * @return ExamSubmitResponse chứa kết quả chấm điểm
      */
     @PostMapping("/exams/{examId}/submit")
     public ResponseEntity<ExamSubmitResponse> submitExam(
             @PathVariable Long examId,
             @Valid @RequestBody ExamSubmitRequest request) {
         ExamSubmitResponse response = examService.submitExam(request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Feature #4: Xem kết quả bài thi.
+     * GET /exams/attempts/{attemptId}/result
+     */
+    @GetMapping("/exams/attempts/{attemptId}/result")
+    public ResponseEntity<ExamResultResponse> getExamResult(@PathVariable Long attemptId) {
+        ExamResultResponse response = examService.getExamResult(attemptId);
         return ResponseEntity.ok(response);
     }
 }
