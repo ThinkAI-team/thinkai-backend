@@ -4,9 +4,68 @@ on:
   pull_request:
     branches: [develop, main]
 
+env:
+  JAVA_VERSION: '25'
+  JWT_SECRET: ci-test-secret-key-must-be-at-least-256-bits-long-for-hs256
+  MAIL_USERNAME: test@test.com
+  MAIL_PASSWORD: test-password
+
 jobs:
-  build:
-    name: Build & Test
+  # ── Job 1: Quét secret trong code ─────────────────────────────────────────
+  secret-scan:
+    name: 🔒 Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
+
+  # ── Job 2: Kiểm tra code convention ───────────────────────────────────────
+  code-quality:
+    name: 📋 Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Checkstyle
+        run: ./mvnw checkstyle:check
+
+  # ── Job 3: Scan thư viện có lỗ hổng CVE ──────────────────────────────────
+  dependency-check:
+    name: 🛡️ Dependency Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: OSS Index (Sonatype)
+        run: ./mvnw org.sonatype.ossindex.maven:ossindex-maven-plugin:audit
+        continue-on-error: true
+
+  # ── Job 4: Build + Test ───────────────────────────────────────────────────
+  build-and-test:
+    name: 🔨 Build & Test
     runs-on: ubuntu-latest
 
     services:
@@ -27,23 +86,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Java 25
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: '25'
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: maven
 
       - name: Build
         run: ./mvnw compile -q
-        env:
-          JWT_SECRET: ci-test-secret-key-must-be-at-least-256-bits-long-for-hs256
-          MAIL_USERNAME: test@test.com
-          MAIL_PASSWORD: test-password
 
-      - name: Run Tests
+      - name: Test
         run: ./mvnw test
-        env:
-          JWT_SECRET: ci-test-secret-key-must-be-at-least-256-bits-long-for-hs256
-          MAIL_USERNAME: test@test.com
-          MAIL_PASSWORD: test-password
