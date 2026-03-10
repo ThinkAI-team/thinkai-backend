@@ -42,7 +42,7 @@ jobs:
           cache: maven
 
       - name: Checkstyle
-        run: ./mvnw checkstyle:check -q
+        run: ./mvnw checkstyle:check
 
   # ── Job 3: Scan thư viện có lỗ hổng CVE ──────────────────────────────────
   dependency-check:
