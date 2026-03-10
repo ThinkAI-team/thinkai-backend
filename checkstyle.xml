@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+    ThinkAI Checkstyle Configuration
+    Chuẩn code convention cho team 7 backend devs
+    Mức: Vừa phải — cho phép star import với lombok/JPA/Spring
+-->
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="error"/>
+
+    <!-- Không check file generated -->
+    <module name="BeforeExecutionExclusionFileFilter">
+        <property name="fileNamePattern" value="module\-info\.java$"/>
+    </module>
+
+    <!-- Dòng không quá 150 ký tự -->
+    <module name="LineLength">
+        <property name="max" value="150"/>
+        <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+    </module>
+
+    <!-- File phải kết thúc bằng dòng trống -->
+    <module name="NewlineAtEndOfFile"/>
+
+    <module name="TreeWalker">
+        <!-- ═══ NAMING ═══ -->
+        <module name="TypeName"/>
+        <module name="MethodName"/>
+        <module name="LocalVariableName"/>
+        <module name="ParameterName"/>
+        <module name="MemberName"/>
+        <module name="ConstantName"/>
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+        </module>
+
+        <!-- ═══ IMPORTS ═══ -->
+        <!-- Cho phép star import với các thư viện phổ biến Spring Boot -->
+        <module name="AvoidStarImport">
+            <property name="allowClassImports" value="false"/>
+            <property name="allowStaticMemberImports" value="true"/>
+            <property name="excludes"
+                      value="lombok,
+                             jakarta.persistence,
+                             jakarta.validation.constraints,
+                             org.springframework.web.bind.annotation,
+                             org.springframework.boot,
+                             org.springframework.boot.autoconfigure"/>
+        </module>
+
+        <!-- Không import thừa -->
+        <module name="UnusedImports"/>
+
+        <!-- ═══ CODING ═══ -->
+        <!-- if/for/while phải có {} -->
+        <module name="NeedBraces"/>
+        <!-- Không có statement rỗng -->
+        <module name="EmptyStatement"/>
+        <!-- equals() phải override hashCode() -->
+        <module name="EqualsHashCode"/>
+
+        <!-- ═══ WHITESPACE ═══ -->
+        <module name="WhitespaceAfter">
+            <property name="tokens" value="COMMA"/>
+        </module>
+    </module>
+</module>
