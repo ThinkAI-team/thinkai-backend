@@ -59,8 +59,8 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: OWASP Dependency Check
-        run: ./mvnw org.owasp:dependency-check-maven:check -q
+      - name: OSS Index (Sonatype)
+        run: ./mvnw org.sonatype.ossindex.maven:ossindex-maven-plugin:audit
         continue-on-error: true
 
   # ── Job 4: Build + Test ───────────────────────────────────────────────────
