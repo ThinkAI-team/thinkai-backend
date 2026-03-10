@@ -1,0 +1,49 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: thinkai_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build
+        run: ./mvnw compile -q
+        env:
+          JWT_SECRET: ci-test-secret-key-must-be-at-least-256-bits-long-for-hs256
+          MAIL_USERNAME: test@test.com
+          MAIL_PASSWORD: test-password
+
+      - name: Run Tests
+        run: ./mvnw test
+        env:
+          JWT_SECRET: ci-test-secret-key-must-be-at-least-256-bits-long-for-hs256
+          MAIL_USERNAME: test@test.com
+          MAIL_PASSWORD: test-password
