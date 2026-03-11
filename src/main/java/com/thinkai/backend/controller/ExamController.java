@@ -5,6 +5,7 @@ import com.thinkai.backend.service.ExamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -15,12 +16,8 @@ public class ExamController {
 
     private final ExamService examService;
 
-    /**
-     * Lấy danh sách bài thi của một khóa học.
-     *
-     * @param courseId ID của khóa học
-     * @return danh sách ExamDto
-     */
+    // 👇 Gắn annotation theo SECURITY_GUIDE
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{courseId}/exams")
     public ResponseEntity<List<ExamDto>> getExamsByCourse(@PathVariable Long courseId) {
         List<ExamDto> exams = examService.getExamsByCourseId(courseId);
