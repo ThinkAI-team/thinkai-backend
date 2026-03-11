@@ -1,0 +1,21 @@
+info:
+  name: exam-taking
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: http://localhost:8081/exams/1/start?userId=2
+  params:
+    - name: userId
+      value: "2"
+      type: query
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsInJvbGUiOiJTVFVERU5UIiwiZnVsbE5hbWUiOiJNYWkgUGjDoXAiLCJpYXQiOjE3NzMyNDM5MTksImV4cCI6MTc3MzMzMDMxOX0.O2lSTZdHTX86gvHgyaiZ7U7k0uw5I1QCiqElJN2uAbjypf9pDvn74HCTJeHPgqp8IEf3-XNv43FW0s5bf4Gvqg
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
