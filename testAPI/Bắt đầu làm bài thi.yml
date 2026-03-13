@@ -1,0 +1,21 @@
+info:
+  name: Bắt đầu làm bài thi
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: http://localhost:8081/exams/1/start?userId=2
+  params:
+    - name: userId
+      value: "2"
+      type: query
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsInJvbGUiOiJTVFVERU5UIiwiZnVsbE5hbWUiOiJNYWkgUGjDoXAiLCJpYXQiOjE3NzMzODQ4MDIsImV4cCI6MTc3MzQ3MTIwMn0.4PkmIxyeWQgZ1ti82CQaB5a1aF1YYUc6LUNmlm7YqH30OZrIr6ecCjcgxXuhFrWMWrHOy36p8oTgShTO6knxhA
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

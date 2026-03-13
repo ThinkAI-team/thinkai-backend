@@ -1,0 +1,33 @@
+info:
+  name: Nộp bài thi
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://localhost:8081/exams/1/submit
+  body:
+    type: json
+    data: |
+      {
+        "attemptId": 1,
+        "answers": [
+          {
+            "questionId": 10,
+            "selectedOption": "A"
+          },
+          {
+            "questionId": 11,
+            "selectedOption": "C"
+          }
+        ]
+      }
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsInJvbGUiOiJTVFVERU5UIiwiZnVsbE5hbWUiOiJNYWkgUGjDoXAiLCJpYXQiOjE3NzMzODQ4MDIsImV4cCI6MTc3MzQ3MTIwMn0.4PkmIxyeWQgZ1ti82CQaB5a1aF1YYUc6LUNmlm7YqH30OZrIr6ecCjcgxXuhFrWMWrHOy36p8oTgShTO6knxhA
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

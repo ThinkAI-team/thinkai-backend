@@ -4,10 +4,12 @@ import com.thinkai.backend.dto.ExamDto;
 import com.thinkai.backend.dto.ExamStartResponse;
 import com.thinkai.backend.dto.ExamSubmitRequest;
 import com.thinkai.backend.dto.ExamSubmitResponse;
+import com.thinkai.backend.security.StudentOnly;
 import com.thinkai.backend.service.ExamService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +24,7 @@ public class ExamController {
      * Feature #1: Lấy danh sách bài thi của một khóa học.
      * GET /courses/{courseId}/exams
      */
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/courses/{courseId}/exams")
     public ResponseEntity<List<ExamDto>> getExamsByCourse(@PathVariable Long courseId) {
         List<ExamDto> exams = examService.getExamsByCourseId(courseId);
@@ -32,6 +35,7 @@ public class ExamController {
      * Feature #2: Bắt đầu làm bài thi.
      * POST /exams/{examId}/start
      */
+    @StudentOnly
     @PostMapping("/exams/{examId}/start")
     public ResponseEntity<ExamStartResponse> startExam(
             @PathVariable Long examId,
@@ -48,6 +52,7 @@ public class ExamController {
      * @param request Body chứa attemptId + danh sách câu trả lời
      * @return ExamSubmitResponse chứa kết quả chấm điểm
      */
+    @StudentOnly
     @PostMapping("/exams/{examId}/submit")
     public ResponseEntity<ExamSubmitResponse> submitExam(
             @PathVariable Long examId,

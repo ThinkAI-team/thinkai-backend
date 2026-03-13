@@ -31,5 +31,5 @@ spring.mail.properties.mail.smtp.writetimeout=5000
 # ===== App Config =====
 app.frontend-url=http://localhost:3000
 
-# ===== Debug Security =====
-logging.level.org.springframework.security=DEBUG
+# ===== CORS =====
+app.cors.allowed-origins=${CORS_ORIGINS:http://localhost:3000}
