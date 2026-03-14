@@ -21,8 +21,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    username: ${MAIL_USERNAME:test@gmail.com}
+    password: ${MAIL_PASSWORD:testpass}
     properties:
       mail:
         smtp:
@@ -38,9 +38,9 @@ spring:
 server:
   port: 8081
 
-# === JWT (BẮT BUỘC set trong .env, KHÔNG có fallback) ===
+# === JWT (BẮT BUỘC set trong .env, có fallback cho dev) ===
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:do_not_use_this_secret_in_production_environments_at_all_costs_use_env_instead}
   expiration: 86400000
 
 # === App ===
