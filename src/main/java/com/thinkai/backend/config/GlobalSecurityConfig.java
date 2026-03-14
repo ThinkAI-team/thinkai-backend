@@ -56,6 +56,7 @@ public class GlobalSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/auth/**",
+                    "/error",
                     "/",
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
