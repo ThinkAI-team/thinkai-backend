@@ -41,11 +41,25 @@ public class AuthService {
         // 3. Build and save user
         String fullName = request.getFirstName().trim() + " " + request.getLastName().trim();
 
+        // 4. Parse role (chỉ cho phép STUDENT hoặc TEACHER, mặc định STUDENT)
+        User.Role userRole = User.Role.STUDENT;
+        if (request.getRole() != null && !request.getRole().isBlank()) {
+            try {
+                User.Role requestedRole = User.Role.valueOf(request.getRole().trim().toUpperCase());
+                if (requestedRole == User.Role.ADMIN) {
+                    throw new ApiException("Không được phép đăng ký với vai trò ADMIN", HttpStatus.FORBIDDEN);
+                }
+                userRole = requestedRole;
+            } catch (IllegalArgumentException e) {
+                throw new ApiException("Vai trò không hợp lệ. Chỉ chấp nhận: STUDENT, TEACHER", HttpStatus.BAD_REQUEST);
+            }
+        }
+
         User user = User.builder()
                 .email(normalizedEmail)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(fullName)
-                .role(User.Role.STUDENT)
+                .role(userRole)
                 .isActive(true)
                 .build();
 
