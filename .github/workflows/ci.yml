@@ -1,0 +1,100 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+env:
+  JAVA_VERSION: '25'
+  JWT_SECRET: ci-test-secret-key-must-be-at-least-256-bits-long-for-hs256
+  MAIL_USERNAME: test@test.com
+  MAIL_PASSWORD: test-password
+
+jobs:
+  # ── Job 1: Quét secret trong code ─────────────────────────────────────────
+  secret-scan:
+    name: 🔒 Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
+
+  # ── Job 2: Kiểm tra code convention ───────────────────────────────────────
+  code-quality:
+    name: 📋 Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Checkstyle
+        run: ./mvnw checkstyle:check
+
+  # ── Job 3: Scan thư viện có lỗ hổng CVE ──────────────────────────────────
+  dependency-check:
+    name: 🛡️ Dependency Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: OSS Index (Sonatype)
+        run: ./mvnw org.sonatype.ossindex.maven:ossindex-maven-plugin:audit
+        continue-on-error: true
+
+  # ── Job 4: Build + Test ───────────────────────────────────────────────────
+  build-and-test:
+    name: 🔨 Build & Test
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: thinkai_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build
+        run: ./mvnw compile -q
+
+      - name: Test
+        run: ./mvnw test
