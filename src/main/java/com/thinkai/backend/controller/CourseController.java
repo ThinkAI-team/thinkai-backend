@@ -1,8 +1,13 @@
 package com.thinkai.backend.controller;
 
 import com.thinkai.backend.dto.ApiResponse;
+import com.thinkai.backend.dto.CourseDetailResponse;
 import com.thinkai.backend.dto.EnrollmentResponse;
+import com.thinkai.backend.entity.Course;
+import com.thinkai.backend.entity.User;
+import com.thinkai.backend.repository.UserRepository;
 import com.thinkai.backend.security.StudentOnly;
+import com.thinkai.backend.security.TeacherOnly;
 import com.thinkai.backend.service.CourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -10,28 +15,97 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/courses")
 @RequiredArgsConstructor
 public class CourseController {
 
     private final CourseService courseService;
+    private final UserRepository userRepository;
 
     /**
-     * POST /courses/{courseId}/enroll — Đăng ký khóa học
-     * Auth: Bearer Token, role STUDENT
+     * GET /courses — Danh sách khóa học (Public)
+     * Params: keyword, priceMin, priceMax, sortBy, sortDir, page, size
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPublishedCourses(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) BigDecimal priceMin,
+            @RequestParam(required = false) BigDecimal priceMax,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size
+    ) {
+        Map<String, Object> response = courseService.getPublishedCourses(
+                keyword, priceMin, priceMax, sortBy, sortDir, page, size
+        );
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * GET /courses/{id} — Chi tiết khóa học (Optional auth)
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<CourseDetailResponse>> getCourseDetail(
+            @PathVariable Long id,
+            Authentication auth
+    ) {
+        Long currentUserId = getCurrentUserId(auth);
+        CourseDetailResponse response = courseService.getCourseDetail(id, currentUserId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * POST /courses/{id}/enroll — Đăng ký khóa học (Student only)
      * Response: 201 Created
      */
-    @PostMapping("/{courseId}/enroll")
     @StudentOnly
+    @PostMapping("/{id}/enroll")
     public ResponseEntity<ApiResponse<EnrollmentResponse>> enrollCourse(
-            @PathVariable Long courseId,
+            @PathVariable Long id,
             Authentication auth
     ) {
         String email = auth.getName();
-        EnrollmentResponse response = courseService.enrollCourse(courseId, email);
+        EnrollmentResponse response = courseService.enrollCourse(id, email);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.created("Enrolled successfully", response));
     }
+
+    // ===================== MANAGEMENT ENDPOINTS (TEACHER) =====================
+
+    @TeacherOnly
+    @PostMapping
+    public ResponseEntity<ApiResponse<Course>> createCourse(@RequestBody Course course) {
+        // Chỉ Teacher mới có quyền tạo khóa học
+        // TODO: Implement actual logic
+        return ResponseEntity.ok(ApiResponse.success(course));
+    }
+
+    @TeacherOnly
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<Course>> updateCourse(@PathVariable Long id, @RequestBody Course course) {
+        // Chỉ Teacher mới có quyền sửa khóa học
+        // TODO: Implement actual logic
+        return ResponseEntity.ok(ApiResponse.success(course));
+    }
+
+    // ===================== HELPER =====================
+
+    private Long getCurrentUserId(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user != null) {
+            return user.getId();
+        }
+        return null;
+    }
 }
+
