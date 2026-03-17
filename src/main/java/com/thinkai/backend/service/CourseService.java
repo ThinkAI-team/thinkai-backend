@@ -1,7 +1,10 @@
 package com.thinkai.backend.service;
 
 import com.thinkai.backend.dto.CourseDetailResponse;
+import com.thinkai.backend.dto.CourseListResponse;
+import com.thinkai.backend.dto.EnrollmentResponse;
 import com.thinkai.backend.dto.LessonResponse;
+import com.thinkai.backend.dto.MyCourseResponse;
 import com.thinkai.backend.entity.Course;
 import com.thinkai.backend.entity.Enrollment;
 import com.thinkai.backend.entity.Lesson;
@@ -12,10 +15,18 @@ import com.thinkai.backend.repository.EnrollmentRepository;
 import com.thinkai.backend.repository.LessonRepository;
 import com.thinkai.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -27,20 +38,57 @@ public class CourseService {
     private final UserRepository userRepository;
 
     /**
-     * Lấy chi tiết khóa học + danh sách bài học + trạng thái enrollment
-     * API: GET /courses/{courseId}
+     * GET /courses — Danh sách khóa học published + filter/search/paginate
+     */
+    public Map<String, Object> getPublishedCourses(
+            String keyword,
+            BigDecimal priceMin,
+            BigDecimal priceMax,
+            String sortBy,
+            String sortDir,
+            int page,
+            int size
+    ) {
+        // Giới hạn size tối đa 50
+        size = Math.min(size, 50);
+
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Course> coursePage = courseRepository.findPublishedCourses(
+                keyword, priceMin, priceMax, pageable
+        );
+
+        List<CourseListResponse> content = coursePage.getContent().stream()
+                .map(this::toCourseListResponse)
+                .toList();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", content);
+        response.put("page", coursePage.getNumber());
+        response.put("size", coursePage.getSize());
+        response.put("totalElements", coursePage.getTotalElements());
+        response.put("totalPages", coursePage.getTotalPages());
+
+        return response;
+    }
+
+    /**
+     * GET /courses/{id} — Chi tiết khóa học + lessons + enrollment status
      */
     public CourseDetailResponse getCourseDetail(Long courseId, Long currentUserId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ApiException(
-                        "Không tìm thấy khóa học với ID: " + courseId,
+                        "Không tìm thấy khóa học with ID: " + courseId,
                         HttpStatus.NOT_FOUND
                 ));
 
-        // Lấy danh sách bài học, sắp xếp theo thứ tự
         List<Lesson> lessons = lessonRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
 
-        // Lấy thông tin giảng viên
+        // Lấy thông tin instructor
         CourseDetailResponse.InstructorInfo instructorInfo = null;
         if (course.getInstructorId() != null) {
             User instructor = userRepository.findById(course.getInstructorId()).orElse(null);
@@ -53,7 +101,7 @@ public class CourseService {
             }
         }
 
-        // Kiểm tra trạng thái enrollment (nếu user đã đăng nhập)
+        // Check enrollment status (nếu user đã đăng nhập)
         Boolean isEnrolled = false;
         Integer progressPercent = 0;
         if (currentUserId != null) {
@@ -66,14 +114,13 @@ public class CourseService {
             }
         }
 
-        // Map lessons sang DTO
         List<LessonResponse> lessonResponses = lessons.stream()
                 .map(lesson -> LessonResponse.builder()
                         .id(lesson.getId())
                         .title(lesson.getTitle())
                         .type(lesson.getType().name())
                         .duration(formatDuration(lesson.getDurationSeconds()))
-                        .isCompleted(false) // TODO: tra LessonProgress khi module Learning Room sẵn sàng
+                        .isCompleted(false) // TODO: check lesson_progress
                         .orderIndex(lesson.getOrderIndex())
                         .build())
                 .toList();
@@ -88,6 +135,107 @@ public class CourseService {
                 .isEnrolled(isEnrolled)
                 .progressPercent(progressPercent)
                 .lessons(lessonResponses)
+                .build();
+    }
+
+    /**
+     * POST /courses/{id}/enroll — Đăng ký khóa học
+     */
+    @Transactional
+    public EnrollmentResponse enrollCourse(Long courseId, Long userId) {
+        // Kiểm tra khóa học tồn tại
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ApiException(
+                        "Không tìm thấy khóa học with ID: " + courseId,
+                        HttpStatus.NOT_FOUND
+                ));
+
+        // Kiểm tra khóa học đã published chưa
+        if (!course.getIsPublished()) {
+            throw new ApiException("Khóa học chưa được xuất bản", HttpStatus.BAD_REQUEST);
+        }
+
+        // Kiểm tra đã đăng ký chưa
+        if (enrollmentRepository.existsByUserIdAndCourseId(userId, courseId)) {
+            throw new ApiException("Bạn đã đăng ký khóa học này rồi", HttpStatus.BAD_REQUEST);
+        }
+
+        Enrollment enrollment = Enrollment.builder()
+                .userId(userId)
+                .courseId(courseId)
+                .progressPercent(0)
+                .build();
+
+        enrollment = enrollmentRepository.save(enrollment);
+
+        return EnrollmentResponse.builder()
+                .enrollmentId(enrollment.getId())
+                .courseId(enrollment.getCourseId())
+                .enrolledAt(enrollment.getEnrolledAt())
+                .build();
+    }
+
+    /**
+     * GET /users/me/courses — Khóa học của tôi
+     */
+    public List<MyCourseResponse> getMyCourses(Long userId) {
+        List<Enrollment> enrollments = enrollmentRepository.findByUserId(userId);
+
+        return enrollments.stream().map(enrollment -> {
+            Course course = courseRepository.findById(enrollment.getCourseId()).orElse(null);
+            if (course == null) {
+                return null;
+            }
+
+            // Tìm bài học tiếp theo (bài đầu tiên chưa hoàn thành)
+            List<Lesson> lessons = lessonRepository.findByCourseIdOrderByOrderIndexAsc(course.getId());
+            String nextLessonTitle = null;
+            Long nextLessonId = null;
+            if (!lessons.isEmpty()) {
+                // Tạm lấy bài đầu tiên hoặc tính theo progress
+                int completedCount = (int) Math.round(
+                        lessons.size() * enrollment.getProgressPercent() / 100.0
+                );
+                int nextIndex = Math.min(completedCount, lessons.size() - 1);
+                Lesson nextLesson = lessons.get(nextIndex);
+                nextLessonTitle = nextLesson.getTitle();
+                nextLessonId = nextLesson.getId();
+            }
+
+            return MyCourseResponse.builder()
+                    .id(course.getId())
+                    .title(course.getTitle())
+                    .thumbnail(course.getThumbnailUrl())
+                    .price(course.getPrice())
+                    .progressPercent(enrollment.getProgressPercent())
+                    .nextLessonTitle(nextLessonTitle)
+                    .nextLessonId(nextLessonId)
+                    .build();
+        }).filter(r -> r != null).toList();
+    }
+
+    // ===================== PRIVATE HELPER =====================
+
+    private CourseListResponse toCourseListResponse(Course course) {
+        CourseListResponse.InstructorInfo instructorInfo = null;
+        if (course.getInstructorId() != null) {
+            User instructor = userRepository.findById(course.getInstructorId()).orElse(null);
+            if (instructor != null) {
+                instructorInfo = CourseListResponse.InstructorInfo.builder()
+                        .id(instructor.getId())
+                        .fullName(instructor.getFullName())
+                        .build();
+            }
+        }
+
+        return CourseListResponse.builder()
+                .id(course.getId())
+                .title(course.getTitle())
+                .thumbnail(course.getThumbnailUrl())
+                .price(course.getPrice())
+                .instructor(instructorInfo)
+                .lessonsCount(lessonRepository.countByCourseId(course.getId()))
+                .enrolledCount(enrollmentRepository.countByCourseId(course.getId()))
                 .build();
     }
 
