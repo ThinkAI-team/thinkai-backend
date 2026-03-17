@@ -31,10 +31,10 @@ import java.util.List;
  * - Phân quyền theo Role: Mỗi dev tự gắn @PreAuthorize trên Controller
  *
  * Các annotation có sẵn (package com.thinkai.backend.security):
- * - @AdminOnly       → hasRole('ADMIN')
- * - @TeacherOnly     → hasRole('TEACHER')
- * - @StudentOnly     → hasRole('STUDENT')
- * - @TeacherOrAdmin  → hasAnyRole('TEACHER', 'ADMIN')
+ * - @AdminOnly → hasRole('ADMIN')
+ * - @TeacherOnly → hasRole('TEACHER')
+ * - @StudentOnly → hasRole('STUDENT')
+ * - @TeacherOrAdmin → hasAnyRole('TEACHER', 'ADMIN')
  */
 @Configuration
 @EnableWebSecurity
@@ -57,10 +57,12 @@ public class GlobalSecurityConfig {
                 .requestMatchers(
                     "/auth/**",
                     "/error",
+                    "/courses/**",
                     "/",
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
                 ).permitAll()
+                .requestMatchers("/auth/update-password", "/auth/me").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

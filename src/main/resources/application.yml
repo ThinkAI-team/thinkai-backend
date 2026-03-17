@@ -38,7 +38,7 @@ spring:
 server:
   port: 8081
 
-# === JWT (BẮT BUỘC set trong .env, KHÔNG có fallback) ===
+# === JWT (BẮT BUỘC set trong .env, có fallback cho dev) ===
 jwt:
   secret: ${JWT_SECRET:Y2hhbmdlLXRoaXMtaW4tcHJvZHVjdGlvbi1pdC1tdXN0LWJlLWF0LWxlYXN0LTI1Ni1iaXRz}
   expiration: 86400000
@@ -48,3 +48,7 @@ app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+
+# === Google OAuth ===
+google:
+  client-id: ${GOOGLE_CLIENT_ID:}

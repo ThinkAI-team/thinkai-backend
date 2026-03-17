@@ -3,9 +3,16 @@ package com.thinkai.backend.service;
 import com.thinkai.backend.dto.UpdateProgressRequest;
 import com.thinkai.backend.dto.UpdateProgressResponse;
 import com.thinkai.backend.dto.VideoPreferenceDto;
-import com.thinkai.backend.entity.*;
+import com.thinkai.backend.entity.Lesson;
+import com.thinkai.backend.entity.LessonProgress;
+import com.thinkai.backend.entity.User;
+import com.thinkai.backend.entity.VideoPreference;
 import com.thinkai.backend.exception.ApiException;
-import com.thinkai.backend.repository.*;
+import com.thinkai.backend.repository.EnrollmentRepository;
+import com.thinkai.backend.repository.LessonProgressRepository;
+import com.thinkai.backend.repository.LessonRepository;
+import com.thinkai.backend.repository.UserRepository;
+import com.thinkai.backend.repository.VideoPreferenceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -103,9 +110,15 @@ public class VideoProgressService {
                         .quality("auto")
                         .build());
 
-        if (dto.getPlaybackSpeed() != null) pref.setPlaybackSpeed(dto.getPlaybackSpeed());
-        if (dto.getAutoPlay() != null) pref.setAutoPlay(dto.getAutoPlay());
-        if (dto.getQuality() != null) pref.setQuality(dto.getQuality());
+        if (dto.getPlaybackSpeed() != null) {
+            pref.setPlaybackSpeed(dto.getPlaybackSpeed());
+        }
+        if (dto.getAutoPlay() != null) {
+            pref.setAutoPlay(dto.getAutoPlay());
+        }
+        if (dto.getQuality() != null) {
+            pref.setQuality(dto.getQuality());
+        }
 
         videoPreferenceRepository.save(pref);
 
