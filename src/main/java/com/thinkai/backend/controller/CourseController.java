@@ -64,10 +64,15 @@ public class CourseController {
     // ===================== HELPER =====================
 
     private Long resolveUserId(Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) return null;
+        if (auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
         String email = auth.getName();
         User user = userRepository.findByEmail(email).orElse(null);
-        return user != null ? user.getId() : null;
+        if (user != null) {
+            return user.getId();
+        }
+        return null;
     }
 }
 

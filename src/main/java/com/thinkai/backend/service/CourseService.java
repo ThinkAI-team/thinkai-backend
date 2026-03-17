@@ -92,7 +92,9 @@ public class CourseService {
     }
 
     private String formatDuration(Integer seconds) {
-        if (seconds == null || seconds == 0) return null;
+        if (seconds == null || seconds == 0) {
+            return null;
+        }
         int min = seconds / 60;
         int sec = seconds % 60;
         return String.format("%d:%02d", min, sec);
