@@ -50,6 +50,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return path.startsWith("/auth/");
+        // Không chạy filter cho các public auth endpoints
+        // Nhưng PHẢI chạy cho update-password và me để lấy thông tin user
+        return (path.startsWith("/auth/") && !path.equals("/auth/update-password") && !path.equals("/auth/me"));
     }
 }
