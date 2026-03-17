@@ -110,6 +110,9 @@ public class GoogleAuthService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole().name())
+                .hasPassword(user.getPasswordHash() != null)
+                .isGoogleUser(user.getGoogleId() != null)
+                .avatarUrl(user.getAvatarUrl())
                 .build();
     }
 }
