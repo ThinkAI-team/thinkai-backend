@@ -1,29 +1,21 @@
 package com.thinkai.backend.controller;
 
-<<<<<<< HEAD
 import com.thinkai.backend.dto.ApiResponse;
-import com.thinkai.backend.service.CourseService;
-=======
 import com.thinkai.backend.entity.Course;
 import com.thinkai.backend.security.TeacherOnly;
->>>>>>> develop
+import com.thinkai.backend.service.CourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-<<<<<<< HEAD
 import java.math.BigDecimal;
 import java.util.Map;
-=======
-import java.util.List;
->>>>>>> develop
 
 @RestController
 @RequestMapping("/courses")
 @RequiredArgsConstructor
 public class CourseController {
 
-<<<<<<< HEAD
     private final CourseService courseService;
 
     /**
@@ -46,11 +38,6 @@ public class CourseController {
                 keyword, priceMin, priceMax, sortBy, sortDir, page, size
         );
         return ResponseEntity.ok(ApiResponse.success(data));
-=======
-    @GetMapping
-    public ResponseEntity<List<Course>> getAllCourses() {
-        // Mọi người đều có thể xem danh sách khóa học
-        return ResponseEntity.ok(List.of());
     }
 
     @TeacherOnly
@@ -65,6 +52,6 @@ public class CourseController {
     public ResponseEntity<Course> updateCourse(@PathVariable Long id, @RequestBody Course course) {
         // Chỉ Teacher mới có quyền sửa khóa học
         return ResponseEntity.ok(course);
->>>>>>> develop
     }
 }
+
