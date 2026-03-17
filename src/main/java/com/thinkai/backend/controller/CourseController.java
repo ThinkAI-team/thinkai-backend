@@ -2,10 +2,12 @@ package com.thinkai.backend.controller;
 
 import com.thinkai.backend.dto.CourseDetailResponse;
 import com.thinkai.backend.dto.EnrollmentResponse;
+import com.thinkai.backend.entity.Course;
 import com.thinkai.backend.entity.User;
 import com.thinkai.backend.exception.ApiException;
 import com.thinkai.backend.repository.UserRepository;
 import com.thinkai.backend.security.StudentOnly;
+import com.thinkai.backend.security.TeacherOnly;
 import com.thinkai.backend.service.CourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -74,6 +77,24 @@ public class CourseController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // ===================== MANAGEMENT ENDPOINTS (TEACHER) =====================
+
+    @TeacherOnly
+    @PostMapping
+    public ResponseEntity<Course> createCourse(@RequestBody Course course) {
+        // Chỉ Teacher mới có quyền tạo khóa học
+        // TODO: Implement actual logic
+        return ResponseEntity.ok(course);
+    }
+
+    @TeacherOnly
+    @PutMapping("/{id}")
+    public ResponseEntity<Course> updateCourse(@PathVariable Long id, @RequestBody Course course) {
+        // Chỉ Teacher mới có quyền sửa khóa học
+        // TODO: Implement actual logic
+        return ResponseEntity.ok(course);
+    }
+
     // ===================== HELPER =====================
 
     private Long getCurrentUserId(Authentication auth) {
@@ -83,3 +104,4 @@ public class CourseController {
         return user != null ? user.getId() : null;
     }
 }
+

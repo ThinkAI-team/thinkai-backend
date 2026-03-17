@@ -1,8 +1,8 @@
 package com.thinkai.backend.controller;
 
-import com.thinkai.backend.dto.ChangePasswordRequest;
 import com.thinkai.backend.dto.MyCourseResponse;
 import com.thinkai.backend.dto.ProfileResponse;
+import com.thinkai.backend.dto.UpdatePasswordRequest;
 import com.thinkai.backend.dto.UpdateProfileRequest;
 import com.thinkai.backend.entity.User;
 import com.thinkai.backend.repository.UserRepository;
@@ -45,7 +45,7 @@ public class UserController {
     @PutMapping("/me/password")
     public ResponseEntity<Map<String, String>> changePassword(
             Authentication auth,
-            @Valid @RequestBody ChangePasswordRequest request) {
+            @Valid @RequestBody UpdatePasswordRequest request) {
         userService.changePassword(auth.getName(), request);
         return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công"));
     }
@@ -62,3 +62,4 @@ public class UserController {
         return ResponseEntity.ok(courses);
     }
 }
+
