@@ -6,6 +6,7 @@ import com.thinkai.backend.dto.GoogleLoginRequest;
 import com.thinkai.backend.dto.LoginRequest;
 import com.thinkai.backend.dto.RegisterRequest;
 import com.thinkai.backend.dto.ResetPasswordRequest;
+import com.thinkai.backend.dto.UpdatePasswordRequest;
 import com.thinkai.backend.service.AuthService;
 import com.thinkai.backend.service.GoogleAuthService;
 import com.thinkai.backend.service.PasswordResetService;
@@ -57,6 +58,17 @@ public class AuthController {
         passwordResetService.resetPassword(request);
         return ResponseEntity.ok(Map.of(
                 "message", "Đặt lại mật khẩu thành công. Vui lòng đăng nhập."));
+    }
+    @GetMapping("/me")
+    public ResponseEntity<AuthResponse> getCurrentUser() {
+        return ResponseEntity.ok(authService.getCurrentUser());
+    }
+
+    @PostMapping("/update-password")
+    public ResponseEntity<Map<String, String>> updatePassword(
+            @Valid @RequestBody UpdatePasswordRequest request) {
+        authService.updatePassword(request);
+        return ResponseEntity.ok(Map.of("message", "Cập nhật mật khẩu thành công."));
     }
 }
 
