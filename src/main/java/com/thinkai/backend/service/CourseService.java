@@ -1,6 +1,10 @@
 package com.thinkai.backend.service;
 
-import com.thinkai.backend.dto.*;
+import com.thinkai.backend.dto.CourseDetailResponse;
+import com.thinkai.backend.dto.CourseListResponse;
+import com.thinkai.backend.dto.EnrollmentResponse;
+import com.thinkai.backend.dto.LessonResponse;
+import com.thinkai.backend.dto.MyCourseResponse;
 import com.thinkai.backend.entity.Course;
 import com.thinkai.backend.entity.Enrollment;
 import com.thinkai.backend.entity.Lesson;
