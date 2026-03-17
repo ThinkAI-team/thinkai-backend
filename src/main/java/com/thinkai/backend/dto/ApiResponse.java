@@ -20,4 +20,13 @@ public class ApiResponse<T> {
                 .data(data)
                 .build();
     }
+
+    public static <T> ApiResponse<T> created(String message, T data) {
+        return ApiResponse.<T>builder()
+                .status(201)
+                .message(message)
+                .data(data)
+                .build();
+    }
 }
+

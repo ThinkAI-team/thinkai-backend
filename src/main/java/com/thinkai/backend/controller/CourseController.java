@@ -1,5 +1,6 @@
 package com.thinkai.backend.controller;
 
+import com.thinkai.backend.dto.ApiResponse;
 import com.thinkai.backend.dto.CourseDetailResponse;
 import com.thinkai.backend.dto.EnrollmentResponse;
 import com.thinkai.backend.entity.Course;
@@ -31,7 +32,7 @@ public class CourseController {
      * Params: keyword, priceMin, priceMax, sortBy, sortDir, page, size
      */
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getPublishedCourses(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPublishedCourses(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) BigDecimal priceMin,
             @RequestParam(required = false) BigDecimal priceMax,
@@ -43,55 +44,55 @@ public class CourseController {
         Map<String, Object> response = courseService.getPublishedCourses(
                 keyword, priceMin, priceMax, sortBy, sortDir, page, size
         );
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
      * GET /courses/{id} — Chi tiết khóa học (Optional auth)
      */
     @GetMapping("/{id}")
-    public ResponseEntity<CourseDetailResponse> getCourseDetail(
+    public ResponseEntity<ApiResponse<CourseDetailResponse>> getCourseDetail(
             @PathVariable Long id,
             Authentication auth
     ) {
         Long currentUserId = getCurrentUserId(auth);
         CourseDetailResponse response = courseService.getCourseDetail(id, currentUserId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
      * POST /courses/{id}/enroll — Đăng ký khóa học (Student only)
+     * Response: 201 Created
      */
     @StudentOnly
     @PostMapping("/{id}/enroll")
-    public ResponseEntity<EnrollmentResponse> enrollCourse(
+    public ResponseEntity<ApiResponse<EnrollmentResponse>> enrollCourse(
             @PathVariable Long id,
             Authentication auth
     ) {
-        Long userId = getCurrentUserId(auth);
-        if (userId == null) {
-            throw new ApiException("Vui lòng đăng nhập để đăng ký khóa học", HttpStatus.UNAUTHORIZED);
-        }
-        EnrollmentResponse response = courseService.enrollCourse(id, userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        String email = auth.getName();
+        EnrollmentResponse response = courseService.enrollCourse(id, email);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.created("Enrolled successfully", response));
     }
 
     // ===================== MANAGEMENT ENDPOINTS (TEACHER) =====================
 
     @TeacherOnly
     @PostMapping
-    public ResponseEntity<Course> createCourse(@RequestBody Course course) {
+    public ResponseEntity<ApiResponse<Course>> createCourse(@RequestBody Course course) {
         // Chỉ Teacher mới có quyền tạo khóa học
         // TODO: Implement actual logic
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(ApiResponse.success(course));
     }
 
     @TeacherOnly
     @PutMapping("/{id}")
-    public ResponseEntity<Course> updateCourse(@PathVariable Long id, @RequestBody Course course) {
+    public ResponseEntity<ApiResponse<Course>> updateCourse(@PathVariable Long id, @RequestBody Course course) {
         // Chỉ Teacher mới có quyền sửa khóa học
         // TODO: Implement actual logic
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(ApiResponse.success(course));
     }
 
     // ===================== HELPER =====================
@@ -108,4 +109,5 @@ public class CourseController {
         return null;
     }
 }
+
 
