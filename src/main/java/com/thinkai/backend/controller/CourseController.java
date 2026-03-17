@@ -5,7 +5,6 @@ import com.thinkai.backend.dto.CourseDetailResponse;
 import com.thinkai.backend.dto.EnrollmentResponse;
 import com.thinkai.backend.entity.Course;
 import com.thinkai.backend.entity.User;
-import com.thinkai.backend.exception.ApiException;
 import com.thinkai.backend.repository.UserRepository;
 import com.thinkai.backend.security.StudentOnly;
 import com.thinkai.backend.security.TeacherOnly;
