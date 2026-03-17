@@ -11,5 +11,9 @@ public class LessonCompleteResponse {
 
     private Long lessonId;
     private Boolean isCompleted;
+<<<<<<< HEAD
     private Double courseProgress;
+=======
+    private Integer courseProgress;
+>>>>>>> origin/develop
 }

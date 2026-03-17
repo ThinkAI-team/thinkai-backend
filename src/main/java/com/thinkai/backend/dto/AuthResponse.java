@@ -13,4 +13,7 @@ public class AuthResponse {
     private String email;
     private String fullName;
     private String role;
+    private boolean hasPassword;
+    private boolean isGoogleUser;
+    private String avatarUrl;
 }

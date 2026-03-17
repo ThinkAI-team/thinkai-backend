@@ -1,7 +1,12 @@
 package com.thinkai.backend.controller;
 
 import com.thinkai.backend.dto.*;
+import com.thinkai.backend.entity.Course;
+import com.thinkai.backend.entity.User;
+import com.thinkai.backend.exception.ApiException;
+import com.thinkai.backend.repository.UserRepository;
 import com.thinkai.backend.security.StudentOnly;
+import com.thinkai.backend.security.TeacherOnly;
 import com.thinkai.backend.service.CourseService;
 import com.thinkai.backend.service.LessonService;
 import jakarta.validation.Valid;
@@ -11,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 @RestController
@@ -20,10 +26,29 @@ public class CourseController {
 
     private final CourseService courseService;
     private final LessonService lessonService;
+    private final UserRepository userRepository;
+
+    /**
+     * GET /courses — Danh sách khóa học (Public)
+     */
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getPublishedCourses(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) BigDecimal priceMin,
+            @RequestParam(required = false) BigDecimal priceMax,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size
+    ) {
+        Map<String, Object> response = courseService.getPublishedCourses(
+                keyword, priceMin, priceMax, sortBy, sortDir, page, size
+        );
+        return ResponseEntity.ok(response);
+    }
 
     /**
      * GET /courses/{courseId} — Chi tiết khóa học + danh sách bài cho sidebar.
-     * Auth: Optional (nếu đã login → trả thêm isEnrolled, progress).
      */
     @GetMapping("/{courseId}")
     public ResponseEntity<Map<String, Object>> getCourseDetail(
@@ -41,7 +66,6 @@ public class CourseController {
 
     /**
      * POST /courses/{courseId}/enroll — Đăng ký khóa học.
-     * Auth: STUDENT only.
      */
     @StudentOnly
     @PostMapping("/{courseId}/enroll")
@@ -59,7 +83,6 @@ public class CourseController {
 
     /**
      * GET /courses/lessons/{lessonId} — Nội dung bài học (video/PDF).
-     * Auth: Bearer Token (phải đã enroll khóa học).
      */
     @GetMapping("/lessons/{lessonId}")
     public ResponseEntity<Map<String, Object>> getLessonDetail(
@@ -76,7 +99,6 @@ public class CourseController {
 
     /**
      * POST /courses/lessons/{lessonId}/complete — Đánh dấu hoàn thành bài học.
-     * Auth: STUDENT only.
      */
     @StudentOnly
     @PostMapping("/lessons/{lessonId}/complete")
@@ -92,5 +114,19 @@ public class CourseController {
                 "status", 200,
                 "message", "Progress updated",
                 "data", response));
+    }
+
+    // ===================== MANAGEMENT ENDPOINTS (TEACHER) =====================
+
+    @TeacherOnly
+    @PostMapping
+    public ResponseEntity<Course> createCourse(@RequestBody Course course) {
+        return ResponseEntity.ok(course);
+    }
+
+    @TeacherOnly
+    @PutMapping("/{id}")
+    public ResponseEntity<Course> updateCourse(@PathVariable Long id, @RequestBody Course course) {
+        return ResponseEntity.ok(course);
     }
 }

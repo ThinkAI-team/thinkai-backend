@@ -21,8 +21,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME: test@gmail.com}
-    password: ${MAIL_PASSWORD: testpass}
+    username: ${MAIL_USERNAME:test@gmail.com}
+    password: ${MAIL_PASSWORD:test}
     properties:
       mail:
         smtp:
@@ -38,9 +38,9 @@ spring:
 server:
   port: 8081
 
-# === JWT (BẮT BUỘC set trong .env, KHÔNG có fallback) ===
+# === JWT (BẮT BUỘC set trong .env, có fallback cho dev) ===
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:thinkai_default_secret_key_that_is_at_least_256_bits_long_abcdef1234567890}
   expiration: 86400000
 
 # === App ===
@@ -48,3 +48,7 @@ app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+
+# === Google OAuth ===
+google:
+  client-id: ${GOOGLE_CLIENT_ID:}
