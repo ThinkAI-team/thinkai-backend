@@ -75,8 +75,9 @@ public class CourseController {
             throw new ApiException("Vui lòng đăng nhập để đăng ký khóa học", HttpStatus.UNAUTHORIZED);
         }
         EnrollmentResponse response = courseService.enrollCourse(id, userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created("Đăng ký thành công", response));
     }
+
 
     // ===================== MANAGEMENT ENDPOINTS (TEACHER) =====================
 
