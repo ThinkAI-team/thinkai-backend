@@ -1,7 +1,7 @@
 package com.thinkai.backend.controller;
 
-import com.thinkai.backend.dto.ChangePasswordRequest;
 import com.thinkai.backend.dto.ProfileResponse;
+import com.thinkai.backend.dto.UpdatePasswordRequest;
 import com.thinkai.backend.dto.UpdateProfileRequest;
 import com.thinkai.backend.service.UserService;
 import jakarta.validation.Valid;
