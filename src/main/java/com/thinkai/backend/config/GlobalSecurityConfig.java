@@ -55,11 +55,16 @@ public class GlobalSecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/auth/**",
+                    "/auth/register",
+                    "/auth/login",
+                    "/auth/google",
+                    "/auth/forgot-password",
+                    "/auth/reset-password",
                     "/",
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
                 ).permitAll()
+                .requestMatchers("/auth/update-password", "/auth/me").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

@@ -4,11 +4,11 @@
 
 ## 📋 Yêu cầu
 
-| Công cụ | Phiên bản | Kiểm tra |
-|---------|-----------|----------|
-| Docker | ≥ 20.x | `docker --version` |
-| Docker Compose | ≥ 2.x | `docker compose version` |
-| Java | ≥ 21 | `java -version` |
+| Công cụ      | Phiên bản | Kiểm tra                  |
+| -------------- | ----------- | -------------------------- |
+| Docker         | ≥ 20.x     | `docker --version`       |
+| Docker Compose | ≥ 2.x      | `docker compose version` |
+| Java           | ≥ 21       | `java -version`          |
 
 ## 🚀 Quick Start
 
@@ -38,6 +38,7 @@ App sẽ chạy tại: `http://localhost:8080`
 - **Password**: root
 
 ### Truy cập MySQL CLI
+
 ```bash
 docker exec -it thinkai-mysql mysql -uroot -proot thinkai_db
 ```
@@ -55,14 +56,15 @@ src/main/java/com/thinkai/backend/
 
 ## 🔧 Configuration
 
-| Variable | File | Mô tả |
-|----------|------|-------|
-| Database URL | `application.properties` | JDBC connection string |
+| Variable     | File                       | Mô tả                       |
+| ------------ | -------------------------- | ----------------------------- |
+| Database URL | `application.properties` | JDBC connection string        |
 | JPA DDL Auto | `application.properties` | `update` (auto sync schema) |
 
 ## ⚠️ Troubleshooting
 
 ### Port 3306 đã bị chiếm
+
 ```bash
 # Kiểm tra process đang dùng port
 sudo lsof -i :3306
@@ -73,11 +75,13 @@ ports:
 ```
 
 ### Permission denied khi chạy mvnw
+
 ```bash
 chmod +x mvnw
 ```
 
 ### MySQL chưa sẵn sàng
+
 ```bash
 # Kiểm tra container status
 docker ps | grep thinkai-mysql
