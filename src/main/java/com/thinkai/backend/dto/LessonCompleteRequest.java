@@ -1,20 +1,16 @@
 package com.thinkai.backend.dto;
 
-<<<<<<< HEAD
 import jakarta.validation.constraints.Min;
-=======
->>>>>>> origin/develop
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class LessonCompleteRequest {
-
-<<<<<<< HEAD
     @Min(value = 0, message = "watchTimeSeconds phải >= 0")
-=======
->>>>>>> origin/develop
     private Integer watchTimeSeconds = 0;
 }

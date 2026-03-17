@@ -26,6 +26,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Dashboard Service for student statistics and overview.
+ */
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
@@ -36,6 +39,9 @@ public class DashboardService {
     private final LessonRepository lessonRepository;
     private final LessonProgressRepository lessonProgressRepository;
 
+    /**
+     * Get dashboard data for the authenticated student.
+     */
     @Transactional(readOnly = true)
     public DashboardResponse getDashboard(String email) {
         // 1. Find user
