@@ -1,12 +1,21 @@
 package com.thinkai.backend.service;
 
-import com.thinkai.backend.dto.*;
+import com.thinkai.backend.dto.AnswerDto;
+import com.thinkai.backend.dto.ExamDto;
+import com.thinkai.backend.dto.ExamStartResponse;
+import com.thinkai.backend.dto.ExamSubmitRequest;
+import com.thinkai.backend.dto.ExamSubmitResponse;
+import com.thinkai.backend.dto.QuestionDto;
 import com.thinkai.backend.entity.Exam;
 import com.thinkai.backend.entity.ExamAnswer;
 import com.thinkai.backend.entity.ExamAttempt;
 import com.thinkai.backend.entity.Question;
 import com.thinkai.backend.exception.ApiException;
-import com.thinkai.backend.repository.*;
+import com.thinkai.backend.repository.CourseRepository;
+import com.thinkai.backend.repository.ExamAnswerRepository;
+import com.thinkai.backend.repository.ExamAttemptRepository;
+import com.thinkai.backend.repository.ExamRepository;
+import com.thinkai.backend.repository.QuestionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
