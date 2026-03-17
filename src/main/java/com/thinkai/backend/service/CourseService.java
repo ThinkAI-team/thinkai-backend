@@ -183,7 +183,9 @@ public class CourseService {
 
         return enrollments.stream().map(enrollment -> {
             Course course = courseRepository.findById(enrollment.getCourseId()).orElse(null);
-            if (course == null) return null;
+            if (course == null) {
+                return null;
+            }
 
             // Tìm bài học tiếp theo (bài đầu tiên chưa hoàn thành)
             List<Lesson> lessons = lessonRepository.findByCourseIdOrderByOrderIndexAsc(course.getId());
@@ -239,7 +241,9 @@ public class CourseService {
     }
 
     private String formatDuration(Integer seconds) {
-        if (seconds == null || seconds == 0) return null;
+        if (seconds == null || seconds == 0) {
+            return null;
+        }
         int min = seconds / 60;
         int sec = seconds % 60;
         return String.format("%d:%02d", min, sec);
