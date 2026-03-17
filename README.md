@@ -17,17 +17,19 @@
 git clone <repository-url>
 cd thinkai-backend
 
-# 2. Khởi động MySQL container
-docker compose up -d
+# 2. Chạy toàn bộ hệ thống (DB + Backend)
+docker compose up --build -d
 
-# 3. Chờ MySQL sẵn sàng (~10 giây)
-docker logs thinkai-mysql --tail 10
-
-# 4. Chạy Spring Boot
-./mvnw spring-boot:run
+# 3. Theo dõi logs
+docker compose logs -f thinkai-backend
 ```
 
-App sẽ chạy tại: `http://localhost:8080`
+Dịch vụ sẽ sẵn sàng tại: `http://localhost:8081`
+
+### Các lệnh hữu ích khác
+- `docker compose down`: Dừng hệ thống nhưng giữ lại dữ liệu DB.
+- `docker compose down -v`: Reset hoàn toàn hệ thống và xóa dữ liệu DB.
+- `docker compose restart thinkai-api`: Restart riêng Backend (sau khi sửa code).
 
 ## 🗄️ Database
 
