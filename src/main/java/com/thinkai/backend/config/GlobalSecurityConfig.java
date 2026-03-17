@@ -55,11 +55,8 @@ public class GlobalSecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/auth/register",
-                    "/auth/login",
-                    "/auth/google",
-                    "/auth/forgot-password",
-                    "/auth/reset-password",
+                    "/auth/**",
+                    "/courses/**",
                     "/",
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
