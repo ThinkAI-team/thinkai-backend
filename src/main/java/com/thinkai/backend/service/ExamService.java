@@ -1,12 +1,24 @@
 package com.thinkai.backend.service;
 
-import com.thinkai.backend.dto.*;
+import com.thinkai.backend.dto.ExamDto;
+import com.thinkai.backend.dto.ExamResultResponse;
+import com.thinkai.backend.dto.ExamStartResponse;
+import com.thinkai.backend.dto.ExamSubmitRequest;
+import com.thinkai.backend.dto.ExamSubmitResponse;
+import com.thinkai.backend.dto.ExamHistoryDto;
+import com.thinkai.backend.dto.AnswerResultDto;
+import com.thinkai.backend.dto.QuestionDto;
+import com.thinkai.backend.dto.AnswerDto;
 import com.thinkai.backend.entity.Exam;
 import com.thinkai.backend.entity.ExamAnswer;
 import com.thinkai.backend.entity.ExamAttempt;
 import com.thinkai.backend.entity.Question;
 import com.thinkai.backend.exception.ApiException;
-import com.thinkai.backend.repository.*;
+import com.thinkai.backend.repository.CourseRepository;
+import com.thinkai.backend.repository.ExamAnswerRepository;
+import com.thinkai.backend.repository.ExamAttemptRepository;
+import com.thinkai.backend.repository.ExamRepository;
+import com.thinkai.backend.repository.QuestionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -193,121 +205,121 @@ public class ExamService {
 
         // ==================== Feature #4: Exam Result ====================
 
-    /**
-     * Xem chi tiết kết quả bài thi.
-     *
-     * 1. Tìm ExamAttempt → 404 nếu không tìm thấy.
-     * 2. Kiểm tra đã nộp (submittedAt != null) → 400 nếu chưa nộp.
-     * 3. Load Exam, Questions, Answers.
-     * 4. Map sang AnswerResultDto (kèm correctOption, explanation).
-     * 5. Trả về ExamResultResponse.
-     */
-    public ExamResultResponse getExamResult(Long attemptId) {
-        // 1. Tìm phiên thi
-        ExamAttempt attempt = examAttemptRepository.findById(attemptId)
-                .orElseThrow(() -> new ApiException(
-                        "Không tìm thấy phiên thi với ID: " + attemptId,
-                        HttpStatus.NOT_FOUND));
+        /**
+         * Xem chi tiết kết quả bài thi.
+         *
+         * 1. Tìm ExamAttempt → 404 nếu không tìm thấy.
+         * 2. Kiểm tra đã nộp (submittedAt != null) → 400 nếu chưa nộp.
+         * 3. Load Exam, Questions, Answers.
+         * 4. Map sang AnswerResultDto (kèm correctOption, explanation).
+         * 5. Trả về ExamResultResponse.
+         */
+        public ExamResultResponse getExamResult(Long attemptId) {
+                // 1. Tìm phiên thi
+                ExamAttempt attempt = examAttemptRepository.findById(attemptId)
+                                .orElseThrow(() -> new ApiException(
+                                                "Không tìm thấy phiên thi với ID: " + attemptId,
+                                                HttpStatus.NOT_FOUND));
 
-        // 2. Kiểm tra đã nộp
-        if (attempt.getSubmittedAt() == null) {
-            throw new ApiException(
-                    "Bài thi chưa được nộp, không thể xem kết quả",
-                    HttpStatus.BAD_REQUEST);
+                // 2. Kiểm tra đã nộp
+                if (attempt.getSubmittedAt() == null) {
+                        throw new ApiException(
+                                        "Bài thi chưa được nộp, không thể xem kết quả",
+                                        HttpStatus.BAD_REQUEST);
+                }
+
+                // 3. Load exam info
+                Exam exam = examRepository.findById(attempt.getExamId())
+                                .orElseThrow(() -> new ApiException(
+                                                "Không tìm thấy bài thi",
+                                                HttpStatus.NOT_FOUND));
+
+                // 4. Load questions và answers
+                List<Question> questions = questionRepository.findByExamIdOrderByOrderIndexAsc(exam.getId());
+                List<ExamAnswer> answers = examAnswerRepository.findByAttemptId(attemptId);
+
+                // Map answerId → ExamAnswer để tra cứu nhanh
+                Map<Long, ExamAnswer> answerMap = answers.stream()
+                                .collect(Collectors.toMap(ExamAnswer::getQuestionId, a -> a));
+
+                // 5. Map sang AnswerResultDto
+                List<AnswerResultDto> answerResults = questions.stream()
+                                .map(q -> {
+                                        ExamAnswer ans = answerMap.get(q.getId());
+                                        return AnswerResultDto.builder()
+                                                        .questionId(q.getId())
+                                                        .content(q.getContent())
+                                                        .options(q.getOptions())
+                                                        .orderIndex(q.getOrderIndex())
+                                                        .selectedOption(ans != null ? ans.getSelectedOption() : null)
+                                                        .correctOption(q.getCorrectOption())
+                                                        .isCorrect(ans != null ? ans.getIsCorrect() : false)
+                                                        .explanation(q.getExplanation())
+                                                        .build();
+                                })
+                                .collect(Collectors.toList());
+
+                // Tính thời gian làm bài
+                long timeTakenSeconds = Duration.between(attempt.getStartedAt(), attempt.getSubmittedAt()).getSeconds();
+
+                // 6. Trả về response
+                return ExamResultResponse.builder()
+                                .attemptId(attempt.getId())
+                                .examTitle(exam.getTitle())
+                                .examType(exam.getExamType())
+                                .score(attempt.getScore())
+                                .correctCount(attempt.getCorrectCount())
+                                .totalQuestions(attempt.getTotalQuestions())
+                                .isPassed(attempt.getIsPassed())
+                                .passingScore(exam.getPassingScore())
+                                .startedAt(attempt.getStartedAt())
+                                .submittedAt(attempt.getSubmittedAt())
+                                .timeTakenSeconds(timeTakenSeconds)
+                                .aiFeedback(attempt.getAiFeedback())
+                                .answers(answerResults)
+                                .build();
         }
 
-        // 3. Load exam info
-        Exam exam = examRepository.findById(attempt.getExamId())
-                .orElseThrow(() -> new ApiException(
-                        "Không tìm thấy bài thi",
-                        HttpStatus.NOT_FOUND));
+        // ==================== Feature #5: Exam History ====================
 
-        // 4. Load questions và answers
-        List<Question> questions = questionRepository.findByExamIdOrderByOrderIndexAsc(exam.getId());
-        List<ExamAnswer> answers = examAnswerRepository.findByAttemptId(attemptId);
+        /**
+         * Lấy lịch sử thi của user.
+         * Chỉ trả về các lần thi đã nộp, sắp xếp mới nhất trước.
+         */
+        public List<ExamHistoryDto> getExamHistory(Long userId) {
+                List<ExamAttempt> attempts = examAttemptRepository.findByUserId(userId);
 
-        // Map answerId → ExamAnswer để tra cứu nhanh
-        Map<Long, ExamAnswer> answerMap = answers.stream()
-                .collect(Collectors.toMap(ExamAnswer::getQuestionId, a -> a));
+                return attempts.stream()
+                                // Chỉ lấy các lần thi đã nộp
+                                .filter(a -> a.getSubmittedAt() != null)
+                                // Sắp xếp mới nhất trước
+                                .sorted((a, b) -> b.getSubmittedAt().compareTo(a.getSubmittedAt()))
+                                .map(attempt -> {
+                                        // Load exam info
+                                        Exam exam = examRepository.findById(attempt.getExamId()).orElse(null);
+                                        String examTitle = exam != null ? exam.getTitle() : "Bài thi đã bị xóa";
 
-        // 5. Map sang AnswerResultDto
-        List<AnswerResultDto> answerResults = questions.stream()
-                .map(q -> {
-                    ExamAnswer ans = answerMap.get(q.getId());
-                    return AnswerResultDto.builder()
-                            .questionId(q.getId())
-                            .content(q.getContent())
-                            .options(q.getOptions())
-                            .orderIndex(q.getOrderIndex())
-                            .selectedOption(ans != null ? ans.getSelectedOption() : null)
-                            .correctOption(q.getCorrectOption())
-                            .isCorrect(ans != null ? ans.getIsCorrect() : false)
-                            .explanation(q.getExplanation())
-                            .build();
-                })
-                .collect(Collectors.toList());
+                                        long timeTakenSeconds = Duration.between(
+                                                        attempt.getStartedAt(), attempt.getSubmittedAt()).getSeconds();
 
-        // Tính thời gian làm bài
-        long timeTakenSeconds = Duration.between(attempt.getStartedAt(), attempt.getSubmittedAt()).getSeconds();
+                                        return ExamHistoryDto.builder()
+                                                        .attemptId(attempt.getId())
+                                                        .examId(attempt.getExamId())
+                                                        .examTitle(examTitle)
+                                                        .examType(exam != null ? exam.getExamType() : null)
+                                                        .score(attempt.getScore())
+                                                        .correctCount(attempt.getCorrectCount())
+                                                        .totalQuestions(attempt.getTotalQuestions())
+                                                        .isPassed(attempt.getIsPassed())
+                                                        .startedAt(attempt.getStartedAt())
+                                                        .submittedAt(attempt.getSubmittedAt())
+                                                        .timeTakenSeconds(timeTakenSeconds)
+                                                        .build();
+                                })
+                                .collect(Collectors.toList());
+        }
 
-        // 6. Trả về response
-        return ExamResultResponse.builder()
-                .attemptId(attempt.getId())
-                .examTitle(exam.getTitle())
-                .examType(exam.getExamType())
-                .score(attempt.getScore())
-                .correctCount(attempt.getCorrectCount())
-                .totalQuestions(attempt.getTotalQuestions())
-                .isPassed(attempt.getIsPassed())
-                .passingScore(exam.getPassingScore())
-                .startedAt(attempt.getStartedAt())
-                .submittedAt(attempt.getSubmittedAt())
-                .timeTakenSeconds(timeTakenSeconds)
-                .aiFeedback(attempt.getAiFeedback())
-                .answers(answerResults)
-                .build();
-    }
-
-    // ==================== Feature #5: Exam History ====================
-
-    /**
-     * Lấy lịch sử thi của user.
-     * Chỉ trả về các lần thi đã nộp, sắp xếp mới nhất trước.
-     */
-    public List<ExamHistoryDto> getExamHistory(Long userId) {
-        List<ExamAttempt> attempts = examAttemptRepository.findByUserId(userId);
-
-        return attempts.stream()
-                // Chỉ lấy các lần thi đã nộp
-                .filter(a -> a.getSubmittedAt() != null)
-                // Sắp xếp mới nhất trước
-                .sorted((a, b) -> b.getSubmittedAt().compareTo(a.getSubmittedAt()))
-                .map(attempt -> {
-                    // Load exam info
-                    Exam exam = examRepository.findById(attempt.getExamId()).orElse(null);
-                    String examTitle = exam != null ? exam.getTitle() : "Bài thi đã bị xóa";
-                    
-                    long timeTakenSeconds = Duration.between(
-                            attempt.getStartedAt(), attempt.getSubmittedAt()).getSeconds();
-
-                    return ExamHistoryDto.builder()
-                            .attemptId(attempt.getId())
-                            .examId(attempt.getExamId())
-                            .examTitle(examTitle)
-                            .examType(exam != null ? exam.getExamType() : null)
-                            .score(attempt.getScore())
-                            .correctCount(attempt.getCorrectCount())
-                            .totalQuestions(attempt.getTotalQuestions())
-                            .isPassed(attempt.getIsPassed())
-                            .startedAt(attempt.getStartedAt())
-                            .submittedAt(attempt.getSubmittedAt())
-                            .timeTakenSeconds(timeTakenSeconds)
-                            .build();
-                })
-                .collect(Collectors.toList());
-    }
-
-    // ==================== Private Mappers ====================
+        // ==================== Private Mappers ====================
 
         private ExamDto toExamDto(Exam exam) {
                 return ExamDto.builder()
