@@ -38,7 +38,7 @@ public class UserService {
     }
 
     @Transactional
-    public void changePassword(String email, com.thinkai.backend.dto.UpdatePasswordRequest request) {
+    public void changePassword(String email, UpdatePasswordRequest request) {
         // 1. Validate confirm
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             throw new ApiException("Mật khẩu xác nhận không khớp", HttpStatus.BAD_REQUEST);

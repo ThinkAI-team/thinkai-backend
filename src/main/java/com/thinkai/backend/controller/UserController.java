@@ -38,7 +38,7 @@ public class UserController {
     @PutMapping("/me/password")
     public ResponseEntity<Map<String, String>> changePassword(
             Authentication auth,
-            @Valid @RequestBody com.thinkai.backend.dto.UpdatePasswordRequest request) {
+            @Valid @RequestBody UpdatePasswordRequest request) {
         userService.changePassword(auth.getName(), request);
         return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công"));
     }
