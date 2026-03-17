@@ -22,7 +22,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: ${MAIL_USERNAME:test@gmail.com}
-    password: ${MAIL_PASSWORD:testpass}
+    password: ${MAIL_PASSWORD:test}
     properties:
       mail:
         smtp:
@@ -40,7 +40,7 @@ server:
 
 # === JWT (BẮT BUỘC set trong .env, có fallback cho dev) ===
 jwt:
-  secret: ${JWT_SECRET:do_not_use_this_secret_in_production_environments_at_all_costs_use_env_instead}
+  secret: ${JWT_SECRET:thinkai_default_secret_key_that_is_at_least_256_bits_long_abcdef1234567890}
   expiration: 86400000
 
 # === App ===
