@@ -1,6 +1,10 @@
 package com.thinkai.backend.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -8,7 +12,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LessonSummaryDto {
-
     private Long id;
     private String title;
     private String type;
