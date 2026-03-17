@@ -45,9 +45,8 @@ public class User {
     private String email;                  // ← nullable=false → NOT NULL
                                            // ← unique=true → UNIQUE KEY
     
-    @Column(name = "password_hash", nullable = false)
-    private String passwordHash;           // ← name="password_hash" vì Java dùng camelCase
-                                           //   nhưng DB dùng snake_case
+    @Column(name = "password_hash")
+    private String passwordHash;           // ← nullable cho Google OAuth users
     
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
