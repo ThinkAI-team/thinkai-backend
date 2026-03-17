@@ -31,10 +31,10 @@ import java.util.List;
  * - Phân quyền theo Role: Mỗi dev tự gắn @PreAuthorize trên Controller
  *
  * Các annotation có sẵn (package com.thinkai.backend.security):
- * - @AdminOnly       → hasRole('ADMIN')
- * - @TeacherOnly     → hasRole('TEACHER')
- * - @StudentOnly     → hasRole('STUDENT')
- * - @TeacherOrAdmin  → hasAnyRole('TEACHER', 'ADMIN')
+ * - @AdminOnly → hasRole('ADMIN')
+ * - @TeacherOnly → hasRole('TEACHER')
+ * - @StudentOnly → hasRole('STUDENT')
+ * - @TeacherOrAdmin → hasAnyRole('TEACHER', 'ADMIN')
  */
 @Configuration
 @EnableWebSecurity
@@ -55,11 +55,8 @@ public class GlobalSecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/auth/register",
-                    "/auth/login",
-                    "/auth/google",
-                    "/auth/forgot-password",
-                    "/auth/reset-password",
+                    "/auth/**",
+                    "/courses/**",
                     "/",
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
