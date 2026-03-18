@@ -76,25 +76,27 @@ public class CourseController {
             throw new ApiException("Vui lòng đăng nhập để đăng ký khóa học", HttpStatus.UNAUTHORIZED);
         }
         EnrollmentResponse response = courseService.enrollCourse(id, userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(response));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created("Đăng ký thành công", response));
+
     }
+
 
     // ===================== MANAGEMENT ENDPOINTS (TEACHER) =====================
 
     @TeacherOnly
     @PostMapping
-    public ResponseEntity<Course> createCourse(@RequestBody Course course) {
+    public ResponseEntity<ApiResponse<Course>> createCourse(@RequestBody Course course) {
         // Chỉ Teacher mới có quyền tạo khóa học
         // TODO: Implement actual logic
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(ApiResponse.success(course));
     }
 
     @TeacherOnly
     @PutMapping("/{id}")
-    public ResponseEntity<Course> updateCourse(@PathVariable Long id, @RequestBody Course course) {
+    public ResponseEntity<ApiResponse<Course>> updateCourse(@PathVariable Long id, @RequestBody Course course) {
         // Chỉ Teacher mới có quyền sửa khóa học
         // TODO: Implement actual logic
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(ApiResponse.success(course));
     }
 
     // ===================== HELPER =====================

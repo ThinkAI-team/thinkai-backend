@@ -15,9 +15,7 @@ import com.thinkai.backend.repository.CourseRepository;
 import com.thinkai.backend.repository.EnrollmentRepository;
 import com.thinkai.backend.repository.LessonRepository;
 import com.thinkai.backend.repository.UserRepository;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,7 +34,6 @@ import java.util.Map;
 public class CourseService {
 
     private final CourseRepository courseRepository;
-
     private final LessonRepository lessonRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final UserRepository userRepository;
@@ -160,7 +157,7 @@ public class CourseService {
 
     public Course getCourseByIdAndTeacher(Long courseId, Long teacherId) {
         return courseRepository.findByIdAndInstructorId(courseId, teacherId)
-                .orElseThrow(() -> new ApiException("Course not found", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ApiException("Không tìm thấy khóa học với ID: " + courseId, HttpStatus.NOT_FOUND));
     }
 
     public Course updateCourse(Long courseId, Long teacherId, CourseRequest request) {
@@ -237,7 +234,7 @@ public class CourseService {
             String nextLessonTitle = null;
             Long nextLessonId = null;
             if (!lessons.isEmpty()) {
-                // Tạm lấy bài đầu tiên hoặc tính theo progress
+                // Tạm lấy bài học đầu tiên hoặc tính theo progress
                 int completedCount = (int) Math.round(
                         lessons.size() * enrollment.getProgressPercent() / 100.0);
                 int nextIndex = Math.min(completedCount, lessons.size() - 1);
@@ -292,4 +289,3 @@ public class CourseService {
         return String.format("%d:%02d", min, sec);
     }
 }
-
