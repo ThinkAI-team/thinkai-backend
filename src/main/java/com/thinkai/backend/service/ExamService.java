@@ -1,14 +1,13 @@
 package com.thinkai.backend.service;
 
+import com.thinkai.backend.dto.AnswerDto;
 import com.thinkai.backend.dto.ExamDto;
-import com.thinkai.backend.dto.ExamResultResponse;
 import com.thinkai.backend.dto.ExamStartResponse;
 import com.thinkai.backend.dto.ExamSubmitRequest;
 import com.thinkai.backend.dto.ExamSubmitResponse;
-import com.thinkai.backend.dto.ExamHistoryDto;
-import com.thinkai.backend.dto.AnswerResultDto;
 import com.thinkai.backend.dto.QuestionDto;
-import com.thinkai.backend.dto.AnswerDto;
+import com.thinkai.backend.dto.AnswerResultDto;
+import com.thinkai.backend.dto.ExamResultResponse;
 import com.thinkai.backend.entity.Exam;
 import com.thinkai.backend.entity.ExamAnswer;
 import com.thinkai.backend.entity.ExamAttempt;
@@ -278,45 +277,6 @@ public class ExamService {
                                 .aiFeedback(attempt.getAiFeedback())
                                 .answers(answerResults)
                                 .build();
-        }
-
-        // ==================== Feature #5: Exam History ====================
-
-        /**
-         * Lấy lịch sử thi của user.
-         * Chỉ trả về các lần thi đã nộp, sắp xếp mới nhất trước.
-         */
-        public List<ExamHistoryDto> getExamHistory(Long userId) {
-                List<ExamAttempt> attempts = examAttemptRepository.findByUserId(userId);
-
-                return attempts.stream()
-                                // Chỉ lấy các lần thi đã nộp
-                                .filter(a -> a.getSubmittedAt() != null)
-                                // Sắp xếp mới nhất trước
-                                .sorted((a, b) -> b.getSubmittedAt().compareTo(a.getSubmittedAt()))
-                                .map(attempt -> {
-                                        // Load exam info
-                                        Exam exam = examRepository.findById(attempt.getExamId()).orElse(null);
-                                        String examTitle = exam != null ? exam.getTitle() : "Bài thi đã bị xóa";
-
-                                        long timeTakenSeconds = Duration.between(
-                                                        attempt.getStartedAt(), attempt.getSubmittedAt()).getSeconds();
-
-                                        return ExamHistoryDto.builder()
-                                                        .attemptId(attempt.getId())
-                                                        .examId(attempt.getExamId())
-                                                        .examTitle(examTitle)
-                                                        .examType(exam != null ? exam.getExamType() : null)
-                                                        .score(attempt.getScore())
-                                                        .correctCount(attempt.getCorrectCount())
-                                                        .totalQuestions(attempt.getTotalQuestions())
-                                                        .isPassed(attempt.getIsPassed())
-                                                        .startedAt(attempt.getStartedAt())
-                                                        .submittedAt(attempt.getSubmittedAt())
-                                                        .timeTakenSeconds(timeTakenSeconds)
-                                                        .build();
-                                })
-                                .collect(Collectors.toList());
         }
 
         // ==================== Private Mappers ====================
