@@ -1,6 +1,7 @@
 package com.thinkai.backend.controller;
 
 import com.thinkai.backend.dto.ExamDto;
+import com.thinkai.backend.dto.ExamResultResponse;
 import com.thinkai.backend.dto.ExamStartResponse;
 import com.thinkai.backend.entity.Exam;
 import com.thinkai.backend.security.StudentOnly;
@@ -34,12 +35,12 @@ public class ExamController {
         return ResponseEntity.ok(exam);
     }
 
-    @StudentOnly
-    @PostMapping("/{id}/submit")
-    public ResponseEntity<String> submitExam(@PathVariable Long id) {
-        // Chỉ Student mới được làm bài/nộp bài
-        return ResponseEntity.ok("Exam submitted");
-    }
+    // @StudentOnly
+    // @PostMapping("/{id}/submit")
+    // public ResponseEntity<String> submitExam(@PathVariable Long id) {
+    // // Chỉ Student mới được làm bài/nộp bài
+    // return ResponseEntity.ok("Exam submitted");
+    // }
 
     @GetMapping
     public ResponseEntity<List<Exam>> getAllExams() {
@@ -85,6 +86,17 @@ public class ExamController {
             @PathVariable Long examId,
             @Valid @RequestBody ExamSubmitRequest request) {
         ExamSubmitResponse response = examService.submitExam(request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Feature #4: Xem kết quả bài thi.
+     * GET /exams/attempts/{attemptId}/result
+     */
+    @StudentOnly
+    @GetMapping("/attempts/{attemptId}/result")
+    public ResponseEntity<ExamResultResponse> getExamResult(@PathVariable Long attemptId) {
+        ExamResultResponse response = examService.getExamResult(attemptId);
         return ResponseEntity.ok(response);
     }
 
