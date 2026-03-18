@@ -258,10 +258,9 @@ public class CourseService {
         }).filter(r -> r != null).toList();
     }
 
-    // ===================== PRIVATE HELPERS =====================
+    // ===================== PRIVATE HELPER =====================
 
     private CourseListResponse toCourseListResponse(Course course) {
-        // Lấy instructor info
         CourseListResponse.InstructorInfo instructorInfo = null;
         if (course.getInstructorId() != null) {
             User instructor = userRepository.findById(course.getInstructorId()).orElse(null);
@@ -293,3 +292,4 @@ public class CourseService {
         return String.format("%d:%02d", min, sec);
     }
 }
+

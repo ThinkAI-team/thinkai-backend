@@ -27,6 +27,7 @@ public class ExamAttempt {
     private BigDecimal score;
 
     @Column(name = "correct_count", nullable = false)
+    @Builder.Default
     private Integer correctCount = 0;
 
     @Column(name = "total_questions", nullable = false)
