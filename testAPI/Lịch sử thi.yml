@@ -1,0 +1,21 @@
+info:
+  name: Lịch sử thi
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: http://localhost:8081/exams/history?userId=1
+  params:
+    - name: userId
+      value: "1"
+      type: query
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsImZ1bGxOYW1lIjoiTWFpIFBow6FwIiwicm9sZSI6IlNUVURFTlQiLCJpYXQiOjE3NzM4NDYwNzMsImV4cCI6MTc3MzkzMjQ3M30.mJKGjzptzrpr1malIEr04EZ_G79S5IQdiZut6e4T8UI72cDa3udpHBYmavvDt9PmpGpTJh45YVCRFCzHUo5Blg
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

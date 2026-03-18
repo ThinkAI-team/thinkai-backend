@@ -6,7 +6,9 @@ import com.thinkai.backend.dto.ExamSubmitRequest;
 import com.thinkai.backend.dto.ExamSubmitResponse;
 import com.thinkai.backend.dto.ExamResultResponse;
 import com.thinkai.backend.dto.ExamHistoryDto;
+import com.thinkai.backend.entity.Exam;
 import com.thinkai.backend.security.StudentOnly;
+import com.thinkai.backend.security.TeacherOnly;
 import com.thinkai.backend.service.ExamService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,17 +19,30 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequestMapping("/exams")
 @RequiredArgsConstructor
 public class ExamController {
 
     private final ExamService examService;
 
+    @TeacherOnly
+    @PostMapping
+    public ResponseEntity<Exam> createExam(@RequestBody Exam exam) {
+        // Chỉ Teacher mới được tạo đề
+        return ResponseEntity.ok(exam);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Exam>> getAllExams() {
+        return ResponseEntity.ok(List.of());
+    }
+
     /**
      * Feature #1: Lấy danh sách bài thi của một khóa học.
-     * GET /courses/{courseId}/exams
+     * GET /exams/{courseId}/exams
      */
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/courses/{courseId}/exams")
+    @GetMapping("/{courseId}/exams")
     public ResponseEntity<List<ExamDto>> getExamsByCourse(@PathVariable Long courseId) {
         List<ExamDto> exams = examService.getExamsByCourseId(courseId);
         return ResponseEntity.ok(exams);
@@ -38,7 +53,7 @@ public class ExamController {
      * POST /exams/{examId}/start
      */
     @StudentOnly
-    @PostMapping("/exams/{examId}/start")
+    @PostMapping("/{examId}/start")
     public ResponseEntity<ExamStartResponse> startExam(
             @PathVariable Long examId,
             @RequestParam Long userId) {
@@ -51,7 +66,7 @@ public class ExamController {
      * POST /exams/{examId}/submit
      */
     @StudentOnly
-    @PostMapping("/exams/{examId}/submit")
+    @PostMapping("/{examId}/submit")
     public ResponseEntity<ExamSubmitResponse> submitExam(
             @PathVariable Long examId,
             @Valid @RequestBody ExamSubmitRequest request) {
@@ -64,7 +79,7 @@ public class ExamController {
      * GET /exams/attempts/{attemptId}/result
      */
     @StudentOnly
-    @GetMapping("/exams/attempts/{attemptId}/result")
+    @GetMapping("/attempts/{attemptId}/result")
     public ResponseEntity<ExamResultResponse> getExamResult(@PathVariable Long attemptId) {
         ExamResultResponse response = examService.getExamResult(attemptId);
         return ResponseEntity.ok(response);
@@ -75,7 +90,7 @@ public class ExamController {
      * GET /exams/history?userId={userId}
      */
     @StudentOnly
-    @GetMapping("/exams/history")
+    @GetMapping("/history")
     public ResponseEntity<List<ExamHistoryDto>> getExamHistory(@RequestParam Long userId) {
         List<ExamHistoryDto> history = examService.getExamHistory(userId);
         return ResponseEntity.ok(history);
