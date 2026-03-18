@@ -36,8 +36,8 @@ public class LessonService {
     public Lesson createLesson(Long courseId, Long teacherId, LessonRequest request) {
         verifyCourseOwnership(courseId, teacherId);
 
-        Integer currentCount = lessonRepository.countByCourseId(courseId);
-        int nextOrderIndex = currentCount != null ? currentCount : 0;
+        long currentCount = lessonRepository.countByCourseId(courseId);
+        int nextOrderIndex = (int) currentCount;
 
         Lesson lesson = Lesson.builder()
                 .courseId(courseId)

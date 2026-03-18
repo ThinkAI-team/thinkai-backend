@@ -86,16 +86,12 @@ public class CourseService {
 
         List<Lesson> lessons = lessonRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
 
-        // Get instructor info
-        CourseDetailResponse.InstructorInfo instructorInfo = null;
+        // Get instructor name
+        String instructorName = null;
         if (course.getInstructorId() != null) {
             User instructor = userRepository.findById(course.getInstructorId()).orElse(null);
             if (instructor != null) {
-                instructorInfo = CourseDetailResponse.InstructorInfo.builder()
-                        .id(instructor.getId())
-                        .fullName(instructor.getFullName())
-                        .avatarUrl(instructor.getAvatarUrl())
-                        .build();
+                instructorName = instructor.getFullName();
             }
         }
 
@@ -127,10 +123,8 @@ public class CourseService {
                 .id(course.getId())
                 .title(course.getTitle())
                 .description(course.getDescription())
-                .thumbnail(course.getThumbnailUrl())
-                .price(course.getPrice())
-                .instructor(instructorInfo)
-                .isEnrolled(isEnrolled)
+                .thumbnailUrl(course.getThumbnailUrl())
+                .instructorName(instructorName)
                 .progressPercent(progressPercent)
                 .lessons(lessonResponses)
                 .build();
