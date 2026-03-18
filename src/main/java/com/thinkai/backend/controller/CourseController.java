@@ -30,7 +30,8 @@ public class CourseController {
     /**
      * GET /courses — Danh sách khóa học (Public)
      *
-     * Params: keyword, priceMin, priceMax, sortBy, sortDir, page, size
+     * Query params: keyword, priceMin, priceMax, sortBy, sortDir, page, size
+     * Response: { status, message, data: { content, page, size, totalElements, totalPages } }
      */
     @GetMapping
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPublishedCourses(
