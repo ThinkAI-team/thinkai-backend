@@ -8,7 +8,7 @@ import com.thinkai.backend.service.AITutorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.core.Authentication;
 @RestController
 @RequestMapping("/ai-tutor")
 @RequiredArgsConstructor
@@ -17,7 +17,7 @@ public class AiTutorController {
     private final AITutorService aiTutorService;
 
     @PostMapping("/chat")
-    public ResponseEntity<AIChatResponse> chat(@RequestBody AIChatRequest request, org.springframework.security.core.Authentication authentication) {
+    public ResponseEntity<AIChatResponse> chat(@RequestBody AIChatRequest request, Authentication authentication) {
         String email = authentication != null ? authentication.getName() : null;
         if ("anonymousUser".equals(email)) {
             email = null;
