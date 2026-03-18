@@ -6,6 +6,7 @@ import com.thinkai.backend.entity.Exam;
 import com.thinkai.backend.security.StudentOnly;
 import com.thinkai.backend.security.TeacherOnly;
 import com.thinkai.backend.service.ExamService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,10 +40,7 @@ public class ExamController {
         return ResponseEntity.ok(List.of());
     }
 
-    /**
-     * Feature #1: Lấy danh sách bài thi của một khóa học.
-     * GET /courses/{courseId}/exams
-     */
+    // 👇 Gắn annotation theo SECURITY_GUIDE
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/{courseId}/exams")
     public ResponseEntity<List<ExamDto>> getExamsByCourse(@PathVariable Long courseId) {
