@@ -5,8 +5,12 @@ import com.thinkai.backend.dto.ChangePasswordRequest;
 import com.thinkai.backend.dto.MyCourseResponse;
 import com.thinkai.backend.dto.ProfileResponse;
 import com.thinkai.backend.dto.UpdateProfileRequest;
+import com.thinkai.backend.exception.ApiException;
+import com.thinkai.backend.entity.User;
+import com.thinkai.backend.repository.UserRepository;
 import com.thinkai.backend.service.CourseService;
 import com.thinkai.backend.service.UserService;
+import org.springframework.http.HttpStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +29,7 @@ public class UserController {
 
     private final UserService userService;
     private final CourseService courseService;
+    private final UserRepository userRepository;
 
     @GetMapping("/me")
     public ResponseEntity<ProfileResponse> getProfile(Authentication auth) {
@@ -54,7 +59,10 @@ public class UserController {
      */
     @GetMapping("/me/courses")
     public ResponseEntity<ApiResponse<List<MyCourseResponse>>> getMyCourses(Authentication auth) {
-        List<MyCourseResponse> courses = courseService.getMyCourses(auth.getName());
+        User user = userRepository.findByEmail(auth.getName())
+            .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
+            
+        List<MyCourseResponse> courses = courseService.getMyCourses(user.getId());
         return ResponseEntity.ok(ApiResponse.success(courses));
     }
 }

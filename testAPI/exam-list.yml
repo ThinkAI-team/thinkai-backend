@@ -1,0 +1,17 @@
+info:
+  name: exam-list
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: http://localhost:8081/exams/1/exams
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsInJvbGUiOiJTVFVERU5UIiwiZnVsbE5hbWUiOiJNYWkgUGjDoXAiLCJpYXQiOjE3NzM4Mjc3OTMsImV4cCI6MTc3MzkxNDE5M30.fqcNSbl8IkIWDBi2VlWuDnqDIv4O5sdU9liFAw-WjjoFbKnynvkR8vd_3gFrc3rLW-ijLP7R2HjIhhxPuEOsUg
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
