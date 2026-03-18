@@ -82,7 +82,7 @@ public class CourseService {
     public CourseDetailResponse getCourseDetail(Long courseId, Long currentUserId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ApiException(
-                        "Không tìm thấy khóa học with ID: " + courseId,
+                        "Không tìm thấy khóa học với ID: " + courseId,
                         HttpStatus.NOT_FOUND
                 ));
 
@@ -146,7 +146,7 @@ public class CourseService {
         // Kiểm tra khóa học tồn tại
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ApiException(
-                        "Không tìm thấy khóa học with ID: " + courseId,
+                        "Không tìm thấy khóa học với ID: " + courseId,
                         HttpStatus.NOT_FOUND
                 ));
 
@@ -248,4 +248,3 @@ public class CourseService {
         return String.format("%d:%02d", min, sec);
     }
 }
-
