@@ -1,10 +1,7 @@
 package com.thinkai.backend.repository;
 
 import java.math.BigDecimal;
-<<<<<<< HEAD
-=======
 import java.util.Optional;
->>>>>>> origin/develop
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,13 +30,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             @Param("priceMax") BigDecimal priceMax,
             Pageable pageable);
 
-<<<<<<< HEAD
-    Page<Course> findByInstructorId(Long instructorId, Pageable pageable);
-
-    java.util.Optional<Course> findByIdAndInstructorId(Long id, Long instructorId);
-=======
     Optional<Course> findByIdAndInstructorId(Long id, Long instructorId);
 
     long countByInstructorId(Long instructorId);
->>>>>>> origin/develop
+
+    Page<Course> findByInstructorId(Long instructorId, Pageable pageable);
 }
