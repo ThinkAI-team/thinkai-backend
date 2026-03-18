@@ -27,10 +27,12 @@ public class AITutorService {
     }
 
     public AIChatResponse chat(AIChatRequest request) {
+        String context = request.getContext() != null ? request.getContext() : "General English";
         String prompt = "You are an AI English Tutor for TOEIC/IELTS students. Your role is strictly to help users learn English. " +
-                "If the user asks a question that is NOT related to English learning, grammar, vocabulary, TOEIC, or IELTS, you MUST politely refuse to answer and remind them of your role. " +
+                "If the user asks a question that is NOT related to English learning, grammar, vocabulary, TOEIC, or IELTS, " +
+                "you MUST politely refuse to answer and remind them of your role. " +
                 "Do not answer general knowledge questions outside the scope of English learning.\n" +
-                "Context of current lesson: " + (request.getContext() != null ? request.getContext() : "General English") + "\n" +
+                "Context of current lesson: " + context + "\n" +
                 "Student: " + request.getMessage();
         
         String responseText = callGeminiApi(prompt);
