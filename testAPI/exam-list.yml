@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://localhost:8081/courses/1/exams
+  url: http://localhost:8081/exams/1/exams
   auth:
     type: bearer
-    token: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsInJvbGUiOiJTVFVERU5UIiwiZnVsbE5hbWUiOiJNYWkgUGjDoXAiLCJpYXQiOjE3NzMyNDI0MTUsImV4cCI6MTc3MzMyODgxNX0.XFlWdDMIS_NriUwWG1WZID6FaPD7KMzulzxrXH1vvWLY4X2iLIuKlidaXxxRQqRFSdcboia-RsQU0x1CBLhczw
+    token: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsInJvbGUiOiJTVFVERU5UIiwiZnVsbE5hbWUiOiJNYWkgUGjDoXAiLCJpYXQiOjE3NzM4Mjc3OTMsImV4cCI6MTc3MzkxNDE5M30.fqcNSbl8IkIWDBi2VlWuDnqDIv4O5sdU9liFAw-WjjoFbKnynvkR8vd_3gFrc3rLW-ijLP7R2HjIhhxPuEOsUg
 
 settings:
   encodeUrl: true
