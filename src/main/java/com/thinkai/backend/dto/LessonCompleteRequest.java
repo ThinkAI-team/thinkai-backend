@@ -1,12 +1,14 @@
 package com.thinkai.backend.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class LessonCompleteRequest {
-
-    private Integer watchTimeSeconds = 0;
+    private Integer watchTimeSeconds;
 }
