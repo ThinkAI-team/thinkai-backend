@@ -68,7 +68,8 @@ public class LearningRoomService {
                 .title(course.getTitle())
                 .description(course.getDescription())
                 .thumbnailUrl(course.getThumbnailUrl())
-                // .instructorName(course.getInstructor() != null ? course.getInstructor().getFullName() : null) // Requires instructor mapping, skip if not mapped in entity directly
+                // Requires instructor mapping, skip if not mapped in entity directly
+                // .instructorName(course.getInstructor() != null ? course.getInstructor().getFullName() : null)
                 .progressPercent(enrollment.getProgressPercent())
                 .lessons(lessonResponses)
                 .build();
@@ -96,8 +97,12 @@ public class LearningRoomService {
 
         for (int i = 0; i < lessons.size(); i++) {
             if (Objects.equals(lessons.get(i).getId(), lessonId)) {
-                if (i > 0) previousLessonId = lessons.get(i - 1).getId();
-                if (i < lessons.size() - 1) nextLessonId = lessons.get(i + 1).getId();
+                if (i > 0) {
+                    previousLessonId = lessons.get(i - 1).getId();
+                }
+                if (i < lessons.size() - 1) {
+                    nextLessonId = lessons.get(i + 1).getId();
+                }
                 break;
             }
         }
