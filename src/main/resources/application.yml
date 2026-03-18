@@ -19,10 +19,10 @@ spring:
 
   # === Email (Gmail SMTP) ===
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME:test@gmail.com}
-    password: ${MAIL_PASSWORD:testpass}
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -40,8 +40,9 @@ server:
 
 # === JWT (BẮT BUỘC set trong .env, có fallback cho dev) ===
 jwt:
-  secret: ${JWT_SECRET:Y2hhbmdlLXRoaXMtaW4tcHJvZHVjdGlvbi1pdC1tdXN0LWJlLWF0LWxlYXN0LTI1Ni1iaXRz}
+  secret: ${JWT_SECRET:thinkai_default_secret_key_that_is_at_least_256_bits_long_abcdef1234567890}
   expiration: 86400000
+
 
 # === App ===
 app:
