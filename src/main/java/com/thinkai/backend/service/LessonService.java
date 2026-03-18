@@ -58,7 +58,9 @@ public class LessonService {
 
         try {
             File uploadDir = new File(UPLOAD_DIR);
-            if (!uploadDir.exists()) uploadDir.mkdirs();
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
 
             String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
             Path path = Paths.get(UPLOAD_DIR + filename);
