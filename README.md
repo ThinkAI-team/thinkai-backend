@@ -30,6 +30,14 @@ Dịch vụ sẽ sẵn sàng tại: `http://localhost:8081`
 - `docker compose down`: Dừng hệ thống nhưng giữ lại dữ liệu DB.
 - `docker compose down -v`: Reset hoàn toàn hệ thống và xóa dữ liệu DB.
 - `docker compose restart thinkai-api`: Restart riêng Backend (sau khi sửa code).
+# 3. Chờ MySQL sẵn sàng (~10 giây)
+docker logs thinkai-mysql --tail 10
+
+# 4. Chạy Spring Boot
+./mvnw spring-boot:run
+```
+
+App sẽ chạy tại: `http://localhost:8080`
 
 ## 🗄️ Database
 

@@ -2,6 +2,7 @@ package com.thinkai.backend.service;
 
 import com.thinkai.backend.dto.CourseDetailResponse;
 import com.thinkai.backend.dto.CourseListResponse;
+import com.thinkai.backend.dto.CourseRequest;
 import com.thinkai.backend.dto.EnrollmentResponse;
 import com.thinkai.backend.dto.LessonResponse;
 import com.thinkai.backend.dto.MyCourseResponse;
@@ -24,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,8 +48,7 @@ public class CourseService {
             String sortBy,
             String sortDir,
             int page,
-            int size
-    ) {
+            int size) {
         // Giới hạn size tối đa 50
         size = Math.min(size, 50);
 
@@ -60,8 +59,7 @@ public class CourseService {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<Course> coursePage = courseRepository.findPublishedCourses(
-                keyword, priceMin, priceMax, pageable
-        );
+                keyword, priceMin, priceMax, pageable);
 
         List<CourseListResponse> content = coursePage.getContent().stream()
                 .map(this::toCourseListResponse)
@@ -83,9 +81,8 @@ public class CourseService {
     public CourseDetailResponse getCourseDetail(Long courseId, Long currentUserId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ApiException(
-                        "Không tìm thấy khóa học with ID: " + courseId,
-                        HttpStatus.NOT_FOUND
-                ));
+                        "Không tìm thấy khóa học với ID: " + courseId,
+                        HttpStatus.NOT_FOUND));
 
         List<Lesson> lessons = lessonRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
 
@@ -139,51 +136,83 @@ public class CourseService {
                 .build();
     }
 
+    // ===================== TEACHER OPERATIONS =====================
+
+    public Course createCourse(Long teacherId, CourseRequest request) {
+        Course course = Course.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .thumbnailUrl(request.getThumbnailUrl())
+                .price(request.getPrice())
+                .instructorId(teacherId)
+                .isPublished(false)
+                .status(Course.Status.DRAFT)
+                .build();
+        return courseRepository.save(course);
+    }
+
+    public Page<Course> getCoursesByTeacher(Long teacherId, Pageable pageable) {
+        return courseRepository.findByInstructorId(teacherId, pageable);
+    }
+
+    public Course getCourseByIdAndTeacher(Long courseId, Long teacherId) {
+        return courseRepository.findByIdAndInstructorId(courseId, teacherId)
+                .orElseThrow(() -> new ApiException("Không tìm thấy khóa học với ID: " + courseId, HttpStatus.NOT_FOUND));
+    }
+
+    public Course updateCourse(Long courseId, Long teacherId, CourseRequest request) {
+        Course course = getCourseByIdAndTeacher(courseId, teacherId);
+        course.setTitle(request.getTitle());
+        course.setDescription(request.getDescription());
+        course.setThumbnailUrl(request.getThumbnailUrl());
+        course.setPrice(request.getPrice());
+        return courseRepository.save(course);
+    }
+
+    public void deleteCourse(Long courseId, Long teacherId) {
+        Course course = getCourseByIdAndTeacher(courseId, teacherId);
+        courseRepository.delete(course);
+    }
+
+    public Course publishCourse(Long courseId, Long teacherId) {
+        Course course = getCourseByIdAndTeacher(courseId, teacherId);
+        course.setIsPublished(true);
+        course.setStatus(Course.Status.APPROVED);
+        return courseRepository.save(course);
+    }
+
     /**
      * POST /courses/{id}/enroll — Đăng ký khóa học
      */
     @Transactional
-    public EnrollmentResponse enrollCourse(Long courseId, String userEmail) {
-        // 1. Tìm user
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new ApiException(
-                        "Không tìm thấy người dùng", HttpStatus.NOT_FOUND
-                ));
-
-        // 2. Tìm khóa học
+    public EnrollmentResponse enrollCourse(Long courseId, Long userId) {
+        // Kiểm tra khóa học tồn tại
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ApiException(
-                        "Không tìm thấy khóa học with ID: " + courseId, HttpStatus.NOT_FOUND
-                ));
+                        "Không tìm thấy khóa học với ID: " + courseId,
+                        HttpStatus.NOT_FOUND));
 
-        // 3. Kiểm tra khóa học đã published chưa
-        if (!course.getIsPublished() || course.getStatus() != Course.Status.APPROVED) {
-            throw new ApiException(
-                    "Khóa học chưa được công bố", HttpStatus.BAD_REQUEST
-            );
+        // Kiểm tra khóa học đã published chưa
+        if (!course.getIsPublished()) {
+            throw new ApiException("Khóa học chưa được xuất bản", HttpStatus.BAD_REQUEST);
         }
 
-        // 4. Kiểm tra đã đăng ký trước đó chưa
-        if (enrollmentRepository.existsByUserIdAndCourseId(user.getId(), courseId)) {
-            throw new ApiException(
-                    "Bạn đã đăng ký khóa học này rồi", HttpStatus.CONFLICT
-            );
+        // Kiểm tra đã đăng ký chưa
+        if (enrollmentRepository.existsByUserIdAndCourseId(userId, courseId)) {
+            throw new ApiException("Bạn đã đăng ký khóa học này rồi", HttpStatus.BAD_REQUEST);
         }
 
-        // 5. Tạo enrollment mới
         Enrollment enrollment = Enrollment.builder()
-                .userId(user.getId())
+                .userId(userId)
                 .courseId(courseId)
                 .progressPercent(0)
-                .enrolledAt(LocalDateTime.now())
                 .build();
 
         enrollment = enrollmentRepository.save(enrollment);
 
-        // 6. Trả response
         return EnrollmentResponse.builder()
                 .enrollmentId(enrollment.getId())
-                .courseId(courseId)
+                .courseId(enrollment.getCourseId())
                 .enrolledAt(enrollment.getEnrolledAt())
                 .build();
     }
@@ -205,10 +234,9 @@ public class CourseService {
             String nextLessonTitle = null;
             Long nextLessonId = null;
             if (!lessons.isEmpty()) {
-                // Tạm lấy bài đầu tiên hoặc tính theo progress
+                // Tạm lấy bài học đầu tiên hoặc tính theo progress
                 int completedCount = (int) Math.round(
-                        lessons.size() * enrollment.getProgressPercent() / 100.0
-                );
+                        lessons.size() * enrollment.getProgressPercent() / 100.0);
                 int nextIndex = Math.min(completedCount, lessons.size() - 1);
                 Lesson nextLesson = lessons.get(nextIndex);
                 nextLessonTitle = nextLesson.getTitle();
@@ -227,10 +255,9 @@ public class CourseService {
         }).filter(r -> r != null).toList();
     }
 
-    // ===================== PRIVATE HELPERS =====================
+    // ===================== PRIVATE HELPER =====================
 
     private CourseListResponse toCourseListResponse(Course course) {
-        // Lấy instructor info
         CourseListResponse.InstructorInfo instructorInfo = null;
         if (course.getInstructorId() != null) {
             User instructor = userRepository.findById(course.getInstructorId()).orElse(null);
@@ -262,4 +289,3 @@ public class CourseService {
         return String.format("%d:%02d", min, sec);
     }
 }
-
