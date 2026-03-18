@@ -280,6 +280,30 @@ public class ExamService {
                                 .build();
         }
 
+        // ==================== Private Mappers ====================
+
+        private ExamDto toExamDto(Exam exam) {
+                return ExamDto.builder()
+                                .id(exam.getId())
+                                .examType(exam.getExamType())
+                                .title(exam.getTitle())
+                                .description(exam.getDescription())
+                                .timeLimitMinutes(exam.getTimeLimitMinutes())
+                                .passingScore(exam.getPassingScore())
+                                .createdAt(exam.getCreatedAt())
+                                .build();
+        }
+
+        private QuestionDto toQuestionDto(Question question) {
+                return QuestionDto.builder()
+                                .id(question.getId())
+                                .content(question.getContent())
+                                .options(question.getOptions())
+                                .type(question.getType().name())
+                                .orderIndex(question.getOrderIndex())
+                                .build();
+        }
+
         // ==================== Feature #5: Exam History ====================
 
         /**
@@ -317,29 +341,5 @@ public class ExamService {
                                                         .build();
                                 })
                                 .collect(Collectors.toList());
-        }
-
-        // ==================== Private Mappers ====================
-
-        private ExamDto toExamDto(Exam exam) {
-                return ExamDto.builder()
-                                .id(exam.getId())
-                                .examType(exam.getExamType())
-                                .title(exam.getTitle())
-                                .description(exam.getDescription())
-                                .timeLimitMinutes(exam.getTimeLimitMinutes())
-                                .passingScore(exam.getPassingScore())
-                                .createdAt(exam.getCreatedAt())
-                                .build();
-        }
-
-        private QuestionDto toQuestionDto(Question question) {
-                return QuestionDto.builder()
-                                .id(question.getId())
-                                .content(question.getContent())
-                                .options(question.getOptions())
-                                .type(question.getType().name())
-                                .orderIndex(question.getOrderIndex())
-                                .build();
         }
 }
