@@ -4,6 +4,12 @@ import com.thinkai.backend.dto.AIChatRequest;
 import com.thinkai.backend.dto.AIChatResponse;
 import com.thinkai.backend.dto.AISummarizeRequest;
 import com.thinkai.backend.dto.AISummarizeResponse;
+import com.thinkai.backend.entity.AiChatLog;
+import com.thinkai.backend.entity.User;
+import com.thinkai.backend.repository.AiChatLogRepository;
+import com.thinkai.backend.repository.UserRepository;
+import com.thinkai.backend.exception.ApiException;
+import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -15,6 +21,8 @@ import java.util.Map;
 public class AITutorService {
 
     private final RestClient restClient;
+    private final AiChatLogRepository aiChatLogRepository;
+    private final UserRepository userRepository;
     
     @Value("${gemini.api.key}")
     private String geminiApiKey;
@@ -22,11 +30,21 @@ public class AITutorService {
     @Value("${gemini.api.url}")
     private String geminiApiUrl;
 
-    public AITutorService(RestClient.Builder restClientBuilder) {
+    public AITutorService(RestClient.Builder restClientBuilder,
+                          AiChatLogRepository aiChatLogRepository,
+                          UserRepository userRepository) {
         this.restClient = restClientBuilder.build();
+        this.aiChatLogRepository = aiChatLogRepository;
+        this.userRepository = userRepository;
     }
 
-    public AIChatResponse chat(AIChatRequest request) {
+    public AIChatResponse chat(AIChatRequest request, String email) {
+        User user = null;
+        if (email != null) {
+            user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
+        }
+
         String context = request.getContext() != null ? request.getContext() : "General English";
         String prompt = "You are an AI English Tutor for TOEIC/IELTS students. Your role is strictly to help users learn English. " +
                 "If the user asks a question that is NOT related to English learning, grammar, vocabulary, TOEIC, or IELTS, " +
@@ -35,8 +53,39 @@ public class AITutorService {
                 "Context of current lesson: " + context + "\n" +
                 "Student: " + request.getMessage();
         
+        long startTime = System.currentTimeMillis();
         String responseText = callGeminiApi(prompt);
+        long responseTimeMs = System.currentTimeMillis() - startTime;
+
+        if (user != null) {
+            AiChatLog chatLog = AiChatLog.builder()
+                    .userId(user.getId())
+                    .userMessage(request.getMessage())
+                    .aiResponse(responseText)
+                    .responseTimeMs((int) responseTimeMs)
+                    .build();
+            aiChatLogRepository.save(chatLog);
+        }
+
         return new AIChatResponse(responseText);
+    }
+
+    public List<AiChatLog> getChatHistory(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
+        return aiChatLogRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+    }
+
+    public AiChatLog getChatById(Long id, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
+        return aiChatLogRepository.findByIdAndUserId(id, user.getId())
+                .orElseThrow(() -> new ApiException("Chat not found or access denied", HttpStatus.NOT_FOUND));
+    }
+
+    public void deleteChat(Long id, String email) {
+        AiChatLog chatLog = getChatById(id, email);
+        aiChatLogRepository.delete(chatLog);
     }
 
     public AISummarizeResponse summarize(AISummarizeRequest request) {

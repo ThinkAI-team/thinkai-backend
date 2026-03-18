@@ -17,8 +17,12 @@ public class AiTutorController {
     private final AITutorService aiTutorService;
 
     @PostMapping("/chat")
-    public ResponseEntity<AIChatResponse> chat(@RequestBody AIChatRequest request) {
-        return ResponseEntity.ok(aiTutorService.chat(request));
+    public ResponseEntity<AIChatResponse> chat(@RequestBody AIChatRequest request, org.springframework.security.core.Authentication authentication) {
+        String email = authentication != null ? authentication.getName() : null;
+        if ("anonymousUser".equals(email)) {
+            email = null;
+        }
+        return ResponseEntity.ok(aiTutorService.chat(request, email));
     }
 
     @PostMapping("/summarize")
