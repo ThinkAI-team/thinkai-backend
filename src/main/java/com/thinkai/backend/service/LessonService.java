@@ -3,7 +3,6 @@ package com.thinkai.backend.service;
 import com.thinkai.backend.dto.LessonOrderRequest;
 import com.thinkai.backend.dto.LessonOrderUpdate;
 import com.thinkai.backend.dto.LessonRequest;
-import com.thinkai.backend.entity.Course;
 import com.thinkai.backend.entity.Lesson;
 import com.thinkai.backend.exception.ApiException;
 import com.thinkai.backend.repository.CourseRepository;
@@ -91,7 +90,7 @@ public class LessonService {
     }
 
     private void verifyCourseOwnership(Long courseId, Long teacherId) {
-        Course course = courseRepository.findByIdAndInstructorId(courseId, teacherId)
+        courseRepository.findByIdAndInstructorId(courseId, teacherId)
                 .orElseThrow(() -> new ApiException("Course not found or access denied", HttpStatus.NOT_FOUND));
     }
 }
