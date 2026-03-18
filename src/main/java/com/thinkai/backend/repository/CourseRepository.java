@@ -33,4 +33,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findByIdAndInstructorId(Long id, Long instructorId);
 
     long countByInstructorId(Long instructorId);
+
+    Page<Course> findByInstructorId(Long instructorId, Pageable pageable);
 }
