@@ -1,0 +1,13 @@
+examType,section,part,content,options,correctAnswer,difficulty
+TOEIC,READING,PART_5,"The new software _____ significantly improved our productivity.", "[""have"",""has"",""having"",""had""]",has,EASY
+TOEIC,READING,PART_5,"Please submit the report _____ Friday at the latest.", "[""on"",""by"",""in"",""at""]",by,MEDIUM
+TOEIC,READING,PART_5,"_____ the heavy rain, the outdoor event was not cancelled.", "[""Because"",""Although"",""Despite"",""However""]",Despite,HARD
+TOEIC,READING,PART_5,"The CEO announced that the company _____ expanding into Europe next year.", "[""is"",""are"",""be"",""being""]",is,EASY
+TOEIC,READING,PART_5,"Employees must _____ their identification badges visible at all times.", "[""keep"",""keeps"",""kept"",""keeping""]",keep,EASY
+TOEIC,READING,PART_6,"Dear Mr. Smith, We are pleased to _____ you that your application has been accepted.", "[""inform"",""informs"",""informed"",""informing""]",inform,MEDIUM
+TOEIC,READING,PART_6,"Please find the enclosed documents for your _____.", "[""review"",""reviews"",""reviewed"",""reviewing""]",review,MEDIUM
+TOEIC,LISTENING,PART_1,"(Audio plays) A. The man is reading a book. B. The man is typing on a keyboard. C. The man is drinking coffee. D. The man is talking on the phone.", "[""A"",""B"",""C"",""D""]",B,EASY
+TOEIC,LISTENING,PART_2,"(Audio plays) Where is the nearest ATM?", "[""A. At 5 PM."",""B. Just around the corner."",""C. I don't need cash.""]",B,EASY
+TOEIC,LISTENING,PART_3,"(Audio plays) What are the speakers mainly discussing?", "[""A new project deadline"",""A company merger"",""A change in policy"",""A budget issue""]",A,MEDIUM
+IELTS,READING,PART_1,"The passage suggests that the main cause of the phenomenon is _____.", "[""climate change"",""pollution"",""deforestation"",""urbanization""]",climate change,HARD
+IELTS,READING,PART_2,"Which paragraph contains information about the early stages of development?", "[""Paragraph A"",""Paragraph B"",""Paragraph C"",""Paragraph D""]",Paragraph B,HARD

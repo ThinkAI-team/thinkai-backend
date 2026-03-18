@@ -1,14 +1,18 @@
 package com.thinkai.backend.controller;
 
 import com.thinkai.backend.dto.ExamDto;
-import com.thinkai.backend.entity.Exam;
 import com.thinkai.backend.dto.ExamStartResponse;
+import com.thinkai.backend.entity.Exam;
+import com.thinkai.backend.security.StudentOnly;
+import com.thinkai.backend.security.TeacherOnly;
+import com.thinkai.backend.service.ExamService;
 import com.thinkai.backend.dto.ExamSubmitRequest;
 import com.thinkai.backend.dto.ExamSubmitResponse;
 import com.thinkai.backend.security.StudentOnly;
 import com.thinkai.backend.security.TeacherOnly;
 import com.thinkai.backend.service.ExamService;
 import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,15 +34,19 @@ public class ExamController {
         return ResponseEntity.ok(exam);
     }
 
+    @StudentOnly
+    @PostMapping("/{id}/submit")
+    public ResponseEntity<String> submitExam(@PathVariable Long id) {
+        // Chỉ Student mới được làm bài/nộp bài
+        return ResponseEntity.ok("Exam submitted");
+    }
+
     @GetMapping
     public ResponseEntity<List<Exam>> getAllExams() {
         return ResponseEntity.ok(List.of());
     }
 
-    /**
-     * Feature #1: Lấy danh sách bài thi của một khóa học.
-     * GET /exams/{courseId}/exams
-     */
+    // 👇 Gắn annotation theo SECURITY_GUIDE
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/{courseId}/exams")
     public ResponseEntity<List<ExamDto>> getExamsByCourse(@PathVariable Long courseId) {
@@ -49,6 +57,10 @@ public class ExamController {
     /**
      * Feature #2: Bắt đầu làm bài thi.
      * POST /exams/{examId}/start
+     *
+     * @param examId ID của bài thi
+     * @param userId ID của user (tạm thời truyền qua param, sau sẽ lấy từ JWT)
+     * @return ExamStartResponse chứa thông tin phiên thi và danh sách câu hỏi
      */
     @StudentOnly
     @PostMapping("/{examId}/start")
@@ -75,4 +87,5 @@ public class ExamController {
         ExamSubmitResponse response = examService.submitExam(request);
         return ResponseEntity.ok(response);
     }
+
 }
