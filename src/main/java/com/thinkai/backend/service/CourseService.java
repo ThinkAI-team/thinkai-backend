@@ -248,3 +248,4 @@ public class CourseService {
         return String.format("%d:%02d", min, sec);
     }
 }
+
