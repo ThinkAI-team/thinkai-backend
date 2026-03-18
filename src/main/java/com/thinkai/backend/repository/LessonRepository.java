@@ -17,5 +17,3 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
     Optional<Lesson> findByIdAndCourseId(Long id, Long courseId);
 }
-
-
