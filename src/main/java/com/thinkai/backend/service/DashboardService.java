@@ -3,17 +3,9 @@ package com.thinkai.backend.service;
 import com.thinkai.backend.dto.DashboardResponse;
 import com.thinkai.backend.dto.EnrolledCourseDto;
 import com.thinkai.backend.dto.NextLessonDto;
-import com.thinkai.backend.entity.Course;
-import com.thinkai.backend.entity.Enrollment;
-import com.thinkai.backend.entity.Lesson;
-import com.thinkai.backend.entity.LessonProgress;
-import com.thinkai.backend.entity.User;
+import com.thinkai.backend.entity.*;
 import com.thinkai.backend.exception.ApiException;
-import com.thinkai.backend.repository.CourseRepository;
-import com.thinkai.backend.repository.EnrollmentRepository;
-import com.thinkai.backend.repository.LessonProgressRepository;
-import com.thinkai.backend.repository.LessonRepository;
-import com.thinkai.backend.repository.UserRepository;
+import com.thinkai.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -72,9 +64,7 @@ public class DashboardService {
 
         for (Enrollment enrollment : enrollments) {
             Course course = courseRepository.findById(enrollment.getCourseId()).orElse(null);
-            if (course == null) {
-                continue;
-            }
+            if (course == null) continue;
 
             List<Lesson> lessons = lessonRepository.findByCourseIdOrderByOrderIndexAsc(course.getId());
             long totalLessons = lessons.size();
@@ -127,15 +117,9 @@ public class DashboardService {
 
         // 7. Sort courses by last accessed (most recent first)
         courseDtos.sort((a, b) -> {
-            if (a.getLastAccessedAt() == null && b.getLastAccessedAt() == null) {
-                return 0;
-            }
-            if (a.getLastAccessedAt() == null) {
-                return 1;
-            }
-            if (b.getLastAccessedAt() == null) {
-                return -1;
-            }
+            if (a.getLastAccessedAt() == null && b.getLastAccessedAt() == null) return 0;
+            if (a.getLastAccessedAt() == null) return 1;
+            if (b.getLastAccessedAt() == null) return -1;
             return b.getLastAccessedAt().compareTo(a.getLastAccessedAt());
         });
 
