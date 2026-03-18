@@ -1,0 +1,18 @@
+# ==============================================================================
+# ThinkAI Backend - Profile STAGING (Oracle Cloud MySQL)
+# ==============================================================================
+# Mục đích: Database tập trung cho team test tích hợp (E2E)
+# Kích hoạt: --spring.profiles.active=staging
+# BẮT BUỘC: Set DB_URL, DB_USERNAME, DB_PASSWORD trong file .env
+# ==============================================================================
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/thinkai_db?useSSL=false&allowPublicKeyRetrivel=true&serverTimezone=UTC}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false

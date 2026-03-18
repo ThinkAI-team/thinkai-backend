@@ -1,0 +1,54 @@
+# ==============================================================================
+# ThinkAI Backend - Cấu hình chung (mọi profile)
+# ==============================================================================
+# Default profile: local (Docker MySQL)
+# Staging profile: chạy với --spring.profiles.active=staging
+# ==============================================================================
+
+spring:
+  profiles:
+    active: local
+
+  # === JPA Common ===
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  # === Email (Gmail SMTP) ===
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+# === Server ===
+server:
+  port: 8081
+
+# === JWT (BẮT BUỘC set trong .env, có fallback cho dev) ===
+jwt:
+  secret: ${JWT_SECRET:thinkai_default_secret_key_that_is_at_least_256_bits_long_abcdef1234567890}
+  expiration: 86400000
+
+# === App ===
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+
+# === Google OAuth ===
+google:
+  client-id: ${GOOGLE_CLIENT_ID:}
