@@ -1,15 +1,28 @@
-FROM maven:3-jdk-8-alpine as builder
+# Stage 1: Build
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-COPY . /usr/src/app
-RUN mvn package
+# Copy Maven wrapper and pom.xml first to cache dependencies
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw
+RUN ./mvnw dependency:go-offline -B
 
-FROM openjdk:8-jre-alpine
+# Copy source and build jar
+COPY src ./src
+RUN ./mvnw package -DskipTests
 
-COPY --from=builder /usr/src/app/target/*.jar /app.jar
+# Stage 2: Runtime
+FROM eclipse-temurin:21-jre-alpine
 
-EXPOSE 8080
+WORKDIR /app
 
-ENTRYPOINT ["java"]
-CMD ["-jar", "/app.jar"]
+# Copy built jar from builder stage
+COPY --from=builder /app/target/*.jar app.jar
+
+# Port must match server.port in application.yml
+EXPOSE 8081
+
+# Environment variables will be injected via docker-compose
+ENTRYPOINT ["java", "-jar", "app.jar"]
