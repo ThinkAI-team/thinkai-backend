@@ -10,11 +10,13 @@ import java.util.Optional;
 @Repository
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 
+    List<Enrollment> findByUserId(Long userId);
+
+    long countByUserId(Long userId);
+
     Optional<Enrollment> findByUserIdAndCourseId(Long userId, Long courseId);
 
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
-
-    List<Enrollment> findByUserId(Long userId);
 
     int countByCourseId(Long courseId);
 }

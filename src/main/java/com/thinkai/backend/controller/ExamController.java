@@ -1,10 +1,14 @@
 package com.thinkai.backend.controller;
 
+import com.thinkai.backend.dto.ExamDto;
 import com.thinkai.backend.entity.Exam;
 import com.thinkai.backend.security.StudentOnly;
 import com.thinkai.backend.security.TeacherOnly;
+import com.thinkai.backend.service.ExamService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
