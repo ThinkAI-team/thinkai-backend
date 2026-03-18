@@ -12,7 +12,6 @@ import com.thinkai.backend.entity.Enrollment;
 
 @Repository
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
-
     List<Enrollment> findByUserId(Long userId);
 
     long countByUserId(Long userId);

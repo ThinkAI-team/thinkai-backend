@@ -31,15 +31,12 @@ import com.thinkai.backend.repository.LessonRepository;
 import com.thinkai.backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
-
-/**
- * Service for Course Catalog, Enrollment and Teacher operations.
- */
 @Service
 @RequiredArgsConstructor
 public class CourseService {
 
     private final CourseRepository courseRepository;
+
     private final LessonRepository lessonRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final UserRepository userRepository;
@@ -55,7 +52,7 @@ public class CourseService {
             String sortDir,
             int page,
             int size) {
-        
+        // Giới hạn size tối đa 50
         size = Math.min(size, 50);
 
         Sort sort = sortDir.equalsIgnoreCase("asc")
@@ -290,3 +287,4 @@ public class CourseService {
         return String.format("%d:%02d", min, sec);
     }
 }
+
