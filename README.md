@@ -4,11 +4,11 @@
 
 ## 📋 Yêu cầu
 
-| Công cụ | Phiên bản | Kiểm tra |
-|---------|-----------|----------|
-| Docker | ≥ 20.x | `docker --version` |
-| Docker Compose | ≥ 2.x | `docker compose version` |
-| Java | ≥ 21 | `java -version` |
+| Công cụ      | Phiên bản | Kiểm tra                  |
+| -------------- | ----------- | -------------------------- |
+| Docker         | ≥ 20.x     | `docker --version`       |
+| Docker Compose | ≥ 2.x      | `docker compose version` |
+| Java           | ≥ 21       | `java -version`          |
 
 ## 🚀 Quick Start
 
@@ -17,19 +17,21 @@
 git clone <repository-url>
 cd thinkai-backend
 
-# 2. Khởi động MySQL container
-docker compose up -d
+# 2. Chạy toàn bộ hệ thống (DB + Backend)
+docker compose up --build -d
 
+# 3. Theo dõi logs
+docker compose logs -f thinkai-backend
+```
+
+Dịch vụ sẽ sẵn sàng tại: `http://localhost:8081`
+
+### Các lệnh hữu ích khác
+- `docker compose down`: Dừng hệ thống nhưng giữ lại dữ liệu DB.
+- `docker compose down -v`: Reset hoàn toàn hệ thống và xóa dữ liệu DB.
+- `docker compose restart thinkai-api`: Restart riêng Backend (sau khi sửa code).
 # 3. Chờ MySQL sẵn sàng (~10 giây)
 docker logs thinkai-mysql --tail 10
-
-# Set JAVA_HOME nếu khi chạy Chạy Spring Boot ./mvnw spring-boot:run báo lỗi 
-# Error: JAVA_HOME is set to an invalid directory. 
-# JAVA_HOME = "C:\Program Files\Android\Android Studio\jre" 
-# Please set the JAVA_HOME variable in your environment to match the 
-# location of your Java installation. 
-
-$env:JAVA_HOME="C:\Program Files\Java\jdk-25.0.2"
 
 
 # 4. Chạy Spring Boot
@@ -47,6 +49,7 @@ App sẽ chạy tại: `http://localhost:8080`
 - **Password**: root
 
 ### Truy cập MySQL CLI
+
 ```bash
 docker exec -it thinkai-mysql mysql -uroot -proot thinkai_db
 ```
@@ -64,14 +67,15 @@ src/main/java/com/thinkai/backend/
 
 ## 🔧 Configuration
 
-| Variable | File | Mô tả |
-|----------|------|-------|
-| Database URL | `application.properties` | JDBC connection string |
+| Variable     | File                       | Mô tả                       |
+| ------------ | -------------------------- | ----------------------------- |
+| Database URL | `application.properties` | JDBC connection string        |
 | JPA DDL Auto | `application.properties` | `update` (auto sync schema) |
 
 ## ⚠️ Troubleshooting
 
 ### Port 3306 đã bị chiếm
+
 ```bash
 # Kiểm tra process đang dùng port
 sudo lsof -i :3306
@@ -82,11 +86,13 @@ ports:
 ```
 
 ### Permission denied khi chạy mvnw
+
 ```bash
 chmod +x mvnw
 ```
 
 ### MySQL chưa sẵn sàng
+
 ```bash
 # Kiểm tra container status
 docker ps | grep thinkai-mysql

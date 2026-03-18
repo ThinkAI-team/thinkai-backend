@@ -1,7 +1,7 @@
 package com.thinkai.backend.service;
 
-import com.thinkai.backend.dto.ChangePasswordRequest;
 import com.thinkai.backend.dto.ProfileResponse;
+import com.thinkai.backend.dto.UpdatePasswordRequest;
 import com.thinkai.backend.dto.UpdateProfileRequest;
 import com.thinkai.backend.entity.User;
 import com.thinkai.backend.exception.ApiException;
@@ -38,21 +38,25 @@ public class UserService {
     }
 
     @Transactional
-    public void changePassword(String email, ChangePasswordRequest request) {
+    public void changePassword(String email, UpdatePasswordRequest request) {
         // 1. Validate confirm
-        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             throw new ApiException("Mật khẩu xác nhận không khớp", HttpStatus.BAD_REQUEST);
         }
 
-        // 2. Validate not same as current
-        if (request.getCurrentPassword().equals(request.getNewPassword())) {
-            throw new ApiException("Mật khẩu mới phải khác mật khẩu hiện tại", HttpStatus.BAD_REQUEST);
-        }
-
-        // 3. Verify current password
         User user = findUser(email);
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
-            throw new ApiException("Mật khẩu hiện tại không đúng", HttpStatus.BAD_REQUEST);
+
+        // 2. Nếu đã có mật khẩu thì bắt buộc verify
+        if (user.getPasswordHash() != null) {
+            if (request.getCurrentPassword() == null || request.getCurrentPassword().isBlank()) {
+                throw new ApiException("Vui lòng nhập mật khẩu hiện tại", HttpStatus.BAD_REQUEST);
+            }
+            if (request.getCurrentPassword().equals(request.getNewPassword())) {
+                throw new ApiException("Mật khẩu mới phải khác mật khẩu hiện tại", HttpStatus.BAD_REQUEST);
+            }
+            if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+                throw new ApiException("Mật khẩu hiện tại không đúng", HttpStatus.BAD_REQUEST);
+            }
         }
 
         // 4. Update
