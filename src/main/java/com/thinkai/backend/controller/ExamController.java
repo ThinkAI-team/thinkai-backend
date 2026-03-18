@@ -14,6 +14,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ExamController {
 
+    private final ExamService examService;
+
     @TeacherOnly
     @PostMapping
     public ResponseEntity<Exam> createExam(@RequestBody Exam exam) {
@@ -31,5 +33,13 @@ public class ExamController {
     @GetMapping
     public ResponseEntity<List<Exam>> getAllExams() {
         return ResponseEntity.ok(List.of());
+    }
+
+    // 👇 Gắn annotation theo SECURITY_GUIDE
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/{courseId}/exams")
+    public ResponseEntity<List<ExamDto>> getExamsByCourse(@PathVariable Long courseId) {
+        List<ExamDto> exams = examService.getExamsByCourseId(courseId);
+        return ResponseEntity.ok(exams);
     }
 }
