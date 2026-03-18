@@ -14,6 +14,7 @@ import java.util.Optional;
 @Repository
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 
+<<<<<<< HEAD
     Optional<Enrollment> findByUserIdAndCourseId(Long userId, Long courseId);
 
     Page<Enrollment> findByUserId(Long userId, Pageable pageable);
@@ -28,4 +29,16 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 
     @Query("SELECT COUNT(e) FROM Enrollment e JOIN Course c ON e.courseId = c.id WHERE c.id = :courseId AND e.progressPercent = 100")
     long countCompletedStudentsByCourseId(@Param("courseId") Long courseId);
+=======
+    List<Enrollment> findByUserId(Long userId);
+
+    long countByUserId(Long userId);
+
+    Optional<Enrollment> findByUserIdAndCourseId(Long userId, Long courseId);
+
+    boolean existsByUserIdAndCourseId(Long userId, Long courseId);
+
+    int countByCourseId(Long courseId);
+>>>>>>> origin/develop
 }
+
