@@ -26,7 +26,9 @@ public class ExamService {
                 int count = 0;
                 for (Map.Entry<String, Integer> entry : request.getPartConfig().entrySet()) {
                     sb.append("\"").append(entry.getKey()).append("\":").append(entry.getValue());
-                    if (++count < request.getPartConfig().size()) sb.append(",");
+                    if (++count < request.getPartConfig().size()) {
+                        sb.append(",");
+                    }
                 }
                 sb.append("}");
                 partConfigJson = sb.toString();
