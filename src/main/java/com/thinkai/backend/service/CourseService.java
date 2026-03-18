@@ -243,14 +243,22 @@ public class CourseService {
                 nextLessonId = nextLesson.getId();
             }
 
+            MyCourseResponse.NextLessonInfo nextLessonInfo = null;
+            if (nextLessonId != null) {
+                nextLessonInfo = MyCourseResponse.NextLessonInfo.builder()
+                        .id(nextLessonId)
+                        .title(nextLessonTitle)
+                        .build();
+            }
+
             return MyCourseResponse.builder()
                     .id(course.getId())
                     .title(course.getTitle())
                     .thumbnail(course.getThumbnailUrl())
                     .price(course.getPrice())
                     .progressPercent(enrollment.getProgressPercent())
-                    .nextLessonTitle(nextLessonTitle)
-                    .nextLessonId(nextLessonId)
+                    .enrolledAt(enrollment.getEnrolledAt())
+                    .nextLesson(nextLessonInfo)
                     .build();
         }).filter(r -> r != null).toList();
     }

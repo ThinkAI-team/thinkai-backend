@@ -1,13 +1,16 @@
 package com.thinkai.backend.controller;
 
+import com.thinkai.backend.dto.ApiResponse;
+import com.thinkai.backend.dto.ChangePasswordRequest;
 import com.thinkai.backend.dto.MyCourseResponse;
 import com.thinkai.backend.dto.ProfileResponse;
-import com.thinkai.backend.dto.UpdatePasswordRequest;
 import com.thinkai.backend.dto.UpdateProfileRequest;
+import com.thinkai.backend.exception.ApiException;
 import com.thinkai.backend.entity.User;
 import com.thinkai.backend.repository.UserRepository;
 import com.thinkai.backend.service.CourseService;
 import com.thinkai.backend.service.UserService;
+import org.springframework.http.HttpStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -45,21 +48,23 @@ public class UserController {
     @PutMapping("/me/password")
     public ResponseEntity<Map<String, String>> changePassword(
             Authentication auth,
-            @Valid @RequestBody UpdatePasswordRequest request) {
+            @Valid @RequestBody ChangePasswordRequest request) {
         userService.changePassword(auth.getName(), request);
         return ResponseEntity.ok(Map.of("message", "Đổi mật khẩu thành công"));
     }
 
     /**
-     * GET /users/me/courses — Khóa học của tôi
+     * GET /users/me/courses — Danh sách khóa học đã đăng ký
+     * Auth: Bearer Token (bắt buộc)
      */
     @GetMapping("/me/courses")
-    public ResponseEntity<List<MyCourseResponse>> getMyCourses(Authentication auth) {
-        String email = auth.getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public ResponseEntity<ApiResponse<List<MyCourseResponse>>> getMyCourses(Authentication auth) {
+        User user = userRepository.findByEmail(auth.getName())
+            .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
+            
         List<MyCourseResponse> courses = courseService.getMyCourses(user.getId());
-        return ResponseEntity.ok(courses);
+        return ResponseEntity.ok(ApiResponse.success(courses));
     }
 }
+
 

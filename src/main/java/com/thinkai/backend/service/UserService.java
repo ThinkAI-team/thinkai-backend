@@ -1,8 +1,9 @@
 package com.thinkai.backend.service;
 
 import com.thinkai.backend.dto.ProfileResponse;
-import com.thinkai.backend.dto.UpdatePasswordRequest;
+import com.thinkai.backend.dto.ChangePasswordRequest;
 import com.thinkai.backend.dto.UpdateProfileRequest;
+
 import com.thinkai.backend.entity.User;
 import com.thinkai.backend.exception.ApiException;
 import com.thinkai.backend.repository.UserRepository;
@@ -38,9 +39,9 @@ public class UserService {
     }
 
     @Transactional
-    public void changePassword(String email, UpdatePasswordRequest request) {
+    public void changePassword(String email, ChangePasswordRequest request) {
         // 1. Validate confirm
-        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
             throw new ApiException("Mật khẩu xác nhận không khớp", HttpStatus.BAD_REQUEST);
         }
 
@@ -63,6 +64,7 @@ public class UserService {
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
     }
+
 
     private User findUser(String email) {
         return userRepository.findByEmail(email)
