@@ -1,0 +1,129 @@
+================================================================================
+    THINKAI - HƯỚNG DẪN PHÂN QUYỀN BẢO MẬT (BẮT BUỘC ĐỌC)
+    Cập nhật: 09/03/2026 - Bình Minh (Auth/DevOps)
+================================================================================
+
+TL;DR (Tóm tắt 30 giây)
+------------------------
+- File GlobalSecurityConfig.java đã ĐÓNG BĂNG → không ai được sửa trừ Bình Minh
+- Mọi endpoint mặc định yêu cầu JWT Token hợp lệ (authenticated)
+- Ai viết API nào → tự gắn annotation phân quyền trên Controller của mình
+- Có sẵn 4 annotation: @AdminOnly, @TeacherOnly, @StudentOnly, @TeacherOrAdmin
+- Nếu cần linh hoạt hơn → dùng @PreAuthorize("...")
+
+
+================================================================================
+1. VÌ SAO THAY ĐỔI?
+================================================================================
+
+TRƯỚC ĐÂY:  Mọi phân quyền dồn vào 1 file SecurityConfig.java
+            → 6 dev cùng sửa → merge conflict liên tục
+            → Gỡ conflict nhầm → lỡ xóa cấu hình chặn endpoint người khác
+            → Rủi ro bảo mật nghiêm trọng
+
+BÂY GIỜ:   Mỗi dev tự phân quyền NGAY TRÊN Controller của mình
+            → Không ai đụng vào file config chung
+            → Hết conflict, code rõ ràng, review dễ
+
+
+================================================================================
+2. CÁCH SỬ DỤNG (CÓ VÍ DỤ)
+================================================================================
+
+--- Cách 1: Custom Annotation (KHUYẾN KHÍCH - ít lỗi typo) ---
+
+    import com.thinkai.backend.security.TeacherOnly;
+
+    @RestController
+    @RequestMapping("/teacher/courses")
+    public class TeacherCourseController {
+
+        @TeacherOnly                           // ← Chỉ TEACHER vào được
+        @PostMapping
+        public ResponseEntity<Course> create(...) { ... }
+    }
+
+--- Cách 2: @PreAuthorize trực tiếp (linh hoạt hơn) ---
+
+    import org.springframework.security.access.prepost.PreAuthorize;
+
+    @RestController
+    @RequestMapping("/admin")
+    public class AdminController {
+
+        @PreAuthorize("hasRole('ADMIN')")
+        @GetMapping("/users")
+        public ResponseEntity<List<User>> getAllUsers() { ... }
+
+        @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+        @GetMapping("/dashboard")
+        public ResponseEntity<Dashboard> getDashboard() { ... }
+    }
+
+
+================================================================================
+3. DANH SÁCH ANNOTATION CÓ SẴN
+================================================================================
+
+    Annotation          | Ý nghĩa                      | File
+    --------------------|-------------------------------|----------------------------
+    @AdminOnly          | Chỉ ADMIN                     | security/AdminOnly.java
+    @TeacherOnly        | Chỉ TEACHER                   | security/TeacherOnly.java
+    @StudentOnly        | Chỉ STUDENT                   | security/StudentOnly.java
+    @TeacherOrAdmin     | TEACHER hoặc ADMIN            | security/TeacherOrAdmin.java
+
+    Nếu không đủ, dùng @PreAuthorize("...") trực tiếp:
+      @PreAuthorize("isAuthenticated()")           → bất kỳ ai có token
+      @PreAuthorize("hasRole('STUDENT')")          → chỉ STUDENT
+      @PreAuthorize("hasAnyRole('STUDENT','TEACHER')")  → STUDENT hoặc TEACHER
+
+
+================================================================================
+4. PHÂN CÔNG THEO MODULE
+================================================================================
+
+    Dev             | Module             | Annotation chính
+    ----------------|--------------------|--------------------------------
+    Hoàng Minh      | Course Management  | @TeacherOnly (tạo/sửa khóa học)
+    Anh Khoa        | Exam / Quiz        | @TeacherOnly (tạo đề), @StudentOnly (làm bài)
+    Bò Trang        | AI Tutor           | @PreAuthorize("isAuthenticated()")
+    Mai Pháp        | Enrollment         | @StudentOnly (đăng ký), @TeacherOrAdmin (quản lý)
+    Trọng Nghĩa     | Teacher Portal     | @TeacherOnly
+    Thái Nguyên     | Admin Panel        | @AdminOnly
+
+
+================================================================================
+5. QUY TẮC BẮT BUỘC
+================================================================================
+
+    [!] Mọi endpoint (trừ /auth/**) PHẢI có ít nhất 1 annotation phân quyền
+    [!] Nếu QUÊN gắn → bất kỳ user có token đều vào được (kể cả sai role)
+    [!] KHÔNG sửa file GlobalSecurityConfig.java
+    [!] KHÔNG thêm requestMatchers mới vào GlobalSecurityConfig.java
+
+    Xem mẫu: controller/UserController.java → có @PreAuthorize("isAuthenticated()")
+
+
+================================================================================
+6. CẤU TRÚC FILE HIỆN TẠI
+================================================================================
+
+    config/
+    ├── GlobalSecurityConfig.java   ← ĐÓNG BĂNG (chỉ Bình Minh sửa)
+    ├── JwtAuthFilter.java          ← ĐÓNG BĂNG
+    └── SECURITY_GUIDE.txt          ← File này
+
+    security/                       ← Package annotation mới
+    ├── AdminOnly.java
+    ├── TeacherOnly.java
+    ├── StudentOnly.java
+    └── TeacherOrAdmin.java
+
+    controller/
+    ├── AuthController.java         ← Public (permitAll, không cần annotation)
+    └── UserController.java         ← Mẫu: có @PreAuthorize("isAuthenticated()")
+
+
+================================================================================
+    Có thắc mắc? Tag @Bình Minh trên nhóm chat hoặc tạo issue trên GitHub.
+================================================================================
