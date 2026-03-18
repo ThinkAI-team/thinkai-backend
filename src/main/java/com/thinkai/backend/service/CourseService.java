@@ -2,6 +2,7 @@ package com.thinkai.backend.service;
 
 import com.thinkai.backend.dto.CourseDetailResponse;
 import com.thinkai.backend.dto.CourseListResponse;
+import com.thinkai.backend.dto.CourseRequest;
 import com.thinkai.backend.dto.EnrollmentResponse;
 import com.thinkai.backend.dto.LessonResponse;
 import com.thinkai.backend.dto.MyCourseResponse;
@@ -47,8 +48,7 @@ public class CourseService {
             String sortBy,
             String sortDir,
             int page,
-            int size
-    ) {
+            int size) {
         // Giới hạn size tối đa 50
         size = Math.min(size, 50);
 
@@ -59,8 +59,7 @@ public class CourseService {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<Course> coursePage = courseRepository.findPublishedCourses(
-                keyword, priceMin, priceMax, pageable
-        );
+                keyword, priceMin, priceMax, pageable);
 
         List<CourseListResponse> content = coursePage.getContent().stream()
                 .map(this::toCourseListResponse)
@@ -83,8 +82,7 @@ public class CourseService {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ApiException(
                         "Không tìm thấy khóa học với ID: " + courseId,
-                        HttpStatus.NOT_FOUND
-                ));
+                        HttpStatus.NOT_FOUND));
 
         List<Lesson> lessons = lessonRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
 
@@ -138,6 +136,51 @@ public class CourseService {
                 .build();
     }
 
+    // ===================== TEACHER OPERATIONS =====================
+
+    public Course createCourse(Long teacherId, CourseRequest request) {
+        Course course = Course.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .thumbnailUrl(request.getThumbnailUrl())
+                .price(request.getPrice())
+                .instructorId(teacherId)
+                .isPublished(false)
+                .status(Course.Status.DRAFT)
+                .build();
+        return courseRepository.save(course);
+    }
+
+    public Page<Course> getCoursesByTeacher(Long teacherId, Pageable pageable) {
+        return courseRepository.findByInstructorId(teacherId, pageable);
+    }
+
+    public Course getCourseByIdAndTeacher(Long courseId, Long teacherId) {
+        return courseRepository.findByIdAndInstructorId(courseId, teacherId)
+                .orElseThrow(() -> new ApiException("Không tìm thấy khóa học với ID: " + courseId, HttpStatus.NOT_FOUND));
+    }
+
+    public Course updateCourse(Long courseId, Long teacherId, CourseRequest request) {
+        Course course = getCourseByIdAndTeacher(courseId, teacherId);
+        course.setTitle(request.getTitle());
+        course.setDescription(request.getDescription());
+        course.setThumbnailUrl(request.getThumbnailUrl());
+        course.setPrice(request.getPrice());
+        return courseRepository.save(course);
+    }
+
+    public void deleteCourse(Long courseId, Long teacherId) {
+        Course course = getCourseByIdAndTeacher(courseId, teacherId);
+        courseRepository.delete(course);
+    }
+
+    public Course publishCourse(Long courseId, Long teacherId) {
+        Course course = getCourseByIdAndTeacher(courseId, teacherId);
+        course.setIsPublished(true);
+        course.setStatus(Course.Status.APPROVED);
+        return courseRepository.save(course);
+    }
+
     /**
      * POST /courses/{id}/enroll — Đăng ký khóa học
      */
@@ -147,8 +190,7 @@ public class CourseService {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ApiException(
                         "Không tìm thấy khóa học với ID: " + courseId,
-                        HttpStatus.NOT_FOUND
-                ));
+                        HttpStatus.NOT_FOUND));
 
         // Kiểm tra khóa học đã published chưa
         if (!course.getIsPublished()) {
@@ -192,10 +234,9 @@ public class CourseService {
             String nextLessonTitle = null;
             Long nextLessonId = null;
             if (!lessons.isEmpty()) {
-                // Tạm lấy bài đầu tiên hoặc tính theo progress
+                // Tạm lấy bài học đầu tiên hoặc tính theo progress
                 int completedCount = (int) Math.round(
-                        lessons.size() * enrollment.getProgressPercent() / 100.0
-                );
+                        lessons.size() * enrollment.getProgressPercent() / 100.0);
                 int nextIndex = Math.min(completedCount, lessons.size() - 1);
                 Lesson nextLesson = lessons.get(nextIndex);
                 nextLessonTitle = nextLesson.getTitle();
