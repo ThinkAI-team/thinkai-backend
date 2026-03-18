@@ -6,6 +6,12 @@ import com.thinkai.backend.entity.Exam;
 import com.thinkai.backend.security.StudentOnly;
 import com.thinkai.backend.security.TeacherOnly;
 import com.thinkai.backend.service.ExamService;
+import com.thinkai.backend.dto.ExamSubmitRequest;
+import com.thinkai.backend.dto.ExamSubmitResponse;
+import com.thinkai.backend.security.StudentOnly;
+import com.thinkai.backend.security.TeacherOnly;
+import com.thinkai.backend.service.ExamService;
+import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -64,4 +70,22 @@ public class ExamController {
         ExamStartResponse response = examService.startExam(examId, userId);
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Feature #3: Nộp bài thi.
+     * POST /exams/{examId}/submit
+     *
+     * @param examId  ID của bài thi (dùng để xác định context)
+     * @param request Body chứa attemptId + danh sách câu trả lời
+     * @return ExamSubmitResponse chứa kết quả chấm điểm
+     */
+    @StudentOnly
+    @PostMapping("/{examId}/submit")
+    public ResponseEntity<ExamSubmitResponse> submitExam(
+            @PathVariable Long examId,
+            @Valid @RequestBody ExamSubmitRequest request) {
+        ExamSubmitResponse response = examService.submitExam(request);
+        return ResponseEntity.ok(response);
+    }
+
 }
