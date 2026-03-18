@@ -5,7 +5,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ai_settings")
+@Table(name = "ai_settings", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "setting_key"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,7 +19,10 @@ public class AiSettings {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "setting_key", nullable = false, unique = true, length = 100)
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
+    @Column(name = "setting_key", nullable = false, length = 100)
     private String settingKey;
 
     @Column(name = "setting_value", nullable = false, columnDefinition = "TEXT")

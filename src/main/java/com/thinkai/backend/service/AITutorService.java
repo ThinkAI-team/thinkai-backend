@@ -6,6 +6,7 @@ import com.thinkai.backend.dto.AISummarizeRequest;
 import com.thinkai.backend.dto.AISummarizeResponse;
 import com.thinkai.backend.entity.AiChatLog;
 import com.thinkai.backend.entity.User;
+import com.thinkai.backend.dto.AiSettingsDto;
 import com.thinkai.backend.repository.AiChatLogRepository;
 import com.thinkai.backend.repository.UserRepository;
 import com.thinkai.backend.exception.ApiException;
@@ -23,6 +24,7 @@ public class AITutorService {
     private final RestClient restClient;
     private final AiChatLogRepository aiChatLogRepository;
     private final UserRepository userRepository;
+    private final AiSettingsService aiSettingsService;
     
     @Value("${gemini.api.key}")
     private String geminiApiKey;
@@ -32,24 +34,32 @@ public class AITutorService {
 
     public AITutorService(RestClient.Builder restClientBuilder,
                           AiChatLogRepository aiChatLogRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          AiSettingsService aiSettingsService) {
         this.restClient = restClientBuilder.build();
         this.aiChatLogRepository = aiChatLogRepository;
         this.userRepository = userRepository;
+        this.aiSettingsService = aiSettingsService;
     }
 
     public AIChatResponse chat(AIChatRequest request, String email) {
         User user = null;
+        AiSettingsDto settings = null;
         if (email != null) {
             user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
+            settings = aiSettingsService.getSettings(email);
         }
+
+        String language = settings != null ? settings.getLanguage() : "English";
+        String responseLength = settings != null ? settings.getResponseLength() : "detailed";
 
         String context = request.getContext() != null ? request.getContext() : "General English";
         String prompt = "You are an AI English Tutor for TOEIC/IELTS students. Your role is strictly to help users learn English. " +
                 "If the user asks a question that is NOT related to English learning, grammar, vocabulary, TOEIC, or IELTS, " +
                 "you MUST politely refuse to answer and remind them of your role. " +
                 "Do not answer general knowledge questions outside the scope of English learning.\n" +
+                "IMPORTANT INSTRUCTIONS FROM USER: Please reply in " + language + " language. Ensure your response is " + responseLength + ".\n" +
                 "Context of current lesson: " + context + "\n" +
                 "Student: " + request.getMessage();
         
