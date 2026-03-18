@@ -33,7 +33,9 @@ public class QuestionBankService {
                 StringBuilder sb = new StringBuilder("[");
                 for (int i = 0; i < request.getTags().size(); i++) {
                     sb.append("\"").append(request.getTags().get(i).replace("\"", "\\\"")).append("\"");
-                    if (i < request.getTags().size() - 1) sb.append(",");
+                    if (i < request.getTags().size() - 1) {
+                        sb.append(",");
+                    }
                 }
                 sb.append("]");
                 tagsJson = sb.toString();
@@ -85,21 +87,31 @@ public class QuestionBankService {
                     continue;
                 }
                 
-                String[] data = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)"); // Split by comma ignoring commas inside quotes
-                if (data.length < 7) continue;
+                // Split by comma ignoring commas inside quotes
+                String[] data = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+                if (data.length < 7) {
+                    continue;
+                }
 
                 // Simple CSV format mapping: examType,section,part,content,options(JSON),correctAnswer,difficulty
                 ExamType examType = ExamType.valueOf(data[0].replace("\"", "").trim());
                 Section section = Section.valueOf(data[1].replace("\"", "").trim());
                 Part part = Part.valueOf(data[2].replace("\"", "").trim());
                 String content = data[3].trim().replace("\"\"", "\"");
-                if (content.startsWith("\"") && content.endsWith("\"")) content = content.substring(1, content.length() - 1);
+                if (content.startsWith("\"") && content.endsWith("\"")) {
+                    content = content.substring(1, content.length() - 1);
+                }
                 
-                String options = data[4].trim().replace("\"\"", "\""); // handle escaped quotes
-                if(options.startsWith("\"") && options.endsWith("\"")) options = options.substring(1, options.length() -1);
+                // handle escaped quotes
+                String options = data[4].trim().replace("\"\"", "\"");
+                if (options.startsWith("\"") && options.endsWith("\"")) {
+                    options = options.substring(1, options.length() - 1);
+                }
                 
                 String correctAnswer = data[5].trim().replace("\"\"", "\"");
-                if (correctAnswer.startsWith("\"") && correctAnswer.endsWith("\"")) correctAnswer = correctAnswer.substring(1, correctAnswer.length() - 1);
+                if (correctAnswer.startsWith("\"") && correctAnswer.endsWith("\"")) {
+                    correctAnswer = correctAnswer.substring(1, correctAnswer.length() - 1);
+                }
                 
                 QuestionBank.Difficulty difficulty = QuestionBank.Difficulty.valueOf(data[6].replace("\"", "").trim());
 
