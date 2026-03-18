@@ -12,6 +12,7 @@ spring:
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
 
+
   jpa:
     hibernate:
       ddl-auto: validate

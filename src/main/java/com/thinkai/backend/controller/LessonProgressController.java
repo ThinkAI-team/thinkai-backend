@@ -16,25 +16,25 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class LessonProgressController {
 
-    private final LessonProgressService lessonProgressService;
+        private final LessonProgressService lessonProgressService;
 
-    @StudentOnly
-    @PostMapping("/{lessonId}/complete")
-    public ResponseEntity<Map<String, Object>> completeLesson(
-            Authentication auth,
-            @PathVariable Long lessonId,
-            @RequestBody(required = false) LessonCompleteRequest request) {
+        @StudentOnly
+        @PostMapping("/{lessonId}/complete")
+        public ResponseEntity<Map<String, Object>> completeLesson(
+                        Authentication auth,
+                        @PathVariable Long lessonId,
+                        @RequestBody(required = false) LessonCompleteRequest request) {
 
-        if (request == null) {
-            request = new LessonCompleteRequest();
+                if (request == null) {
+                        request = new LessonCompleteRequest();
+                }
+
+                LessonCompleteResponse response = lessonProgressService.completeLesson(
+                                auth.getName(), lessonId, request);
+
+                return ResponseEntity.ok(Map.of(
+                                "status", 200,
+                                "message", "Progress updated",
+                                "data", response));
         }
-
-        LessonCompleteResponse response = lessonProgressService.completeLesson(
-                auth.getName(), lessonId, request);
-
-        return ResponseEntity.ok(Map.of(
-                "status", 200,
-                "message", "Progress updated",
-                "data", response));
-    }
 }
