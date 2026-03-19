@@ -4,6 +4,9 @@ import com.thinkai.backend.dto.ExamDto;
 import com.thinkai.backend.dto.ExamStartResponse;
 import com.thinkai.backend.dto.ExamSubmitRequest;
 import com.thinkai.backend.dto.ExamSubmitResponse;
+import com.thinkai.backend.dto.ExamHistoryDto;
+import com.thinkai.backend.dto.ExamResultResponse;
+
 import com.thinkai.backend.entity.Exam;
 import com.thinkai.backend.security.StudentOnly;
 import com.thinkai.backend.security.TeacherOnly;
@@ -75,5 +78,27 @@ public class ExamController {
             @Valid @RequestBody ExamSubmitRequest request) {
         ExamSubmitResponse response = examService.submitExam(request);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Feature #4: Xem kết quả bài thi.
+     * GET /exams/attempts/{attemptId}/result
+     */
+    @StudentOnly
+    @GetMapping("/attempts/{attemptId}/result")
+    public ResponseEntity<ExamResultResponse> getExamResult(@PathVariable Long attemptId) {
+        ExamResultResponse response = examService.getExamResult(attemptId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Feature #5: Lịch sử thi.
+     * GET /exams/history?userId={userId}
+     */
+    @StudentOnly
+    @GetMapping("/history")
+    public ResponseEntity<List<ExamHistoryDto>> getExamHistory(@RequestParam Long userId) {
+        List<ExamHistoryDto> history = examService.getExamHistory(userId);
+        return ResponseEntity.ok(history);
     }
 }
