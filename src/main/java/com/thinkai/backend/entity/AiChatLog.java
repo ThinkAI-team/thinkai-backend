@@ -35,6 +35,9 @@ public class AiChatLog {
     @Column(columnDefinition = "JSON")
     private String citations;
 
+    @Column(name = "rating")
+    private Integer rating;
+
     @Column(name = "response_time_ms")
     private Integer responseTimeMs;
 

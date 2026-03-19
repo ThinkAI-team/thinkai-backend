@@ -33,4 +33,12 @@ public class AiChatController {
         aiTutorService.deleteChat(id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{messageId}/feedback")
+    public ResponseEntity<AiChatLog> submitFeedback(
+            @PathVariable Long messageId,
+            @jakarta.validation.Valid @RequestBody com.thinkai.backend.dto.AiFeedbackRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(aiTutorService.submitFeedback(messageId, authentication.getName(), request));
+    }
 }

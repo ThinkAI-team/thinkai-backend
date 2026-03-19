@@ -95,6 +95,12 @@ public class AITutorService {
                 .orElseThrow(() -> new ApiException("Chat not found or access denied", HttpStatus.NOT_FOUND));
     }
 
+    public AiChatLog submitFeedback(Long id, String email, com.thinkai.backend.dto.AiFeedbackRequest request) {
+        AiChatLog chatLog = getChatById(id, email);
+        chatLog.setRating(request.getRating());
+        return aiChatLogRepository.save(chatLog);
+    }
+
     public void deleteChat(Long id, String email) {
         AiChatLog chatLog = getChatById(id, email);
         aiChatLogRepository.delete(chatLog);
