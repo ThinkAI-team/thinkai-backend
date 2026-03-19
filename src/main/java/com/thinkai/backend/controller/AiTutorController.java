@@ -12,7 +12,7 @@ import org.springframework.security.core.Authentication;
 @RestController
 @RequestMapping("/ai-tutor")
 @RequiredArgsConstructor
-public class AITutorController {
+public class AiTutorController {
 
     private final AITutorService aiTutorService;
 
