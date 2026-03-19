@@ -53,7 +53,6 @@ public class AITutorService {
 
         String language = settings != null ? settings.getLanguage() : "English";
         String responseLength = settings != null ? settings.getResponseLength() : "detailed";
-
         String context = request.getContext() != null ? request.getContext() : "General English";
         String prompt = "You are an AI English Tutor for TOEIC/IELTS students. Your role is strictly to help users learn English. " +
                 "If the user asks a question that is NOT related to English learning, grammar, vocabulary, TOEIC, or IELTS, " +
@@ -62,6 +61,9 @@ public class AITutorService {
                 "IMPORTANT INSTRUCTIONS FROM USER: Please reply in " + language + " language. Ensure your response is " + responseLength + ".\n" +
                 "Context of current lesson: " + context + "\n" +
                 "Student: " + request.getMessage();
+        if (email != null && !email.trim().isEmpty()) {
+            prompt += "\nStudent Email: " + email;
+        }
         
         long startTime = System.currentTimeMillis();
         String responseText = callGeminiApi(prompt);
