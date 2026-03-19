@@ -28,4 +28,7 @@ public class RegisterRequest {
 
     @NotBlank(message = "Xác nhận mật khẩu không được để trống")
     private String confirmPassword;
+
+    // Optional: STUDENT (default) hoặc TEACHER
+    private String role;
 }
