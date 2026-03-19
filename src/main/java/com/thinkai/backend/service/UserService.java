@@ -1,8 +1,9 @@
 package com.thinkai.backend.service;
 
-import com.thinkai.backend.dto.ChangePasswordRequest;
 import com.thinkai.backend.dto.ProfileResponse;
+import com.thinkai.backend.dto.ChangePasswordRequest;
 import com.thinkai.backend.dto.UpdateProfileRequest;
+
 import com.thinkai.backend.entity.User;
 import com.thinkai.backend.exception.ApiException;
 import com.thinkai.backend.repository.UserRepository;
@@ -44,21 +45,26 @@ public class UserService {
             throw new ApiException("Mật khẩu xác nhận không khớp", HttpStatus.BAD_REQUEST);
         }
 
-        // 2. Validate not same as current
-        if (request.getCurrentPassword().equals(request.getNewPassword())) {
-            throw new ApiException("Mật khẩu mới phải khác mật khẩu hiện tại", HttpStatus.BAD_REQUEST);
-        }
-
-        // 3. Verify current password
         User user = findUser(email);
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
-            throw new ApiException("Mật khẩu hiện tại không đúng", HttpStatus.BAD_REQUEST);
+
+        // 2. Nếu đã có mật khẩu thì bắt buộc verify
+        if (user.getPasswordHash() != null) {
+            if (request.getCurrentPassword() == null || request.getCurrentPassword().isBlank()) {
+                throw new ApiException("Vui lòng nhập mật khẩu hiện tại", HttpStatus.BAD_REQUEST);
+            }
+            if (request.getCurrentPassword().equals(request.getNewPassword())) {
+                throw new ApiException("Mật khẩu mới phải khác mật khẩu hiện tại", HttpStatus.BAD_REQUEST);
+            }
+            if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+                throw new ApiException("Mật khẩu hiện tại không đúng", HttpStatus.BAD_REQUEST);
+            }
         }
 
         // 4. Update
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
     }
+
 
     private User findUser(String email) {
         return userRepository.findByEmail(email)
