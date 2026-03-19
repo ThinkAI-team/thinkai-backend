@@ -62,7 +62,7 @@ public class LessonProgressService {
         lessonProgressRepository.save(progress);
 
         // 5. Tính lại progress percent
-        int totalLessons = lessonRepository.countByCourseId(lesson.getCourseId());
+        long totalLessons = lessonRepository.countByCourseId(lesson.getCourseId());
         long completedLessons = lessonProgressRepository
                 .countCompletedByUserAndCourse(user.getId(), lesson.getCourseId());
 
