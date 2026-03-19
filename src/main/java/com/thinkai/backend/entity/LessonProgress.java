@@ -6,9 +6,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "lesson_progress", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"user_id", "lesson_id"})
+        @UniqueConstraint(columnNames = { "user_id", "lesson_id" })
 })
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

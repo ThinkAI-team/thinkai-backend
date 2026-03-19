@@ -41,3 +41,4 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     """)
     long countCompletedStudentsByInstructorId(@Param("instructorId") Long instructorId);
 }
+

@@ -36,3 +36,4 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     Page<Course> findByInstructorId(Long instructorId, Pageable pageable);
 }
+

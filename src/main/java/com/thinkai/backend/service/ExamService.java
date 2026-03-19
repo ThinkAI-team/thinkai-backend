@@ -3,6 +3,7 @@ package com.thinkai.backend.service;
 import com.thinkai.backend.dto.AnswerDto;
 import com.thinkai.backend.dto.ExamDto;
 import com.thinkai.backend.dto.ExamHistoryDto;
+import com.thinkai.backend.dto.ExamRequest;
 import com.thinkai.backend.dto.ExamStartResponse;
 import com.thinkai.backend.dto.ExamSubmitRequest;
 import com.thinkai.backend.dto.ExamSubmitResponse;
@@ -20,6 +21,8 @@ import com.thinkai.backend.repository.ExamAttemptRepository;
 import com.thinkai.backend.repository.ExamRepository;
 import com.thinkai.backend.repository.QuestionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +44,27 @@ public class ExamService {
         private final QuestionRepository questionRepository;
         private final ExamAttemptRepository examAttemptRepository;
         private final ExamAnswerRepository examAnswerRepository;
+
+        // ==================== Teacher Operations ====================
+
+        public Exam createExam(Long teacherId, ExamRequest request) {
+                Exam exam = Exam.builder()
+                                .courseId(request.getCourseId())
+                                .title(request.getTitle())
+                                .examType(request.getExamType())
+                                .description(request.getDescription())
+                                .timeLimitMinutes(request.getTimeLimitMinutes() != null ? request.getTimeLimitMinutes()
+                                                : 120)
+                                .passingScore(request.getPassingScore() != null ? request.getPassingScore() : 60)
+                                .isRandomOrder(request.getIsRandomOrder() != null ? request.getIsRandomOrder() : false)
+                                .createdBy(teacherId)
+                                .build();
+                return examRepository.save(exam);
+        }
+
+        public Page<Exam> getExamsByTeacher(Long teacherId, Pageable pageable) {
+                return examRepository.findByCreatedBy(teacherId, pageable);
+        }
 
         // ==================== Feature #1: Exam List ====================
 

@@ -21,19 +21,19 @@ public class Exam {
     @Column(name = "course_id", nullable = false)
     private Long courseId;
 
+    @Column(nullable = false, length = 255)
+    private String title;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "exam_type", nullable = false)
     private ExamType examType;
-
-    @Column(nullable = false, length = 255)
-    private String title;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "time_limit_minutes", nullable = false)
     @Builder.Default
-    private Integer timeLimitMinutes = 120; // TOEIC: 120 minutes
+    private Integer timeLimitMinutes = 120;
 
     @Column(name = "passing_score", nullable = false)
     @Builder.Default
@@ -44,7 +44,7 @@ public class Exam {
     private Boolean isRandomOrder = false;
 
     @Column(name = "part_config", columnDefinition = "JSON")
-    private String partConfig; // {"PART_1": 6, "PART_2": 25, ...}
+    private String partConfig;
 
     @Column(name = "created_by")
     private Long createdBy;
