@@ -14,14 +14,12 @@ public interface LessonProgressRepository extends JpaRepository<LessonProgress, 
 
     Optional<LessonProgress> findByUserIdAndLessonId(Long userId, Long lessonId);
 
+    List<LessonProgress> findByUserIdAndLessonIdIn(Long userId, List<Long> lessonIds);
+
     List<LessonProgress> findByUserIdAndIsCompletedTrue(Long userId);
 
-    Optional<LessonProgress> findTopByUserIdOrderByLastAccessedAtDesc(Long userId);
-
     @Query("SELECT COUNT(lp) FROM LessonProgress lp " +
-            "WHERE lp.userId = :userId " +
-            "AND lp.isCompleted = true " +
-            "AND lp.lessonId IN (SELECT l.id FROM Lesson l WHERE l.courseId = :courseId)")
-    long countCompletedByUserAndCourse(@Param("userId") Long userId,
-            @Param("courseId") Long courseId);
+           "JOIN Lesson l ON lp.lessonId = l.id " +
+           "WHERE lp.userId = :userId AND l.courseId = :courseId AND lp.isCompleted = true")
+    long countCompletedByUserAndCourse(@Param("userId") Long userId, @Param("courseId") Long courseId);
 }
