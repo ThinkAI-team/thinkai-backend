@@ -1,15 +1,17 @@
 # ==============================================================================
-# ThinkAI Backend - Profile LOCAL (Docker MySQL)
+# ThinkAI Backend - Profile LOCAL (YAML Format)
 # ==============================================================================
-# Mục đích: Dev tự do test, phá data, Hibernate tự tạo/sửa bảng
-# Kích hoạt: Mặc định (không cần truyền gì)
-# ==============================================================================
+gemini:
+  api:
+    key: "AIzaSyClSWxLMC0bBWyJgcifeP2YMF5wMEH4ItM"
+    url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent"
 
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/thinkai_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
@@ -18,3 +20,4 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect

@@ -7,11 +7,12 @@ WORKDIR /app
 COPY .mvn/ .mvn
 COPY mvnw pom.xml ./
 RUN chmod +x mvnw
-RUN ./mvnw dependency:go-offline -B
+##RUN ./mvnw dependency:go-offline -B -DskipTests
+RUN mvn dependency:go-offline -B
 
 # Copy source and build jar
 COPY src ./src
-RUN ./mvnw package -DskipTests
+RUN mvn package -DskipTests -B
 
 # Stage 2: Runtime
 FROM eclipse-temurin:21-jre-alpine
