@@ -1,6 +1,7 @@
 package com.thinkai.backend.repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -34,6 +35,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     long countByInstructorId(Long instructorId);
 
-    Page<Course> findByInstructorId(Long instructorId, Pageable pageable);
-}
+    long countByIsPublishedTrue();
 
+    Page<Course> findByInstructorId(Long instructorId, Pageable pageable);
+
+    List<Course> findByInstructorId(Long instructorId);
+}
