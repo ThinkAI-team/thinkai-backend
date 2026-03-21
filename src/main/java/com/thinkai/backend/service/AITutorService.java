@@ -25,7 +25,7 @@ public class AITutorService {
     private final AiChatLogRepository aiChatLogRepository;
     private final UserRepository userRepository;
     private final AiSettingsService aiSettingsService;
-    
+
     @Value("${gemini.api.key}")
     private String geminiApiKey;
 
@@ -33,9 +33,9 @@ public class AITutorService {
     private String geminiApiUrl;
 
     public AITutorService(RestClient.Builder restClientBuilder,
-                          AiChatLogRepository aiChatLogRepository,
-                          UserRepository userRepository,
-                          AiSettingsService aiSettingsService) {
+            AiChatLogRepository aiChatLogRepository,
+            UserRepository userRepository,
+            AiSettingsService aiSettingsService) {
         this.restClient = restClientBuilder.build();
         this.aiChatLogRepository = aiChatLogRepository;
         this.userRepository = userRepository;
@@ -54,17 +54,20 @@ public class AITutorService {
         String language = settings != null ? settings.getLanguage() : "English";
         String responseLength = settings != null ? settings.getResponseLength() : "detailed";
         String context = request.getContext() != null ? request.getContext() : "General English";
-        String prompt = "You are an AI English Tutor for TOEIC/IELTS students. Your role is strictly to help users learn English. " +
-                "If the user asks a question that is NOT related to English learning, grammar, vocabulary, TOEIC, or IELTS, " +
+        String prompt = "You are an AI English Tutor for TOEIC/IELTS students. Your role is strictly to help users learn English. "
+                +
+                "If the user asks a question that is NOT related to English learning, grammar, vocabulary, TOEIC, or IELTS, "
+                +
                 "you MUST politely refuse to answer and remind them of your role. " +
                 "Do not answer general knowledge questions outside the scope of English learning.\n" +
-                "IMPORTANT INSTRUCTIONS FROM USER: Please reply in " + language + " language. Ensure your response is " + responseLength + ".\n" +
+                "IMPORTANT INSTRUCTIONS FROM USER: Please reply in " + language + " language. Ensure your response is "
+                + responseLength + ".\n" +
                 "Context of current lesson: " + context + "\n" +
                 "Student: " + request.getMessage();
         if (email != null && !email.trim().isEmpty()) {
             prompt += "\nStudent Email: " + email;
         }
-        
+
         long startTime = System.currentTimeMillis();
         String responseText = callGeminiApi(prompt);
         long responseTimeMs = System.currentTimeMillis() - startTime;
@@ -109,9 +112,10 @@ public class AITutorService {
     public AISummarizeResponse summarize(AISummarizeRequest request) {
         String prompt = "You are an AI English Tutor. Please summarize the following lesson content concisely. " +
                 "Highlight key grammar rules, vocabulary, or structures to help the student review. " +
-                "Only summarize the provided English lesson content. If the content is not related to English learning, refuse to summarize it.\n\n" +
+                "Only summarize the provided English lesson content. If the content is not related to English learning, refuse to summarize it.\n\n"
+                +
                 request.getContent();
-        
+
         String responseText = callGeminiApi(prompt);
         return new AISummarizeResponse(responseText);
     }
@@ -132,7 +136,9 @@ public class AITutorService {
                 + (wrongAnswersSummary != null && !wrongAnswersSummary.isBlank()
                         ? "Các câu sai:\n" + wrongAnswersSummary + "\n\n"
                         : "")
-                + "Yêu cầu phản hồi: 1) Đánh giá tổng quan, 2) Điểm mạnh, 3) Cần cải thiện (dựa trên câu sai), 4) Gợi ý bước tiếp theo. Giới hạn dưới 200 từ.";
+                + "Yêu cầu phản hồi: 1) Đánh giá tổng quan, 2) Điểm mạnh, "
+                + "3) Cần cải thiện (dựa trên câu sai), 4) Gợi ý bước tiếp theo. "
+                + "Giới hạn dưới 200 từ.";
         return callGeminiApi(prompt);
     }
 
@@ -141,18 +147,15 @@ public class AITutorService {
             return "System Error: Gemini API key is not configured. Please contact the administrator.";
         }
 
-        String requestUrl = geminiApiUrl.contains("?") 
-            ? geminiApiUrl + "&key=" + geminiApiKey 
-            : geminiApiUrl + "?key=" + geminiApiKey;
+        String requestUrl = geminiApiUrl.contains("?")
+                ? geminiApiUrl + "&key=" + geminiApiKey
+                : geminiApiUrl + "?key=" + geminiApiKey;
 
         // Gemini API Request Body Structure
         Map<String, Object> requestBody = Map.of(
-            "contents", List.of(
-                Map.of("parts", List.of(
-                    Map.of("text", prompt)
-                ))
-            )
-        );
+                "contents", List.of(
+                        Map.of("parts", List.of(
+                                Map.of("text", prompt)))));
 
         try {
             Map<?, ?> response = restClient.post()
