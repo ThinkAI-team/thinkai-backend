@@ -142,12 +142,20 @@ public class ExamService {
          * 7. Trả về kết quả chấm.
          */
         @Transactional
-        public ExamSubmitResponse submitExam(ExamSubmitRequest request) {
+        public ExamSubmitResponse submitExam(Long examId, Long currentUserId, ExamSubmitRequest request) {
                 // 1. Tìm phiên thi
                 ExamAttempt attempt = examAttemptRepository.findById(request.getAttemptId())
                                 .orElseThrow(() -> new ApiException(
                                                 "Không tìm thấy phiên thi với ID: " + request.getAttemptId(),
                                                 HttpStatus.NOT_FOUND));
+
+                if (!attempt.getUserId().equals(currentUserId)) {
+                        throw new ApiException("Bạn không có quyền nộp bài cho phiên thi này", HttpStatus.FORBIDDEN);
+                }
+
+                if (!attempt.getExamId().equals(examId)) {
+                        throw new ApiException("Phiên thi không thuộc bài thi hiện tại", HttpStatus.BAD_REQUEST);
+                }
 
                 // 2. Kiểm tra chưa nộp
                 if (attempt.getSubmittedAt() != null) {
@@ -238,12 +246,16 @@ public class ExamService {
          * 4. Map sang AnswerResultDto (kèm correctOption, explanation).
          * 5. Trả về ExamResultResponse.
          */
-        public ExamResultResponse getExamResult(Long attemptId) {
+        public ExamResultResponse getExamResult(Long attemptId, Long currentUserId) {
                 // 1. Tìm phiên thi
                 ExamAttempt attempt = examAttemptRepository.findById(attemptId)
                                 .orElseThrow(() -> new ApiException(
                                                 "Không tìm thấy phiên thi với ID: " + attemptId,
                                                 HttpStatus.NOT_FOUND));
+
+                if (!attempt.getUserId().equals(currentUserId)) {
+                        throw new ApiException("Bạn không có quyền xem kết quả phiên thi này", HttpStatus.FORBIDDEN);
+                }
 
                 // 2. Kiểm tra đã nộp
                 if (attempt.getSubmittedAt() == null) {
@@ -310,8 +322,8 @@ public class ExamService {
          * Lấy lịch sử thi của user.
          * Chỉ trả về các lần thi đã nộp, sắp xếp mới nhất trước.
          */
-        public List<ExamHistoryDto> getExamHistory(Long userId) {
-                List<ExamAttempt> attempts = examAttemptRepository.findByUserId(userId);
+        public List<ExamHistoryDto> getExamHistory(Long currentUserId) {
+                List<ExamAttempt> attempts = examAttemptRepository.findByUserId(currentUserId);
 
                 return attempts.stream()
                                 // Chỉ lấy các lần thi đã nộp
