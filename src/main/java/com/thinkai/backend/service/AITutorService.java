@@ -116,6 +116,26 @@ public class AITutorService {
         return new AISummarizeResponse(responseText);
     }
 
+    /**
+     * Tạo phản hồi AI cho kết quả bài thi TOEIC/IELTS.
+     * Phản hồi bằng tiếng Việt, ngắn gọn và mang tính khích lệ.
+     */
+    public String generateExamFeedback(String examTitle, java.math.BigDecimal score,
+            int correctCount, int totalQuestions, boolean isPassed, String wrongAnswersSummary) {
+        String prompt = "Bạn là AI Gia sư tiếng Anh cho học viên TOEIC/IELTS. "
+                + "Một học viên vừa hoàn thành bài thi. Hãy đưa ra phản hồi ngắn gọn, khích lệ và mang tính xây dựng bằng tiếng Việt.\n\n"
+                + "Thông tin kết quả:\n"
+                + "- Bài thi: " + examTitle + "\n"
+                + "- Điểm: " + score + "%\n"
+                + "- Số câu đúng: " + correctCount + "/" + totalQuestions + "\n"
+                + "- Kết quả: " + (isPassed ? "Đạt" : "Chưa đạt") + "\n\n"
+                + (wrongAnswersSummary != null && !wrongAnswersSummary.isBlank()
+                        ? "Các câu sai:\n" + wrongAnswersSummary + "\n\n"
+                        : "")
+                + "Yêu cầu phản hồi: 1) Đánh giá tổng quan, 2) Điểm mạnh, 3) Cần cải thiện (dựa trên câu sai), 4) Gợi ý bước tiếp theo. Giới hạn dưới 200 từ.";
+        return callGeminiApi(prompt);
+    }
+
     private String callGeminiApi(String prompt) {
         if (geminiApiKey == null || geminiApiKey.trim().isEmpty()) {
             return "System Error: Gemini API key is not configured. Please contact the administrator.";

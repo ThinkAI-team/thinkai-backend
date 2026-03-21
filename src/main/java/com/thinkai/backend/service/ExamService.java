@@ -44,6 +44,7 @@ public class ExamService {
         private final QuestionRepository questionRepository;
         private final ExamAttemptRepository examAttemptRepository;
         private final ExamAnswerRepository examAnswerRepository;
+        private final AITutorService aiTutorService;
 
         // ==================== Teacher Operations ====================
 
@@ -172,21 +173,45 @@ public class ExamService {
 
                 List<Question> questions = questionRepository.findByExamIdOrderByOrderIndexAsc(exam.getId());
 
-                // Tạo map questionId → correctOption để tra cứu nhanh
+                // Tạo map questionId → Question và correctOption
+                Map<Long, Question> questionMap = questions.stream()
+                                .collect(Collectors.toMap(Question::getId, q -> q));
                 Map<Long, String> correctAnswerMap = questions.stream()
                                 .collect(Collectors.toMap(Question::getId, Question::getCorrectOption));
 
                 // 4. Chấm từng câu trả lời
                 int correctCount = 0;
+                StringBuilder wrongAnswersSummary = new StringBuilder();
 
                 for (AnswerDto answer : request.getAnswers()) {
                         String correctOption = correctAnswerMap.get(answer.getQuestionId());
 
                         boolean isCorrect = correctOption != null
-                                        && correctOption.equalsIgnoreCase(answer.getSelectedOption());
+                                        && normalizeOptionForComparison(correctOption)
+                                                        .equals(normalizeOptionForComparison(
+                                                                        answer.getSelectedOption()));
 
                         if (isCorrect) {
                                 correctCount++;
+                        } else {
+                                // Thu thập thông tin câu sai cho AI Feedback
+                                Question q = questionMap.get(answer.getQuestionId());
+                                if (q != null) {
+                                        String contentSnippet = q.getContent().length() > 100
+                                                        ? q.getContent().substring(0, 100) + "..."
+                                                        : q.getContent();
+                                        wrongAnswersSummary.append("- Câu: ").append(contentSnippet)
+                                                        .append(" | Bạn chọn: ").append(answer.getSelectedOption())
+                                                        .append(" | Đáp án đúng: ").append(correctOption);
+                                        if (q.getExplanation() != null && !q.getExplanation().isBlank()) {
+                                                wrongAnswersSummary.append(" | Giải thích: ")
+                                                                .append(q.getExplanation().length() > 150
+                                                                                ? q.getExplanation().substring(0, 150)
+                                                                                        + "..."
+                                                                                : q.getExplanation());
+                                        }
+                                        wrongAnswersSummary.append("\n");
+                                }
                         }
 
                         // 5. Lưu ExamAnswer
@@ -214,14 +239,31 @@ public class ExamService {
                 // Tính thời gian làm bài
                 long timeTakenSeconds = Duration.between(attempt.getStartedAt(), submittedAt).getSeconds();
 
-                // 7. Cập nhật ExamAttempt
+                // 7. Tạo AI Feedback (không làm hỏng submit nếu Gemini lỗi)
+                String aiFeedback = null;
+                try {
+                        aiFeedback = aiTutorService.generateExamFeedback(
+                                        exam.getTitle(),
+                                        score,
+                                        correctCount,
+                                        totalQuestions,
+                                        isPassed,
+                                        wrongAnswersSummary.length() > 0 ? wrongAnswersSummary.toString() : null);
+                } catch (Exception e) {
+                        // Log nhưng không throw — nộp bài vẫn thành công
+                        org.slf4j.LoggerFactory.getLogger(ExamService.class)
+                                        .warn("Không thể tạo AI Feedback: {}", e.getMessage());
+                }
+
+                // 8. Cập nhật ExamAttempt
                 attempt.setScore(score);
                 attempt.setCorrectCount(correctCount);
                 attempt.setIsPassed(isPassed);
+                attempt.setAiFeedback(aiFeedback);
                 attempt.setSubmittedAt(submittedAt);
                 examAttemptRepository.save(attempt);
 
-                // 8. Trả về kết quả
+                // 9. Trả về kết quả
                 return ExamSubmitResponse.builder()
                                 .attemptId(attempt.getId())
                                 .examTitle(exam.getTitle())
@@ -377,5 +419,21 @@ public class ExamService {
                                 .type(question.getType().name())
                                 .orderIndex(question.getOrderIndex())
                                 .build();
+        }
+
+        /**
+         * Chuẩn hóa option để so sánh: DB lưu "A", frontend gửi "A. Reading".
+         * Trích xuất key (A, B, C...) từ format "X. ..." để so khớp đúng.
+         */
+        private String normalizeOptionForComparison(String option) {
+                if (option == null || option.isBlank()) {
+                        return "";
+                }
+                String trimmed = option.trim();
+                // Format "A. Reading" hoặc "B. Room 2" -> lấy "A" hoặc "B"
+                if (trimmed.matches("^[A-Za-z]\\.\\s+.*")) {
+                        return trimmed.substring(0, 1).toUpperCase();
+                }
+                return trimmed.toUpperCase();
         }
 }
