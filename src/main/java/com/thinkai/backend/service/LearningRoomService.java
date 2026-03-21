@@ -68,6 +68,8 @@ public class LearningRoomService {
                 .title(course.getTitle())
                 .description(course.getDescription())
                 .thumbnailUrl(course.getThumbnailUrl())
+                .price(course.getPrice())
+                .isEnrolled(true)
                 // Requires instructor mapping, skip if not mapped in entity directly
                 // .instructorName(course.getInstructor() != null ? course.getInstructor().getFullName() : null)
                 .progressPercent(enrollment.getProgressPercent())

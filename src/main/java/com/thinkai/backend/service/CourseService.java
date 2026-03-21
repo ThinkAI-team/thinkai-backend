@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +28,7 @@ import com.thinkai.backend.entity.User;
 import com.thinkai.backend.exception.ApiException;
 import com.thinkai.backend.repository.CourseRepository;
 import com.thinkai.backend.repository.EnrollmentRepository;
+import com.thinkai.backend.repository.LessonProgressRepository;
 import com.thinkai.backend.repository.LessonRepository;
 import com.thinkai.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +38,7 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final LessonRepository lessonRepository;
+    private final LessonProgressRepository lessonProgressRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final UserRepository userRepository;
 
@@ -84,18 +88,11 @@ public class CourseService {
                         "Không tìm thấy khóa học với ID: " + courseId,
                         HttpStatus.NOT_FOUND));
 
+        boolean isInstructor = currentUserId != null
+                && course.getInstructorId() != null
+                && course.getInstructorId().equals(currentUserId);
+
         List<Lesson> lessons = lessonRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
-
-        // Get instructor name
-        String instructorName = null;
-        if (course.getInstructorId() != null) {
-            User instructor = userRepository.findById(course.getInstructorId()).orElse(null);
-            if (instructor != null) {
-                instructorName = instructor.getFullName();
-            }
-        }
-
-        // Check enrollment status
         Boolean isEnrolled = false;
         Integer progressPercent = 0;
         if (currentUserId != null) {
@@ -108,13 +105,37 @@ public class CourseService {
             }
         }
 
+        // Public users or non-related users cannot view unpublished courses.
+        if (!Boolean.TRUE.equals(course.getIsPublished()) && !isInstructor && !isEnrolled) {
+            throw new ApiException("Khóa học chưa được xuất bản", HttpStatus.FORBIDDEN);
+        }
+
+        // Get instructor name
+        String instructorName = null;
+        if (course.getInstructorId() != null) {
+            User instructor = userRepository.findById(course.getInstructorId()).orElse(null);
+            if (instructor != null) {
+                instructorName = instructor.getFullName();
+            }
+        }
+
+        Set<Long> completedLessonIds = (currentUserId == null || lessons.isEmpty())
+                ? Set.of()
+                : lessonProgressRepository.findByUserIdAndLessonIdIn(
+                                currentUserId,
+                                lessons.stream().map(Lesson::getId).toList())
+                        .stream()
+                        .filter(progress -> Boolean.TRUE.equals(progress.getIsCompleted()))
+                        .map(progress -> progress.getLessonId())
+                        .collect(Collectors.toSet());
+
         List<LessonResponse> lessonResponses = lessons.stream()
                 .map(lesson -> LessonResponse.builder()
                         .id(lesson.getId())
                         .title(lesson.getTitle())
                         .type(lesson.getType().name())
                         .duration(formatDuration(lesson.getDurationSeconds()))
-                        .isCompleted(false) // TODO: check lesson_progress
+                        .isCompleted(completedLessonIds.contains(lesson.getId()))
                         .orderIndex(lesson.getOrderIndex())
                         .build())
                 .toList();
@@ -125,6 +146,8 @@ public class CourseService {
                 .description(course.getDescription())
                 .thumbnailUrl(course.getThumbnailUrl())
                 .instructorName(instructorName)
+                .price(course.getPrice())
+                .isEnrolled(isEnrolled)
                 .progressPercent(progressPercent)
                 .lessons(lessonResponses)
                 .build();

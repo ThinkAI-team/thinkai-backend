@@ -8,6 +8,7 @@ import com.thinkai.backend.exception.ApiException;
 import com.thinkai.backend.repository.CourseRepository;
 import com.thinkai.backend.repository.LessonRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,9 @@ public class LessonService {
     private final CourseRepository courseRepository;
 
     private static final String UPLOAD_DIR = "uploads/";
+
+    @Value("${app.backend-url:http://localhost:8081}")
+    private String backendUrl;
 
     @Transactional
     public Lesson createLesson(Long courseId, Long teacherId, LessonRequest request) {
@@ -66,8 +70,10 @@ public class LessonService {
             Path path = Paths.get(UPLOAD_DIR + filename);
             Files.write(path, file.getBytes());
 
-            // In production, this would be an S3 or GCS URL
-            return "http://localhost:8080/api/files/" + filename; 
+            String normalizedBackendUrl = backendUrl.endsWith("/")
+                    ? backendUrl.substring(0, backendUrl.length() - 1)
+                    : backendUrl;
+            return normalizedBackendUrl + "/api/files/" + filename;
 
         } catch (IOException e) {
             throw new ApiException("Failed to upload file", HttpStatus.INTERNAL_SERVER_ERROR);

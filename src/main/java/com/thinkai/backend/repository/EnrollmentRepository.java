@@ -24,6 +24,8 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 
     int countByCourseId(Long courseId);
 
+    List<Enrollment> findByCourseIdIn(List<Long> courseIds);
+
     @Query("""
             SELECT COUNT(DISTINCT e.userId)
             FROM Enrollment e
@@ -41,4 +43,3 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     """)
     long countCompletedStudentsByInstructorId(@Param("instructorId") Long instructorId);
 }
-

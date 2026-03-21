@@ -2,6 +2,7 @@ package com.thinkai.backend.controller;
 
 import com.thinkai.backend.dto.ApiResponse;
 import com.thinkai.backend.dto.CourseDetailResponse;
+import com.thinkai.backend.dto.CourseRequest;
 import com.thinkai.backend.dto.EnrollmentResponse;
 import com.thinkai.backend.entity.Course;
 import com.thinkai.backend.entity.User;
@@ -10,6 +11,7 @@ import com.thinkai.backend.repository.UserRepository;
 import com.thinkai.backend.security.StudentOnly;
 import com.thinkai.backend.security.TeacherOnly;
 import com.thinkai.backend.service.CourseService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -85,17 +87,22 @@ public class CourseController {
 
     @TeacherOnly
     @PostMapping
-    public ResponseEntity<ApiResponse<Course>> createCourse(@RequestBody Course course) {
-        // Chỉ Teacher mới có quyền tạo khóa học
-        // TODO: Implement actual logic
-        return ResponseEntity.ok(ApiResponse.success(course));
+    public ResponseEntity<ApiResponse<Course>> createCourse(
+            Authentication auth,
+            @Valid @RequestBody CourseRequest request) {
+        Long teacherId = requireCurrentUserId(auth);
+        Course course = courseService.createCourse(teacherId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created("Tạo khóa học thành công", course));
     }
 
     @TeacherOnly
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Course>> updateCourse(@PathVariable Long id, @RequestBody Course course) {
-        // Chỉ Teacher mới có quyền sửa khóa học
-        // TODO: Implement actual logic
+    public ResponseEntity<ApiResponse<Course>> updateCourse(
+            Authentication auth,
+            @PathVariable Long id,
+            @Valid @RequestBody CourseRequest request) {
+        Long teacherId = requireCurrentUserId(auth);
+        Course course = courseService.updateCourse(id, teacherId, request);
         return ResponseEntity.ok(ApiResponse.success(course));
     }
 
@@ -111,5 +118,13 @@ public class CourseController {
             return user.getId();
         }
         return null;
+    }
+
+    private Long requireCurrentUserId(Authentication auth) {
+        Long userId = getCurrentUserId(auth);
+        if (userId == null) {
+            throw new ApiException("Vui lòng đăng nhập", HttpStatus.UNAUTHORIZED);
+        }
+        return userId;
     }
 }
