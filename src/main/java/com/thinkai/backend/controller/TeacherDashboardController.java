@@ -1,5 +1,6 @@
 package com.thinkai.backend.controller;
 
+import com.thinkai.backend.dto.ApiResponse;
 import com.thinkai.backend.dto.DashboardStatsResponse;
 import com.thinkai.backend.entity.User;
 import com.thinkai.backend.exception.ApiException;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/teacher")
+@RequestMapping({"/teacher", "/teacher-portal"})
 @RequiredArgsConstructor
 public class TeacherDashboardController {
 
@@ -24,11 +25,11 @@ public class TeacherDashboardController {
 
     @GetMapping("/dashboard")
     @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
-    public ResponseEntity<DashboardStatsResponse> getDashboard(Authentication auth) {
+    public ResponseEntity<ApiResponse<DashboardStatsResponse>> getDashboard(Authentication auth) {
         User teacher = userRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
                 
         DashboardStatsResponse stats = dashboardService.getDashboardStats(teacher.getId());
-        return ResponseEntity.ok(stats);
+        return ResponseEntity.ok(ApiResponse.success("Teacher dashboard stats", stats));
     }
 }
