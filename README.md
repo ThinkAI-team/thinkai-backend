@@ -1,119 +1,155 @@
-# ThinkAI Backend
+# 🚀 ThinkAI - Smart Education Platform
 
-> Spring Boot backend API cho nền tảng học trực tuyến ThinkAI.
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](./CHANGELOG.md)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+[![Status](https://img.shields.io/badge/status-In%20Development-yellow.svg)]()
 
-## 📋 Yêu cầu
+> Nền tảng E-learning thế hệ mới, tích hợp sức mạnh của **Google Gemini API** để mang đến trải nghiệm học tập thông minh.
 
-| Công cụ      | Phiên bản | Kiểm tra                  |
-| -------------- | ----------- | -------------------------- |
-| Docker         | ≥ 20.x     | `docker --version`       |
-| Docker Compose | ≥ 2.x      | `docker compose version` |
-| Java           | ≥ 21       | `java -version`          |
+---
+
+## ✨ Features
+
+### 🤖 AI Tutor
+
+Gia sư ảo hỗ trợ giải đáp thắc mắc 24/7, trả lời dựa trên ngữ cảnh bài học.
+
+### 📝 Smart Exam
+
+Tự động tạo đề thi từ nội dung bài học và phân tích lỗ hổng kiến thức bằng AI.
+
+### 📚 Learning Management
+
+Quản lý khóa học, theo dõi tiến độ, và tổ chức nội dung học tập hiệu quả.
+
+---
+
+## 🛠 Tech Stack
+
+| Layer        | Technology              | Description                           |
+| ------------ | ----------------------- | ------------------------------------- |
+| **Frontend** | Next.js 14 (App Router) | Tailwind CSS, Shadcn/UI, Lucide React |
+| **Backend**  | Spring Boot 3           | Spring Security, JPA, Lombok          |
+| **Database** | MySQL 8.0               | Relational data storage               |
+| **AI Core**  | Google Gemini Pro       | NLP, Chatbot, Exam Generation         |
+| **DevOps**   | Docker, GitLab CI       | Deployment on Render/Vercel           |
+
+---
+
+## 📁 Project Structure
+
+```
+thinkai/
+├── applications/
+│   ├── frontend/          # Next.js Frontend
+│   └── backend/           # Spring Boot Backend
+├── operations/
+│   └── infrastructure/    # Docker Compose & K8s
+└── knowledge/
+    └── docs/              # Documentation (you are here)
+        ├── README.md
+        ├── SRS.md         # Software Requirements
+        ├── Architecture.md
+        ├── API_SPEC.md    # API Documentation
+        └── DB_Scheme.md   # Database Schema
+```
+
+---
 
 ## 🚀 Quick Start
 
-```bash
-# 1. Clone project
-git clone <repository-url>
-cd thinkai-backend
+### Prerequisites
 
-# 2. Chạy toàn bộ hệ thống (DB + Backend)
-docker compose up --build -d
+- Docker Desktop
+- Node.js 18+
+- JDK 17+
+- MySQL 8.0 (or use Docker)
 
-# 3. Theo dõi logs
-docker compose logs -f thinkai-backend
-```
-
-Dịch vụ sẽ sẵn sàng tại: `http://localhost:8081`
-
-### Các lệnh hữu ích khác
-- `docker compose down`: Dừng hệ thống nhưng giữ lại dữ liệu DB.
-- `docker compose down -v`: Reset hoàn toàn hệ thống và xóa dữ liệu DB.
-- `docker compose restart thinkai-api`: Restart riêng Backend (sau khi sửa code).
-# 3. Chờ MySQL sẵn sàng (~10 giây)
-docker logs thinkai-mysql --tail 10
-
-# 4. Chạy Spring Boot
-./mvnw spring-boot:run
-```
-
-App sẽ chạy tại: `http://localhost:8080`
-
-## 🗄️ Database
-
-- **Host**: localhost
-- **Port**: 3306
-- **Database**: thinkai_db
-- **Username**: root
-- **Password**: root
-
-### Truy cập MySQL CLI
+### Development Setup
 
 ```bash
-docker exec -it thinkai-mysql mysql -uroot -proot thinkai_db
+# 1. Clone infrastructure repository
+git clone <link-repo-infrastructure>
+cd infrastructure
+
+# 2. Start Database & Backend with Docker
+docker-compose up -d mysql backend
+
+# 3. Run Frontend (in frontend directory)
+cd ../frontend
+npm install
+npm run dev
 ```
 
-## 📁 Cấu trúc Project
+### Environment Variables
 
-```
-src/main/java/com/thinkai/backend/
-├── entity/          # JPA Entities (15 files)
-├── repository/      # Data Access Layer (coming soon)
-├── service/         # Business Logic (coming soon)
-├── controller/      # REST API (coming soon)
-└── DemoApplication.java
+**Frontend (.env.local):**
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
 ```
 
-## 🔧 Configuration
+**Backend (application.yml):**
 
-| Variable     | File                       | Mô tả                       |
-| ------------ | -------------------------- | ----------------------------- |
-| Database URL | `application.properties` | JDBC connection string        |
-| JPA DDL Auto | `application.properties` | `update` (auto sync schema) |
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/thinkai
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
-## ⚠️ Troubleshooting
-
-### Port 3306 đã bị chiếm
-
-```bash
-# Kiểm tra process đang dùng port
-sudo lsof -i :3306
-
-# Hoặc đổi port trong docker-compose.yml
-ports:
-  - "3307:3306"  # Đổi sang 3307
+gemini:
+  api-key: ${GEMINI_API_KEY}
 ```
 
-### Permission denied khi chạy mvnw
+---
 
-```bash
-chmod +x mvnw
-```
+## 📖 Documentation
 
-### MySQL chưa sẵn sàng
+| Document                                 | Description                         |
+| ---------------------------------------- | ----------------------------------- |
+| [SRS.md](./SRS.md)                       | Software Requirements Specification |
+| [Architecture.md](./Architecture.md)     | System Architecture & Data Flow     |
+| [API_SPEC.md](./API_SPEC.md)             | RESTful API Documentation           |
+| [DB_Scheme.md](./DB_Scheme.md)           | Database Schema Design              |
+| [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)   | UI/UX Design System & Guidelines    |
 
-```bash
-# Kiểm tra container status
-docker ps | grep thinkai-mysql
+---
 
-# Xem logs
-docker logs thinkai-mysql
-```
+## 👥 Team
 
-## 📚 Documentation
+| Role             | Name              | Responsibilities     |
+| ---------------- | ----------------- | -------------------- |
+| **Project Lead** | Bình Minh         | Architecture, DevOps |
+| **Backend**      | Nguyên, Pháp      | Spring Boot, API     |
+| **Frontend**     | Minh, Trang, Khoa | Next.js, UI/UX       |
 
-- [Database Schema](../thinkai-docs/DB_Scheme.md)
-- [API Specification](../thinkai-docs/API_SPEC.md)
-- [Architecture](../thinkai-docs/Architecture.md)
+---
 
-## 🛠️ Tech Stack
+## 🗓 Roadmap
 
-- **Framework**: Spring Boot 4.0.2
-- **Database**: MySQL 8.0
-- **ORM**: Hibernate / JPA
-- **Build**: Maven
-- **Container**: Docker
+- [x] **Phase 1:** Core Features (Auth, Courses, Learning Room)
+- [ ] **Phase 2:** AI Integration (Tutor, Smart Exam)
+- [ ] **Phase 3:** Advanced Features (Analytics, Mobile App)
+
+---
+
+## 📝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
 
 ## 📄 License
 
-Private - ThinkAI Team
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+
+---
+
+<p align="center">
+  Made with ❤️ by ThinkAI Team
+</p>
