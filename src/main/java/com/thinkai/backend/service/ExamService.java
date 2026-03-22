@@ -183,7 +183,9 @@ public class ExamService {
                         String correctOption = correctAnswerMap.get(answer.getQuestionId());
 
                         boolean isCorrect = correctOption != null
-                                        && correctOption.equalsIgnoreCase(answer.getSelectedOption());
+                                        && normalizeOptionForComparison(correctOption)
+                                                        .equals(normalizeOptionForComparison(
+                                                                        answer.getSelectedOption()));
 
                         if (isCorrect) {
                                 correctCount++;
@@ -377,5 +379,21 @@ public class ExamService {
                                 .type(question.getType().name())
                                 .orderIndex(question.getOrderIndex())
                                 .build();
+        }
+
+        /**
+         * Chuẩn hóa option để so sánh: DB lưu "A", frontend gửi "A. Reading".
+         * Trích xuất key (A, B, C...) từ format "X. ..." để so khớp đúng.
+         */
+        private String normalizeOptionForComparison(String option) {
+                if (option == null || option.isBlank()) {
+                        return "";
+                }
+                String trimmed = option.trim();
+                // Format "A. Reading" hoặc "B. Room 2" -> lấy "A" hoặc "B"
+                if (trimmed.matches("^[A-Za-z]\\.\\s+.*")) {
+                        return trimmed.substring(0, 1).toUpperCase();
+                }
+                return trimmed.toUpperCase();
         }
 }
