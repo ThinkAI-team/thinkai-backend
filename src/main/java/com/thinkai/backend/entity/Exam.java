@@ -1,12 +1,14 @@
 package com.thinkai.backend.entity;
 
+import com.thinkai.backend.entity.enums.ExamType;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "exams")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -23,21 +25,26 @@ public class Exam {
     private String title;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Difficulty difficulty = Difficulty.MEDIUM;
+    @Column(name = "exam_type", nullable = false)
+    private ExamType examType;
 
-    public enum Difficulty {
-        EASY, MEDIUM, HARD
-    }
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @Column(name = "time_limit_minutes", nullable = false)
-    private Integer timeLimitMinutes = 30;
+    @Builder.Default
+    private Integer timeLimitMinutes = 120;
 
     @Column(name = "passing_score", nullable = false)
+    @Builder.Default
     private Integer passingScore = 60;
 
-    @Column(name = "is_ai_generated", nullable = false)
-    private Boolean isAiGenerated = false;
+    @Column(name = "is_random_order", nullable = false)
+    @Builder.Default
+    private Boolean isRandomOrder = false;
+
+    @Column(name = "part_config", columnDefinition = "JSON")
+    private String partConfig;
 
     @Column(name = "created_by")
     private Long createdBy;
