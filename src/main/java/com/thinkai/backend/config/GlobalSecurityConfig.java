@@ -62,6 +62,7 @@ public class GlobalSecurityConfig {
                     "/v3/api-docs/**",
                     "/ai-tutor/**"
                 ).permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/courses", "/courses/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
