@@ -1,40 +1,55 @@
-version: '3.8'
+# ==============================================================================
+# Docker Compose - ThinkAI Backend (Local Development)
+# ==============================================================================
+# Mục đích: Chạy ứng dụng Spring Boot + MySQL trên máy local
+# Cách chạy: docker-compose up -d
+# ==============================================================================
 
 services:
+  # ---------------------------------------------------------------------------
+  # MySQL Database
+  # ---------------------------------------------------------------------------
   thinkai-db:
-    image: mysql:8.0
-    container_name: thinkai-mysql
-    restart: always
+    image: mysql:8.0                     # Sử dụng MySQL version 8.0
+    container_name: thinkai-mysql         # Tên container để dễ nhận diện
+    restart: always                      # Tự động restart khi container fail
     environment:
-      MYSQL_DATABASE: thinkai_db      # Tên DB dự án
-      MYSQL_ROOT_PASSWORD: root       # Pass root (chỉ dùng cho Local Dev)
-      MYSQL_USER: dev_user            # User phụ (optional)
-      MYSQL_PASSWORD: thinkai123
+      MYSQL_DATABASE: thinkai_db         # Tên database tự động tạo khi khởi động
+      MYSQL_ROOT_PASSWORD: root          # Password cho user root (chỉ dùng local dev)
+      MYSQL_USER: dev_user               # User phụ để kết nối (optional)
+      MYSQL_PASSWORD: thinkai123         # Password cho user phụ
     ports:
-      - "3306:3306"                   # Map port ra ngoài để Workbench/Java kết nối
+      - "3306:3306"                     # Map port 3306 của container ra port 3306 máy host
     volumes:
-      - mysql_data:/var/lib/mysql     # Quan trọng: Giữ dữ liệu không bị mất khi tắt Docker
+      - mysql_data:/var/lib/mysql        # Lưu dữ liệu vào volume, không bị mất khi restart
     command: --default-authentication-plugin=mysql_native_password
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 20s
       retries: 10
 
+  # ---------------------------------------------------------------------------
+  # Spring Boot API
+  # ---------------------------------------------------------------------------
   thinkai-api:
-    build: .
-    container_name: thinkai-backend
-    restart: always
+    build: .                             # Build từ Dockerfile trong thư mục hiện tại
+    container_name: thinkai-backend      # Tên container cho backend
+    restart: always                      # Tự động restart khi fail
     ports:
-      - "8081:8081"
+      - "8081:8081"                     # Map port 8081 (Spring Boot) ra máy host
     depends_on:
-      thinkai-db:
+      thinkai-db:                        # Đợi database khỏi mới chạy backend
         condition: service_healthy
-    env_file: .env
+    env_file: .env                       # Đọc biến môi trường từ file .env
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker   # Kích hoạt profile "docker"
+      # URL kết nối MySQL: jdbc:mysql://<tên_service>:<port>/<database>
       - SPRING_DATASOURCE_URL=jdbc:mysql://thinkai-db:3306/thinkai_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATASOURCE_USERNAME=root  # Username kết nối database
+      - SPRING_DATASOURCE_PASSWORD=root  # Password kết nối database
 
+# ---------------------------------------------------------------------------
+# Volumes: Lưu trữ dữ liệu bền vững
+# ---------------------------------------------------------------------------
 volumes:
-  mysql_data:
+  mysql_data:                           # Volume lưu trữ dữ liệu MySQL
