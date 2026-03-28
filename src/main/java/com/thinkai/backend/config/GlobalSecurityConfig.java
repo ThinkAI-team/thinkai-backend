@@ -60,7 +60,8 @@ public class GlobalSecurityConfig {
                     "/",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
-                    "/ai-tutor/**"
+                    "/ai-tutor/**",
+                    "/api/files/**"
                 ).permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/courses", "/courses/**").permitAll()
                 .anyRequest().authenticated()

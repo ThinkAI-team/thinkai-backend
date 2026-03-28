@@ -34,6 +34,9 @@ public class LessonProgress {
     @Column(name = "last_accessed_at")
     private LocalDateTime lastAccessedAt;
 
+    @Column(name = "current_time_seconds")
+    private Integer currentTimeSeconds = 0;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 }

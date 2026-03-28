@@ -13,4 +13,7 @@ public class UpdateProgressRequest {
     @NotNull(message = "watchTimeSeconds là bắt buộc")
     @Min(value = 0, message = "watchTimeSeconds phải >= 0")
     private Integer watchTimeSeconds;
+
+    @Min(value = 0, message = "currentTimeSeconds phải >= 0")
+    private Integer currentTimeSeconds;
 }
