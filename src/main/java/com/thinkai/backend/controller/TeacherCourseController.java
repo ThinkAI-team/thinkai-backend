@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/teacher/courses")
@@ -70,5 +72,15 @@ public class TeacherCourseController {
     public ResponseEntity<Course> publishCourse(Authentication auth, @PathVariable Long id) {
         Course course = courseService.publishCourse(id, getTeacherId(auth));
         return ResponseEntity.ok(course);
+    }
+
+    @PostMapping("/{id}/thumbnail")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
+    public ResponseEntity<Map<String, String>> uploadThumbnail(
+            Authentication auth,
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        String fileUrl = courseService.uploadThumbnail(id, getTeacherId(auth), file);
+        return ResponseEntity.ok(Map.of("url", fileUrl));
     }
 }

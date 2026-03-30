@@ -5,8 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +34,7 @@ import com.thinkai.backend.repository.LessonProgressRepository;
 import com.thinkai.backend.repository.LessonRepository;
 import com.thinkai.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+
 @Service
 @RequiredArgsConstructor
 public class CourseService {
@@ -122,8 +125,8 @@ public class CourseService {
         Set<Long> completedLessonIds = (currentUserId == null || lessons.isEmpty())
                 ? Set.of()
                 : lessonProgressRepository.findByUserIdAndLessonIdIn(
-                                currentUserId,
-                                lessons.stream().map(Lesson::getId).toList())
+                        currentUserId,
+                        lessons.stream().map(Lesson::getId).toList())
                         .stream()
                         .filter(progress -> Boolean.TRUE.equals(progress.getIsCompleted()))
                         .map(progress -> progress.getLessonId())
@@ -174,7 +177,8 @@ public class CourseService {
 
     public Course getCourseByIdAndTeacher(Long courseId, Long teacherId) {
         return courseRepository.findByIdAndInstructorId(courseId, teacherId)
-                .orElseThrow(() -> new ApiException("Không tìm thấy khóa học với ID: " + courseId, HttpStatus.NOT_FOUND));
+                .orElseThrow(
+                        () -> new ApiException("Không tìm thấy khóa học với ID: " + courseId, HttpStatus.NOT_FOUND));
     }
 
     public Course updateCourse(Long courseId, Long teacherId, CourseRequest request) {
@@ -196,6 +200,63 @@ public class CourseService {
         course.setIsPublished(true);
         course.setStatus(Course.Status.APPROVED);
         return courseRepository.save(course);
+    }
+
+    private static final String UPLOAD_DIR = "uploads/";
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final List<String> ALLOWED_IMAGE_TYPES = List.of(
+            "image/jpeg", "image/png", "image/gif", "image/webp");
+
+    @Value("${app.backend-url:http://localhost:8081}")
+    private String backendUrl;
+
+    @Transactional
+    public String uploadThumbnail(Long courseId, Long teacherId, org.springframework.web.multipart.MultipartFile file) {
+        Course course = getCourseByIdAndTeacher(courseId, teacherId);
+
+        if (file.isEmpty()) {
+            throw new ApiException("File không được để trống", HttpStatus.BAD_REQUEST);
+        }
+
+        if (file.getSize() > MAX_FILE_SIZE) {
+            String sizeInMB = String.format("%.0f MB", file.getSize() / (1024.0 * 1024));
+            throw new ApiException("File quá lớn (" + sizeInMB + "). Giới hạn tối đa: 10 MB", HttpStatus.BAD_REQUEST);
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType)) {
+            throw new ApiException("Chỉ chấp nhận file ảnh (JPEG, PNG, GIF, WEBP)", HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            java.io.File uploadDirObj = new java.io.File(UPLOAD_DIR);
+            if (!uploadDirObj.exists()) {
+                uploadDirObj.mkdirs();
+            }
+
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String newFilename = java.util.UUID.randomUUID().toString() + extension;
+            java.nio.file.Path path = java.nio.file.Paths.get(UPLOAD_DIR + newFilename).toAbsolutePath();
+            
+            // Use copy from stream to bypass MultipartFile temporary path issues
+            java.nio.file.Files.copy(file.getInputStream(), path, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+            String normalizedBackendUrl = backendUrl.endsWith("/")
+                    ? backendUrl.substring(0, backendUrl.length() - 1)
+                    : backendUrl;
+            String fileUrl = normalizedBackendUrl + "/api/files/" + newFilename;
+            
+            course.setThumbnailUrl(fileUrl);
+            courseRepository.save(course);
+
+            return fileUrl;
+        } catch (java.io.IOException e) {
+            throw new ApiException("Lỗi khi lưu file: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
