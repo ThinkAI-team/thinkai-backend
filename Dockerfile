@@ -47,6 +47,26 @@ COPY --from=builder /app/target/*.jar app.jar
 # Phải khớp với server.port trong application.yml
 EXPOSE 8081
 
+# ==============================================================================
+# Các lệnh Docker thường dùng:
+# ==============================================================================
+# Build image:
+#   docker build -t minhtuyetvoi/thinkai-backend:latest .
+
+# Tag image với version:
+#   docker tag minhtuyetvoi/thinkai-backend:latest minhtuyetvoi/thinkai-backend:1.0.0
+
+# Push lên Docker Hub:
+#   docker push minhtuyetvoi/thinkai-backend:latest
+#   docker push minhtuyetvoi/thinkai-backend:1.0.0
+
+# Pull image từ Docker Hub:
+#   docker pull minhtuyetvoi/thinkai-backend:latest
+
+# Chạy container:
+#   docker run -p 8081:8081 minhtuyetvoi/thinkai-backend:latest
+# ==============================================================================
+
 # Lệnh chạy khi container khởi động
 # Container nhận biến môi trường từ bên ngoài (docker-compose, Railway,...)
 ENTRYPOINT ["java", "-jar", "app.jar"]
