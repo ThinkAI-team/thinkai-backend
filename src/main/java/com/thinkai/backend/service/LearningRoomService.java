@@ -124,6 +124,13 @@ public class LearningRoomService {
         progress.setLastAccessedAt(LocalDateTime.now());
         lessonProgressRepository.save(progress);
 
+        // Tính % tiến độ bài học
+        double lessonPercent = 0.0;
+        if (lesson.getDurationSeconds() != null && lesson.getDurationSeconds() > 0) {
+            lessonPercent = Math.min(100.0,
+                    (double) progress.getWatchTimeSeconds() / lesson.getDurationSeconds() * 100);
+        }
+
         return LessonDetailResponse.builder()
                 .id(lesson.getId())
                 .title(lesson.getTitle())
@@ -134,6 +141,8 @@ public class LearningRoomService {
                 .orderIndex(lesson.getOrderIndex())
                 .isCompleted(progress.getIsCompleted())
                 .watchTimeSeconds(progress.getWatchTimeSeconds())
+                .currentTimeSeconds(progress.getCurrentTimeSeconds())
+                .lessonProgressPercent(Math.round(lessonPercent * 10.0) / 10.0)
                 .courseId(course.getId())
                 .courseTitle(course.getTitle())
                 .previousLessonId(previousLessonId)

@@ -9,6 +9,12 @@ spring:
   profiles:
     active: local
 
+  # === Upload file (video/pdf) tối đa 1GB ===
+  servlet:
+    multipart:
+      max-file-size: 1GB
+      max-request-size: 1GB
+
   # === JPA Common ===
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -37,6 +43,9 @@ spring:
 # === Server ===
 server:
   port: 8081
+  tomcat:
+    max-swallow-size: -1
+    connection-timeout: 600000
 
 # === JWT (BẮT BUỘC set trong .env, có fallback cho dev) ===
 jwt:

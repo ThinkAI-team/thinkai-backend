@@ -16,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -56,9 +55,36 @@ public class LessonService {
         return lessonRepository.save(lesson);
     }
 
+    private static final long MAX_FILE_SIZE = 1L * 1024 * 1024 * 1024; // 1GB
+    private static final List<String> ALLOWED_CONTENT_TYPES = List.of(
+            "video/mp4", "video/webm", "video/ogg", "video/quicktime", "video/x-msvideo",
+            "application/pdf"
+    );
+
     @Transactional
     public String uploadLessonFile(Long courseId, Long teacherId, MultipartFile file) {
         verifyCourseOwnership(courseId, teacherId);
+
+        // Validate file rỗng
+        if (file.isEmpty()) {
+            throw new ApiException("File không được để trống", HttpStatus.BAD_REQUEST);
+        }
+
+        // Validate kích thước
+        if (file.getSize() > MAX_FILE_SIZE) {
+            String sizeInMB = String.format("%.0f MB", file.getSize() / (1024.0 * 1024));
+            throw new ApiException(
+                    "File quá lớn (" + sizeInMB + "). Giới hạn tối đa: 1 GB",
+                    HttpStatus.valueOf(413));
+        }
+
+        // Validate loại file
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
+            throw new ApiException(
+                    "Định dạng file không hợp lệ. Chỉ chấp nhận: video (mp4, webm, ogg, mov, avi) và pdf",
+                    HttpStatus.BAD_REQUEST);
+        }
 
         try {
             File uploadDir = new File(UPLOAD_DIR);
@@ -68,7 +94,9 @@ public class LessonService {
 
             String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
             Path path = Paths.get(UPLOAD_DIR + filename);
-            Files.write(path, file.getBytes());
+
+            // Streaming: không load toàn bộ file vào RAM
+            file.transferTo(path.toFile());
 
             String normalizedBackendUrl = backendUrl.endsWith("/")
                     ? backendUrl.substring(0, backendUrl.length() - 1)
@@ -76,7 +104,7 @@ public class LessonService {
             return normalizedBackendUrl + "/api/files/" + filename;
 
         } catch (IOException e) {
-            throw new ApiException("Failed to upload file", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new ApiException("Upload file thất bại: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

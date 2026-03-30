@@ -21,6 +21,8 @@ public class LessonDetailResponse {
     // User progress details
     private Boolean isCompleted;
     private Integer watchTimeSeconds;
+    private Integer currentTimeSeconds;
+    private Double lessonProgressPercent;
     
     // Navigation info
     private Long courseId;
