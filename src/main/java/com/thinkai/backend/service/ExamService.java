@@ -74,7 +74,8 @@ public class ExamService {
                                 .title(request.getTitle())
                                 .examType(request.getExamType())
                                 .description(request.getDescription())
-                                .timeLimitMinutes(request.getTimeLimitMinutes() != null ? request.getTimeLimitMinutes() : 120)
+                                .timeLimitMinutes(request.getTimeLimitMinutes() != null ? request.getTimeLimitMinutes()
+                                                : 120)
                                 .passingScore(request.getPassingScore() != null ? request.getPassingScore() : 60)
                                 .isRandomOrder(request.getIsRandomOrder() != null ? request.getIsRandomOrder() : false)
                                 .partConfig(partConfigStr)
@@ -87,19 +88,21 @@ public class ExamService {
                         for (Map.Entry<String, Integer> entry : request.getPartConfig().entrySet()) {
                                 try {
                                         Part part = Part.valueOf(entry.getKey());
-                                        List<QuestionBank> availableQuestions = questionBankRepository.findByExamTypeAndPart(request.getExamType(), part);
-                                        
+                                        List<QuestionBank> availableQuestions = questionBankRepository
+                                                        .findByExamTypeAndPart(request.getExamType(), part);
+
                                         if (availableQuestions.size() > 0) {
                                                 Collections.shuffle(availableQuestions);
                                                 int limit = Math.min(entry.getValue(), availableQuestions.size());
                                                 List<QuestionBank> selected = availableQuestions.subList(0, limit);
-                                                
+
                                                 for (QuestionBank qb : selected) {
                                                         Question q = Question.builder()
                                                                         .examId(exam.getId())
                                                                         .content(qb.getContent())
                                                                         .options(qb.getOptions())
-                                                                        .correctOption(qb.getCorrectAnswer())
+                                                                        .correctOption(normalizeOptionForComparison(
+                                                                                        qb.getCorrectAnswer()))
                                                                         .type(Question.QuestionType.SINGLE_CHOICE)
                                                                         .explanation(qb.getExplanation())
                                                                         .orderIndex(orderIndex++)
@@ -108,11 +111,12 @@ public class ExamService {
                                                 }
                                         }
                                 } catch (IllegalArgumentException e) {
-                                        org.slf4j.LoggerFactory.getLogger(ExamService.class).warn("Invalid part key: {}", entry.getKey());
+                                        org.slf4j.LoggerFactory.getLogger(ExamService.class)
+                                                        .warn("Invalid part key: {}", entry.getKey());
                                 }
                         }
                 }
-                
+
                 return exam;
         }
 
@@ -260,7 +264,7 @@ public class ExamService {
                                                 wrongAnswersSummary.append(" | Giải thích: ")
                                                                 .append(q.getExplanation().length() > 150
                                                                                 ? q.getExplanation().substring(0, 150)
-                                                                                        + "..."
+                                                                                                + "..."
                                                                                 : q.getExplanation());
                                         }
                                         wrongAnswersSummary.append("\n");
@@ -271,7 +275,7 @@ public class ExamService {
                         ExamAnswer examAnswer = ExamAnswer.builder()
                                         .attemptId(attempt.getId())
                                         .questionId(answer.getQuestionId())
-                                        .selectedOption(answer.getSelectedOption())
+                                        .selectedOption(normalizeOptionForComparison(answer.getSelectedOption()))
                                         .isCorrect(isCorrect)
                                         .build();
                         examAnswerRepository.save(examAnswer);
