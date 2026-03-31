@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import com.thinkai.backend.entity.enums.Part;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -20,4 +22,6 @@ public interface QuestionBankRepository extends JpaRepository<QuestionBank, Long
     List<QuestionBank> findByExamTypeAndCreatedBy(ExamType examType, Long createdBy);
 
     List<QuestionBank> findByExamType(ExamType examType);
+    
+    List<QuestionBank> findByExamTypeAndPart(ExamType examType, Part part);
 }

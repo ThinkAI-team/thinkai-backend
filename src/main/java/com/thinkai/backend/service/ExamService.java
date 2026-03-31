@@ -19,13 +19,17 @@ import com.thinkai.backend.repository.CourseRepository;
 import com.thinkai.backend.repository.ExamAnswerRepository;
 import com.thinkai.backend.repository.ExamAttemptRepository;
 import com.thinkai.backend.repository.ExamRepository;
+import com.thinkai.backend.repository.QuestionBankRepository;
 import com.thinkai.backend.repository.QuestionRepository;
+import com.thinkai.backend.entity.enums.Part;
+import com.thinkai.backend.entity.QuestionBank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Collections;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -42,6 +46,7 @@ public class ExamService {
         private final ExamRepository examRepository;
         private final CourseRepository courseRepository;
         private final QuestionRepository questionRepository;
+        private final QuestionBankRepository questionBankRepository;
         private final ExamAttemptRepository examAttemptRepository;
         private final ExamAnswerRepository examAnswerRepository;
         private final AITutorService aiTutorService;
@@ -49,18 +54,66 @@ public class ExamService {
         // ==================== Teacher Operations ====================
 
         public Exam createExam(Long teacherId, ExamRequest request) {
+                String partConfigStr = null;
+                if (request.getPartConfig() != null && !request.getPartConfig().isEmpty()) {
+                        StringBuilder sb = new StringBuilder("{");
+                        boolean first = true;
+                        for (Map.Entry<String, Integer> entry : request.getPartConfig().entrySet()) {
+                                if (!first) {
+                                        sb.append(", ");
+                                }
+                                sb.append("\"").append(entry.getKey()).append("\": ").append(entry.getValue());
+                                first = false;
+                        }
+                        sb.append("}");
+                        partConfigStr = sb.toString();
+                }
+
                 Exam exam = Exam.builder()
                                 .courseId(request.getCourseId())
                                 .title(request.getTitle())
                                 .examType(request.getExamType())
                                 .description(request.getDescription())
-                                .timeLimitMinutes(request.getTimeLimitMinutes() != null ? request.getTimeLimitMinutes()
-                                                : 120)
+                                .timeLimitMinutes(request.getTimeLimitMinutes() != null ? request.getTimeLimitMinutes() : 120)
                                 .passingScore(request.getPassingScore() != null ? request.getPassingScore() : 60)
                                 .isRandomOrder(request.getIsRandomOrder() != null ? request.getIsRandomOrder() : false)
+                                .partConfig(partConfigStr)
                                 .createdBy(teacherId)
                                 .build();
-                return examRepository.save(exam);
+                exam = examRepository.save(exam);
+
+                if (request.getPartConfig() != null && !request.getPartConfig().isEmpty()) {
+                        int orderIndex = 1;
+                        for (Map.Entry<String, Integer> entry : request.getPartConfig().entrySet()) {
+                                try {
+                                        Part part = Part.valueOf(entry.getKey());
+                                        List<QuestionBank> availableQuestions = questionBankRepository.findByExamTypeAndPart(request.getExamType(), part);
+                                        
+                                        if (availableQuestions.size() > 0) {
+                                                Collections.shuffle(availableQuestions);
+                                                int limit = Math.min(entry.getValue(), availableQuestions.size());
+                                                List<QuestionBank> selected = availableQuestions.subList(0, limit);
+                                                
+                                                for (QuestionBank qb : selected) {
+                                                        Question q = Question.builder()
+                                                                        .examId(exam.getId())
+                                                                        .content(qb.getContent())
+                                                                        .options(qb.getOptions())
+                                                                        .correctOption(qb.getCorrectAnswer())
+                                                                        .type(Question.QuestionType.SINGLE_CHOICE)
+                                                                        .explanation(qb.getExplanation())
+                                                                        .orderIndex(orderIndex++)
+                                                                        .build();
+                                                        questionRepository.save(q);
+                                                }
+                                        }
+                                } catch (IllegalArgumentException e) {
+                                        org.slf4j.LoggerFactory.getLogger(ExamService.class).warn("Invalid part key: {}", entry.getKey());
+                                }
+                        }
+                }
+                
+                return exam;
         }
 
         public Page<Exam> getExamsByTeacher(Long teacherId, Pageable pageable) {
