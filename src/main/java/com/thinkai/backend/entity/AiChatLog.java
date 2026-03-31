@@ -26,6 +26,12 @@ public class AiChatLog {
     @Column(name = "lesson_id")
     private Long lessonId;
 
+    @Column(name = "conversation_id", length = 64)
+    private String conversationId;
+
+    @Column(name = "conversation_title", length = 255)
+    private String conversationTitle;
+
     @Column(name = "user_message", nullable = false, columnDefinition = "TEXT")
     private String userMessage;
 

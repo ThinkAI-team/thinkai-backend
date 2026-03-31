@@ -16,4 +16,8 @@ public interface AiChatLogRepository extends JpaRepository<AiChatLog, Long> {
     List<AiChatLog> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     Optional<AiChatLog> findByIdAndUserId(Long id, Long userId);
+
+    List<AiChatLog> findByUserIdAndConversationIdOrderByCreatedAtAsc(Long userId, String conversationId);
+
+    List<AiChatLog> findByUserIdAndConversationIdOrderByCreatedAtDesc(Long userId, String conversationId);
 }

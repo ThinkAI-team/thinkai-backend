@@ -64,4 +64,10 @@ public class AiSettingsService {
         
         aiSettingsRepository.save(setting);
     }
+
+    @Transactional
+    public void updateSetting(String key, String value) {
+        Long adminUserId = 1L;
+        updateOrInsertSetting(adminUserId, key, value, adminUserId);
+    }
 }

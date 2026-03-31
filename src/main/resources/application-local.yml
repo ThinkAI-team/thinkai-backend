@@ -1,14 +1,19 @@
 # ==============================================================================
 # ThinkAI Backend - Profile LOCAL (YAML Format)
 # ==============================================================================
-gemini:
+openrouter:
   api:
-    key: "AIzaSyClSWxLMC0bBWyJgcifeP2YMF5wMEH4ItM"
-    url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent"
+    key: ${OPENROUTER_API_KEY:}
+    url: "https://openrouter.ai/api/v1/chat/completions"
+    model: ${OPENROUTER_MODEL:qwen/qwen3.6-plus-preview:free}
+    fallback-model: ${OPENROUTER_FALLBACK_MODEL:stepfun/step-3.5-flash:free}
+    temperature: ${OPENROUTER_TEMPERATURE:0.3}
+    top-p: ${OPENROUTER_TOP_P:0.9}
+    max-tokens: ${OPENROUTER_MAX_TOKENS:700}
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/thinkai_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/thinkai_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectTimeout=5000&socketTimeout=15000&tcpKeepAlive=true
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
