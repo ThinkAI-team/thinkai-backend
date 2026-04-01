@@ -79,7 +79,6 @@ public class CourseController {
         }
         EnrollmentResponse response = courseService.enrollCourse(id, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created("Đăng ký thành công", response));
-
     }
 
 

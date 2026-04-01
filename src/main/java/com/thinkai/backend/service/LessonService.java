@@ -13,11 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -87,23 +82,23 @@ public class LessonService {
         }
 
         try {
-            File uploadDir = new File(UPLOAD_DIR);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
+            java.io.File uploadDirObj = new java.io.File(UPLOAD_DIR);
+            if (!uploadDirObj.exists()) {
+                uploadDirObj.mkdirs();
             }
 
-            String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-            Path path = Paths.get(UPLOAD_DIR + filename);
+            String filename = java.util.UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+            java.nio.file.Path path = java.nio.file.Paths.get(UPLOAD_DIR + filename).toAbsolutePath();
 
-            // Streaming: không load toàn bộ file vào RAM
-            file.transferTo(path.toFile());
+            // Streaming: sử dụng Files.copy để tránh lỗi đường dẫn tạm của Tomcat
+            java.nio.file.Files.copy(file.getInputStream(), path, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
             String normalizedBackendUrl = backendUrl.endsWith("/")
                     ? backendUrl.substring(0, backendUrl.length() - 1)
                     : backendUrl;
             return normalizedBackendUrl + "/api/files/" + filename;
 
-        } catch (IOException e) {
+        } catch (java.io.IOException e) {
             throw new ApiException("Upload file thất bại: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

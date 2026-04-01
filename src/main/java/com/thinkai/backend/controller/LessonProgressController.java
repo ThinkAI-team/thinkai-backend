@@ -4,6 +4,7 @@ import com.thinkai.backend.dto.LessonCompleteRequest;
 import com.thinkai.backend.dto.LessonCompleteResponse;
 import com.thinkai.backend.security.StudentOnly;
 import com.thinkai.backend.service.LessonProgressService;
+import com.thinkai.backend.service.VideoProgressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -17,6 +18,7 @@ import java.util.Map;
 public class LessonProgressController {
 
         private final LessonProgressService lessonProgressService;
+        private final VideoProgressService videoProgressService;
 
         @StudentOnly
         @PostMapping("/{lessonId}/complete")
@@ -35,6 +37,20 @@ public class LessonProgressController {
                 return ResponseEntity.ok(Map.of(
                                 "status", 200,
                                 "message", "Progress updated",
+                                "data", response));
+        }
+
+        @StudentOnly
+        @PutMapping("/{lessonId}/pdf-opened")
+        public ResponseEntity<Map<String, Object>> markPdfOpened(
+                        Authentication auth,
+                        @PathVariable Long lessonId) {
+
+                var response = videoProgressService.markPdfCompleted(lessonId, auth.getName());
+
+                return ResponseEntity.ok(Map.of(
+                                "status", 200,
+                                "message", "PDF marked as completed",
                                 "data", response));
         }
 }
