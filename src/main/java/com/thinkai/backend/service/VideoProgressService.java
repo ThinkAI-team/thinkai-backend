@@ -33,7 +33,7 @@ public class VideoProgressService {
     private final VideoPreferenceRepository videoPreferenceRepository;
     private final UserRepository userRepository;
 
-    private static final double AUTO_COMPLETE_THRESHOLD = 0.9;
+    private static final double AUTO_COMPLETE_THRESHOLD = 0.95;
 
     /**
      * Lưu tiến độ xem giữa chừng — frontend gọi định kỳ mỗi 10s.
@@ -172,6 +172,82 @@ public class VideoProgressService {
                 .playbackSpeed(pref.getPlaybackSpeed())
                 .autoPlay(pref.getAutoPlay())
                 .quality(pref.getQuality())
+                .build();
+    }
+
+    /**
+     * Đánh dấu bài PDF hoàn thành khi user mở tài liệu.
+     * Idempotent: gọi nhiều lần không ghi đè.
+     */
+    @Transactional
+    public UpdateProgressResponse markPdfCompleted(Long lessonId, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException("Người dùng không tồn tại", HttpStatus.NOT_FOUND));
+
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new ApiException("Bài học không tồn tại", HttpStatus.NOT_FOUND));
+
+        var enrollment = enrollmentRepository.findByUserIdAndCourseId(user.getId(), lesson.getCourseId())
+                .orElseThrow(() -> new ApiException("Bạn chưa đăng ký khóa học này", HttpStatus.FORBIDDEN));
+
+        LessonProgress progress = lessonProgressRepository
+                .findByUserIdAndLessonId(user.getId(), lessonId)
+                .orElse(LessonProgress.builder()
+                        .userId(user.getId())
+                        .lessonId(lessonId)
+                        .isCompleted(false)
+                        .watchTimeSeconds(0)
+                        .currentTimeSeconds(0)
+                        .build());
+
+        // Idempotent: đã hoàn thành rồi thì tính lại course progress và return
+        if (Boolean.TRUE.equals(progress.getIsCompleted())) {
+            List<Lesson> allLessons = lessonRepository.findByCourseIdOrderByOrderIndexAsc(lesson.getCourseId());
+            long completedCount = lessonProgressRepository.countCompletedByUserAndCourse(
+                    user.getId(), lesson.getCourseId());
+            double coursePercent = allLessons.isEmpty() ? 0.0
+                    : (double) completedCount / allLessons.size() * 100;
+
+            log.debug("PDF already completed: lesson={}, user={}", lessonId, email);
+            return UpdateProgressResponse.builder()
+                    .lessonId(lessonId)
+                    .watchTimeSeconds(progress.getWatchTimeSeconds())
+                    .currentTimeSeconds(progress.getCurrentTimeSeconds())
+                    .isCompleted(true)
+                    .lessonProgressPercent(100.0)
+                    .courseProgressPercent(Math.round(coursePercent * 10.0) / 10.0)
+                    .build();
+        }
+
+        // Mark as completed
+        progress.setIsCompleted(true);
+        progress.setCompletedAt(LocalDateTime.now());
+        progress.setLastAccessedAt(LocalDateTime.now());
+        lessonProgressRepository.save(progress);
+
+        // Recalculate course progress
+        List<Lesson> allLessons = lessonRepository.findByCourseIdOrderByOrderIndexAsc(lesson.getCourseId());
+        long completedCount = lessonProgressRepository.countCompletedByUserAndCourse(
+                user.getId(), lesson.getCourseId());
+        double coursePercent = allLessons.isEmpty() ? 0.0
+                : (double) completedCount / allLessons.size() * 100;
+
+        enrollment.setProgressPercent((int) Math.round(coursePercent));
+        if (coursePercent >= 100.0 && enrollment.getCompletedAt() == null) {
+            enrollment.setCompletedAt(LocalDateTime.now());
+        }
+        enrollmentRepository.save(enrollment);
+
+        log.info("PDF auto-completed: lesson={}, user={}, coursePercent={}%",
+                lessonId, email, Math.round(coursePercent));
+
+        return UpdateProgressResponse.builder()
+                .lessonId(lessonId)
+                .watchTimeSeconds(0)
+                .currentTimeSeconds(0)
+                .isCompleted(true)
+                .lessonProgressPercent(100.0)
+                .courseProgressPercent(Math.round(coursePercent * 10.0) / 10.0)
                 .build();
     }
 }
