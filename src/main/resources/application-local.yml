@@ -26,3 +26,15 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
+
+# ==============================================================================
+# payOS Configuration
+# ==============================================================================
+payos:
+  client-id: ${PAYOS_CLIENT_ID:}
+  api-key: ${PAYOS_API_KEY:}
+  checksum-key: ${PAYOS_CHECKSUM_KEY:}
+  webhook-url: ${PAYOS_WEBHOOK_URL:http://localhost:8081/api/v1/payments/webhook}
+  return-url: ${PAYOS_RETURN_URL:http://localhost:3000/payment/success}
+  cancel-url: ${PAYOS_CANCEL_URL:http://localhost:3000/payment/cancel}
+  base-url: https://api-merchant.payos.vn

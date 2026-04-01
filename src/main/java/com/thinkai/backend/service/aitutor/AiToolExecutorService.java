@@ -41,6 +41,7 @@ public class AiToolExecutorService {
     public ToolExecuteResult execute(String action, JsonNode args, User user) {
         return switch (action) {
             case "enroll_course" -> executeEnrollCourse(args, user);
+            case "unenroll_course" -> executeUnenrollCourse(args, user);
             case "update_course" -> executeUpdateCourse(args, user);
             case "delete_course" -> executeDeleteCourse(args, user);
             case "create_course" -> executeCreateCourse(args, user);
@@ -90,6 +91,27 @@ public class AiToolExecutorService {
         enrollmentRepository.save(enrollment);
 
         return ToolExecuteResult.success("enroll_course", "Đăng ký khóa học thành công! Course: " + course.getTitle());
+    }
+
+    private ToolExecuteResult executeUnenrollCourse(JsonNode args, User user) {
+        if (user.getRole() != User.Role.STUDENT) {
+            return ToolExecuteResult.failure("Chỉ STUDENT mới có thể hủy đăng ký khóa học.");
+        }
+
+        Long courseId = extractLong(args, "courseId");
+        if (courseId == null) {
+            return ToolExecuteResult.needInfo("unenroll_course", "Thiếu courseId để hủy đăng ký.");
+        }
+
+        Optional<Enrollment> optEnrollment = enrollmentRepository.findByUserIdAndCourseId(user.getId(), courseId);
+        if (optEnrollment.isEmpty()) {
+            return ToolExecuteResult.failure("Bạn chưa đăng ký khóa học này.");
+        }
+
+        Enrollment enrollment = optEnrollment.get();
+        enrollmentRepository.delete(enrollment);
+
+        return ToolExecuteResult.success("unenroll_course", "Đã hủy đăng ký khóa học thành công!");
     }
 
     private ToolExecuteResult executeUpdateCourse(JsonNode args, User user) {

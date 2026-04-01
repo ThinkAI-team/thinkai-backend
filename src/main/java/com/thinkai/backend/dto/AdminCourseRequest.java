@@ -1,5 +1,6 @@
 package com.thinkai.backend.dto;
 
+import com.thinkai.backend.entity.Course;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,4 +19,6 @@ public class AdminCourseRequest {
     private BigDecimal price;
     private Long instructorId;
     private String thumbnailUrl;
+    private Boolean isPublished;
+    private Course.Status status;
 }

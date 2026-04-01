@@ -293,6 +293,17 @@ public class CourseService {
     }
 
     /**
+     * DELETE /enrollments/{courseId} — Hủy đăng ký khóa học.
+     */
+    @Transactional
+    public void unenrollCourse(Long courseId, Long userId) {
+        Enrollment enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
+                .orElseThrow(() -> new ApiException("Bạn chưa đăng ký khóa học này", HttpStatus.BAD_REQUEST));
+
+        enrollmentRepository.delete(enrollment);
+    }
+
+    /**
      * GET /users/me/courses — User's enrolled courses.
      */
     public List<MyCourseResponse> getMyCourses(Long userId) {

@@ -1,5 +1,6 @@
 package com.thinkai.backend.controller;
 
+import com.thinkai.backend.dto.ApiResponse;
 import com.thinkai.backend.entity.Enrollment;
 import com.thinkai.backend.entity.User;
 import com.thinkai.backend.exception.ApiException;
@@ -35,6 +36,16 @@ public class EnrollmentController {
         Long userId = requireCurrentUserId(auth);
         com.thinkai.backend.dto.EnrollmentResponse response = courseService.enrollCourse(courseId, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @StudentOnly
+    @DeleteMapping("/{courseId}")
+    public ResponseEntity<ApiResponse<Void>> unenrollFromCourse(
+            Authentication auth,
+            @PathVariable Long courseId) {
+        Long userId = requireCurrentUserId(auth);
+        courseService.unenrollCourse(courseId, userId);
+        return ResponseEntity.ok(ApiResponse.success("Hủy đăng ký khóa học thành công", null));
     }
 
     @TeacherOrAdmin

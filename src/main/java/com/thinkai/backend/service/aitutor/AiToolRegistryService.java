@@ -39,6 +39,8 @@ public class AiToolRegistryService {
 
         register(map, AiToolDefinition.mutating("enroll_course", AiAgentType.LEARNING, 
                 Set.of(User.Role.STUDENT), true, List.of("courseId")));
+        register(map, AiToolDefinition.mutating("unenroll_course", AiAgentType.LEARNING, 
+                Set.of(User.Role.STUDENT), true, List.of("courseId")));
         
         register(map, AiToolDefinition.mutating("create_course", AiAgentType.COURSE_OPS, 
                 Set.of(User.Role.TEACHER, User.Role.ADMIN), true, List.of("title", "description")));

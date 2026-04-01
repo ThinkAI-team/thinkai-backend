@@ -69,7 +69,9 @@ public class GlobalSecurityConfig {
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
                     "/ai-tutor/**",
-                    "/api/files/**"
+                    "/api/files/**",
+                    "/api/v1/payments/webhook",
+                    "/api/v1/payments/webhook-test"
                 ).permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/courses", "/courses/**").permitAll()
                 .anyRequest().authenticated()

@@ -140,7 +140,8 @@ public class AdminPanelController {
                 .price(request.getPrice())
                 .instructorId(request.getInstructorId())
                 .thumbnailUrl(request.getThumbnailUrl())
-                .isPublished(false)
+                .isPublished(request.getIsPublished() != null ? request.getIsPublished() : false)
+                .status(request.getStatus() != null ? request.getStatus() : Course.Status.DRAFT)
                 .build();
         
         course = courseRepository.save(course);
@@ -166,6 +167,12 @@ public class AdminPanelController {
         course.setPrice(request.getPrice());
         course.setInstructorId(request.getInstructorId());
         course.setThumbnailUrl(request.getThumbnailUrl());
+        if (request.getIsPublished() != null) {
+            course.setIsPublished(request.getIsPublished());
+        }
+        if (request.getStatus() != null) {
+            course.setStatus(request.getStatus());
+        }
         
         course = courseRepository.save(course);
         
