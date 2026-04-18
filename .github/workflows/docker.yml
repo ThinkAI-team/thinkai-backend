@@ -18,8 +18,9 @@ env:
   REGISTRY: docker.io
   IMAGE_NAME: minhtuyetvoi/thinkai-backend
 
-# Job 1: Build Docker Image & Trivy Scan
-build-scan:
+jobs:
+  # Job 1: Build Docker Image & Trivy Scan
+  build-scan:
   name: Build and Scan
   runs-on: ubuntu-latest
 
