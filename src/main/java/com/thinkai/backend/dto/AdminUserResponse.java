@@ -17,4 +17,5 @@ public class AdminUserResponse {
     private String email;
     private User.Role role;
     private Boolean isActive;
+    private User.ApprovalStatus approvalStatus;
 }

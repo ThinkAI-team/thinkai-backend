@@ -1,5 +1,6 @@
 package com.thinkai.backend.service.aitutor;
 
+import com.thinkai.backend.ai.cache.SemanticCacheService;
 import com.thinkai.backend.dto.AiPendingActionDto;
 import com.thinkai.backend.entity.AiPendingAction;
 import com.thinkai.backend.entity.User;
@@ -24,16 +25,19 @@ public class AiPendingActionService {
     private final UserRepository userRepository;
     private final AiToolExecutorService aiToolExecutorService;
     private final ObjectMapper objectMapper;
+    private final SemanticCacheService semanticCacheService;
 
     public AiPendingActionService(
             AiPendingActionRepository repository,
             UserRepository userRepository,
             @Lazy AiToolExecutorService aiToolExecutorService,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            SemanticCacheService semanticCacheService) {
         this.repository = repository;
         this.userRepository = userRepository;
         this.aiToolExecutorService = aiToolExecutorService;
         this.objectMapper = objectMapper;
+        this.semanticCacheService = semanticCacheService;
     }
 
     @Transactional
@@ -173,6 +177,7 @@ public class AiPendingActionService {
             pending.setStatus(AiPendingAction.Status.CONFIRMED);
             pending.setConfirmedAt(LocalDateTime.now());
             repository.save(pending);
+            invalidateHarnessCache(user.getId(), pending.getAction());
 
             result.put("success", execResult.isSuccess());
             result.put("message", execResult.getMessage());
@@ -183,6 +188,64 @@ public class AiPendingActionService {
         }
 
         return result;
+    }
+
+    @Transactional
+    public Map<String, Object> confirmAndExecuteById(Long actionId, String email) {
+        Map<String, Object> result = new HashMap<>();
+        if (actionId == null) {
+            result.put("success", false);
+            result.put("message", "actionId is required");
+            return result;
+        }
+        Optional<User> optUser = userRepository.findByEmail(email);
+        if (optUser.isEmpty()) {
+            result.put("success", false);
+            result.put("message", "User not found");
+            return result;
+        }
+        User user = optUser.get();
+        Optional<AiPendingAction> optPending = repository.findByIdAndUserId(actionId, user.getId());
+        if (optPending.isEmpty()) {
+            result.put("success", false);
+            result.put("message", "Pending action not found");
+            return result;
+        }
+
+        AiPendingAction pending = optPending.get();
+        if (pending.getStatus() != AiPendingAction.Status.PENDING) {
+            result.put("success", false);
+            result.put("message", "Pending action is not in PENDING state");
+            return result;
+        }
+        if (pending.getExpiresAt() != null && pending.getExpiresAt().isBefore(LocalDateTime.now())) {
+            pending.setStatus(AiPendingAction.Status.EXPIRED);
+            repository.save(pending);
+            result.put("success", false);
+            result.put("message", "Action has expired");
+            return result;
+        }
+
+        try {
+            JsonNode args = objectMapper.readTree(pending.getPayload());
+            AiToolExecutorService.ToolExecuteResult execResult =
+                    aiToolExecutorService.execute(pending.getAction(), args, user);
+
+            pending.setStatus(AiPendingAction.Status.CONFIRMED);
+            pending.setConfirmedAt(LocalDateTime.now());
+            repository.save(pending);
+            invalidateHarnessCache(user.getId(), pending.getAction());
+
+            result.put("success", execResult.isSuccess());
+            result.put("message", execResult.getMessage());
+            result.put("action", pending.getAction());
+            result.put("actionId", pending.getId());
+            return result;
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "Error executing action: " + e.getMessage());
+            return result;
+        }
     }
 
     @Transactional
@@ -200,5 +263,63 @@ public class AiPendingActionService {
             pending.setCancelledAt(LocalDateTime.now());
             repository.save(pending);
         }
+    }
+
+    @Transactional
+    public Map<String, Object> cancelPendingActionById(Long actionId, String email) {
+        Map<String, Object> result = new HashMap<>();
+        if (actionId == null) {
+            result.put("success", false);
+            result.put("message", "actionId is required");
+            return result;
+        }
+        Optional<User> optUser = userRepository.findByEmail(email);
+        if (optUser.isEmpty()) {
+            result.put("success", false);
+            result.put("message", "User not found");
+            return result;
+        }
+        User user = optUser.get();
+        Optional<AiPendingAction> optPending = repository.findByIdAndUserId(actionId, user.getId());
+        if (optPending.isEmpty()) {
+            result.put("success", false);
+            result.put("message", "Pending action not found");
+            return result;
+        }
+        AiPendingAction pending = optPending.get();
+        if (pending.getStatus() != AiPendingAction.Status.PENDING) {
+            result.put("success", false);
+            result.put("message", "Pending action is not in PENDING state");
+            return result;
+        }
+
+        pending.setStatus(AiPendingAction.Status.CANCELLED);
+        pending.setCancelledAt(LocalDateTime.now());
+        repository.save(pending);
+        result.put("success", true);
+        result.put("message", "Pending action cancelled");
+        result.put("actionId", pending.getId());
+        return result;
+    }
+
+    private void invalidateHarnessCache(Long userId, String action) {
+        if (userId == null || action == null) {
+            return;
+        }
+        if (!isMutatingAction(action)) {
+            return;
+        }
+        semanticCacheService.invalidateAll(userId);
+    }
+
+    private boolean isMutatingAction(String action) {
+        return switch (action) {
+            case "enroll_course", "unenroll_course",
+                 "create_course", "update_course", "publish_course", "delete_course",
+                 "create_lesson", "update_lesson", "delete_lesson",
+                 "create_exam", "update_exam", "publish_exam", "delete_exam",
+                 "create_question", "bulk_import_questions" -> true;
+            default -> false;
+        };
     }
 }

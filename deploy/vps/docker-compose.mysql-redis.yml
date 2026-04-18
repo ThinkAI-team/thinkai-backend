@@ -1,0 +1,103 @@
+name: thinkai
+
+services:
+  thinkai-db:
+    image: mysql:8.0
+    container_name: thinkai-db
+    restart: unless-stopped
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max-connections=180
+      - --innodb-buffer-pool-size=1024M
+      - --innodb-log-file-size=256M
+      - --tmp-table-size=64M
+      - --max-heap-table-size=64M
+      - --slow_query_log=1
+      - --long_query_time=1
+      - --slow_query_log_file=/var/lib/mysql/slow.log
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-defaultdb}
+      MYSQL_USER: ${MYSQL_USER:-thinkai}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: Asia/Ho_Chi_Minh
+    volumes:
+      - thinkai_mysql_data:/var/lib/mysql
+    networks:
+      - thinkai-net
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    mem_limit: 2g
+    cpus: "2.0"
+
+  thinkai-redis:
+    image: redis:7-alpine
+    container_name: thinkai-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - yes
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - allkeys-lru
+    volumes:
+      - thinkai_redis_data:/data
+    networks:
+      - thinkai-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+    mem_limit: 512m
+    cpus: "0.5"
+
+  thinkai-backend:
+    image: minhtuyetvoi/thinkai-backend:latest
+    container_name: thinkai-backend
+    restart: unless-stopped
+    depends_on:
+      thinkai-db:
+        condition: service_healthy
+      thinkai-redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+
+      DB_URL: jdbc:mysql://thinkai-db:3306/${MYSQL_DATABASE:-defaultdb}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectTimeout=10000&socketTimeout=30000&tcpKeepAlive=true
+      DB_USERNAME: ${MYSQL_USER:-thinkai}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+
+      SPRING_DATA_REDIS_HOST: thinkai-redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ""
+
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: 10
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: 2
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: 30000
+      SPRING_DATASOURCE_HIKARI_VALIDATION_TIMEOUT: 5000
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: 1200000
+      SPRING_JPA_OPEN_IN_VIEW: "false"
+    ports:
+      - "8081:8081"
+    networks:
+      - thinkai-net
+    mem_limit: 3g
+    cpus: "2.0"
+
+volumes:
+  thinkai_mysql_data:
+  thinkai_redis_data:
+
+networks:
+  thinkai-net:
+    driver: bridge

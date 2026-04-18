@@ -7,11 +7,15 @@ import com.thinkai.backend.dto.LoginRequest;
 import com.thinkai.backend.dto.RegisterRequest;
 import com.thinkai.backend.dto.ResetPasswordRequest;
 import com.thinkai.backend.dto.UpdatePasswordRequest;
+import com.thinkai.backend.exception.ApiException;
+import com.thinkai.backend.security.LoginAttemptGuardService;
 import com.thinkai.backend.service.AuthService;
 import com.thinkai.backend.service.GoogleAuthService;
 import com.thinkai.backend.service.PasswordResetService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +29,7 @@ public class AuthController {
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
     private final GoogleAuthService googleAuthService;
+    private final LoginAttemptGuardService loginAttemptGuardService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -33,9 +38,23 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        AuthResponse response = authService.login(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<AuthResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        String clientIp = loginAttemptGuardService.extractClientIp(httpRequest);
+        String email = request.getEmail();
+        loginAttemptGuardService.assertNotBlocked(email, clientIp);
+        try {
+            AuthResponse response = authService.login(request);
+            loginAttemptGuardService.recordSuccess(email, clientIp);
+            return ResponseEntity.ok(response);
+        } catch (ApiException ex) {
+            if (ex.getStatus() == HttpStatus.UNAUTHORIZED) {
+                loginAttemptGuardService.recordFailure(email, clientIp);
+            }
+            throw ex;
+        }
     }
 
     @PostMapping("/google")
@@ -71,4 +90,3 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Cập nhật mật khẩu thành công."));
     }
 }
-

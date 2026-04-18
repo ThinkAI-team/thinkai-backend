@@ -25,7 +25,12 @@ public class Enrollment {
     private Long courseId;
 
     @Column(name = "progress_percent", nullable = false)
+    @Builder.Default
     private Integer progressPercent = 0;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
 
     @Column(name = "enrolled_at", nullable = false, updatable = false)
     private LocalDateTime enrolledAt;

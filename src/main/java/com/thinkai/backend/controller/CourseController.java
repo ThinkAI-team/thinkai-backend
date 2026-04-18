@@ -81,6 +81,21 @@ public class CourseController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created("Đăng ký thành công", response));
     }
 
+    /**
+     * DELETE /courses/{id}/enroll — Hủy đăng ký khóa học (Student only)
+     * Alias để tương thích client cũ.
+     */
+    @StudentOnly
+    @DeleteMapping("/{id}/enroll")
+    public ResponseEntity<ApiResponse<Void>> unenrollCourse(
+            @PathVariable Long id,
+            Authentication auth
+    ) {
+        Long userId = requireCurrentUserId(auth);
+        courseService.unenrollCourse(id, userId);
+        return ResponseEntity.ok(ApiResponse.success("Hủy đăng ký khóa học thành công", null));
+    }
+
 
     // ===================== MANAGEMENT ENDPOINTS (TEACHER) =====================
 

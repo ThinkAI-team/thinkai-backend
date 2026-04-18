@@ -33,7 +33,9 @@ public class VideoProgressService {
     private final VideoPreferenceRepository videoPreferenceRepository;
     private final UserRepository userRepository;
 
-    private static final double AUTO_COMPLETE_THRESHOLD = 0.95;
+    // Auto-complete only when learner watches the full video.
+    // Manual complete is handled separately (>= 90%) in LessonProgressService.
+    private static final double AUTO_COMPLETE_THRESHOLD = 1.00;
 
     /**
      * Lưu tiến độ xem giữa chừng — frontend gọi định kỳ mỗi 10s.

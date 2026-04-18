@@ -29,6 +29,7 @@ import com.thinkai.backend.entity.Lesson;
 import com.thinkai.backend.entity.User;
 import com.thinkai.backend.exception.ApiException;
 import com.thinkai.backend.repository.CourseRepository;
+import com.thinkai.backend.repository.CartItemRepository;
 import com.thinkai.backend.repository.EnrollmentRepository;
 import com.thinkai.backend.repository.LessonProgressRepository;
 import com.thinkai.backend.repository.LessonRepository;
@@ -43,7 +44,9 @@ public class CourseService {
     private final LessonRepository lessonRepository;
     private final LessonProgressRepository lessonProgressRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     /**
      * GET /courses — List published courses with filters, search and pagination.
@@ -112,6 +115,9 @@ public class CourseService {
         if (!Boolean.TRUE.equals(course.getIsPublished()) && !isInstructor && !isEnrolled) {
             throw new ApiException("Khóa học chưa được xuất bản", HttpStatus.FORBIDDEN);
         }
+        if (course.getStatus() == Course.Status.BLOCKED && !isInstructor) {
+            throw new ApiException("Khóa học đã bị khóa bởi quản trị viên", HttpStatus.FORBIDDEN);
+        }
 
         // Get instructor name
         String instructorName = null;
@@ -168,7 +174,9 @@ public class CourseService {
                 .isPublished(false)
                 .status(Course.Status.DRAFT)
                 .build();
-        return courseRepository.save(course);
+        Course saved = courseRepository.save(course);
+        notificationService.notifyStudentsWhenCourseCreated(teacherId, saved);
+        return saved;
     }
 
     public Page<Course> getCoursesByTeacher(Long teacherId, Pageable pageable) {
@@ -207,7 +215,7 @@ public class CourseService {
     private static final List<String> ALLOWED_IMAGE_TYPES = List.of(
             "image/jpeg", "image/png", "image/gif", "image/webp");
 
-    @Value("${app.backend-url:http://localhost:8081}")
+    @Value("${app.backend-url:}")
     private String backendUrl;
 
     @Transactional
@@ -245,10 +253,11 @@ public class CourseService {
             // Use copy from stream to bypass MultipartFile temporary path issues
             java.nio.file.Files.copy(file.getInputStream(), path, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
-            String normalizedBackendUrl = backendUrl.endsWith("/")
-                    ? backendUrl.substring(0, backendUrl.length() - 1)
-                    : backendUrl;
-            String fileUrl = normalizedBackendUrl + "/api/files/" + newFilename;
+            String normalizedBackendUrl = backendUrl == null ? "" : backendUrl.trim();
+            if (!normalizedBackendUrl.isBlank() && normalizedBackendUrl.endsWith("/")) {
+                normalizedBackendUrl = normalizedBackendUrl.substring(0, normalizedBackendUrl.length() - 1);
+            }
+            String fileUrl = (normalizedBackendUrl.isBlank() ? "" : normalizedBackendUrl) + "/api/files/" + newFilename;
             
             course.setThumbnailUrl(fileUrl);
             courseRepository.save(course);
@@ -272,6 +281,12 @@ public class CourseService {
         if (!course.getIsPublished()) {
             throw new ApiException("Khóa học chưa được xuất bản", HttpStatus.BAD_REQUEST);
         }
+        if (course.getStatus() == Course.Status.BLOCKED) {
+            throw new ApiException("Khóa học đã bị khóa bởi quản trị viên", HttpStatus.BAD_REQUEST);
+        }
+        if (course.getStatus() != Course.Status.APPROVED) {
+            throw new ApiException("Khóa học chưa sẵn sàng để đăng ký", HttpStatus.BAD_REQUEST);
+        }
 
         if (enrollmentRepository.existsByUserIdAndCourseId(userId, courseId)) {
             throw new ApiException("Bạn đã đăng ký khóa học này rồi", HttpStatus.BAD_REQUEST);
@@ -281,9 +296,11 @@ public class CourseService {
                 .userId(userId)
                 .courseId(courseId)
                 .progressPercent(0)
+                .isActive(true)
                 .build();
 
         enrollment = enrollmentRepository.save(enrollment);
+        cartItemRepository.deleteByCartUserIdAndCourseId(userId, courseId);
 
         return EnrollmentResponse.builder()
                 .enrollmentId(enrollment.getId())
@@ -312,6 +329,9 @@ public class CourseService {
         return enrollments.stream().map(enrollment -> {
             Course course = courseRepository.findById(enrollment.getCourseId()).orElse(null);
             if (course == null) {
+                return null;
+            }
+            if (course.getStatus() == Course.Status.BLOCKED) {
                 return null;
             }
 

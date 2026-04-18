@@ -8,6 +8,8 @@ import com.thinkai.backend.entity.User;
 import com.thinkai.backend.exception.ApiException;
 import com.thinkai.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,12 +22,15 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional(readOnly = true)
+    @Cacheable(value = "user", key = "#email")
     public ProfileResponse getProfile(String email) {
         User user = findUser(email);
         return toProfileResponse(user);
     }
 
     @Transactional
+    @CacheEvict(value = "user", key = "#email")
     public ProfileResponse updateProfile(String email, UpdateProfileRequest request) {
         User user = findUser(email);
 

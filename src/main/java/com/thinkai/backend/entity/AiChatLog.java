@@ -47,6 +47,12 @@ public class AiChatLog {
     @Column(name = "response_time_ms")
     private Integer responseTimeMs;
 
+    @Column(name = "source", length = 20)
+    private String source; // "tutor" or "harness"
+
+    @Column(name = "agent_type", length = 50)
+    private String agentType; // Agent type for harness (e.g., TOEIC_READING, CONVERSATION)
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

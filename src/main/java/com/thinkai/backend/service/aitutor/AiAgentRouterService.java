@@ -49,7 +49,7 @@ public class AiAgentRouterService {
             actionsJoiner.add(action);
         }
 
-        return "You are a multi-agent router for Bo Trang (AI Tutor platform assistant).\n"
+        return "You are a multi-agent router for BiliBily (AI Tutor platform assistant).\n"
                 + "Return strict JSON only with schema: {\"action\":\"...\",\"args\":{...}}.\n"
                 + "Do not return markdown or explanation.\n"
                 + "Available actions: " + actionsJoiner + ".\n"

@@ -43,9 +43,23 @@ WORKDIR /app
 # Chỉ copy file .jar, không copy source code
 COPY --from=builder /app/target/*.jar app.jar
 
+# Tạo user non-root (security best practice)
+RUN addgroup -g 1000 appgroup && \
+    adduser -u 1000 -G appgroup -s /bin/sh -D appuser
+
+# Set ownership
+RUN chown -R appuser:appgroup /app
+
+# Switch to non-root user
+USER appuser
+
 # Khai báo port mà ứng dụng sẽ lắng nghe
 # Phải khớp với server.port trong application.yml
 EXPOSE 8081
+
+# Healthcheck cho Docker/K8s
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8081/actuator/health || exit 1
 
 # ==============================================================================
 # Các lệnh Docker thường dùng:

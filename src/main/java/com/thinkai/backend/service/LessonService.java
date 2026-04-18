@@ -27,7 +27,7 @@ public class LessonService {
 
     private static final String UPLOAD_DIR = "uploads/";
 
-    @Value("${app.backend-url:http://localhost:8081}")
+    @Value("${app.backend-url:}")
     private String backendUrl;
 
     @Transactional
@@ -93,10 +93,11 @@ public class LessonService {
             // Streaming: sử dụng Files.copy để tránh lỗi đường dẫn tạm của Tomcat
             java.nio.file.Files.copy(file.getInputStream(), path, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
-            String normalizedBackendUrl = backendUrl.endsWith("/")
-                    ? backendUrl.substring(0, backendUrl.length() - 1)
-                    : backendUrl;
-            return normalizedBackendUrl + "/api/files/" + filename;
+            String normalizedBackendUrl = backendUrl == null ? "" : backendUrl.trim();
+            if (!normalizedBackendUrl.isBlank() && normalizedBackendUrl.endsWith("/")) {
+                normalizedBackendUrl = normalizedBackendUrl.substring(0, normalizedBackendUrl.length() - 1);
+            }
+            return (normalizedBackendUrl.isBlank() ? "" : normalizedBackendUrl) + "/api/files/" + filename;
 
         } catch (java.io.IOException e) {
             throw new ApiException("Upload file thất bại: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

@@ -78,6 +78,12 @@ public class AiToolExecutorService {
         if (!Boolean.TRUE.equals(course.getIsPublished())) {
             return ToolExecuteResult.failure("Khóa học này chưa được xuất bản.");
         }
+        if (course.getStatus() == Course.Status.BLOCKED) {
+            return ToolExecuteResult.failure("Khóa học này đã bị khóa bởi quản trị viên.");
+        }
+        if (course.getStatus() != Course.Status.APPROVED) {
+            return ToolExecuteResult.failure("Khóa học này chưa sẵn sàng để đăng ký.");
+        }
 
         if (enrollmentRepository.existsByUserIdAndCourseId(user.getId(), courseId)) {
             return ToolExecuteResult.failure("Bạn đã đăng ký khóa học này rồi.");
@@ -87,6 +93,7 @@ public class AiToolExecutorService {
                 .userId(user.getId())
                 .courseId(courseId)
                 .progressPercent(0)
+                .isActive(true)
                 .build();
         enrollmentRepository.save(enrollment);
 

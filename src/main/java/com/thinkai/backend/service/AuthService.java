@@ -62,20 +62,14 @@ public class AuthService {
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(fullName)
                 .role(userRole)
-                .isActive(true)
+                .isActive(false)
+                .approvalStatus(User.ApprovalStatus.PENDING)
                 .build();
 
         userRepository.save(user);
 
-        // 4. Generate JWT
-        String token = jwtUtil.generateToken(user.getEmail(), Map.of(
-                "role", user.getRole().name(),
-                "fullName", user.getFullName()
-        ));
-
-        // 5. Return response
+        // 4. Return response (pending admin approval, no JWT yet)
         return AuthResponse.builder()
-                .token(token)
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole().name())
@@ -93,7 +87,10 @@ public class AuthService {
 
         // 2. Check account active
         if (!user.getIsActive()) {
-            throw new ApiException("Tài khoản đã bị khóa", HttpStatus.FORBIDDEN);
+            if (user.getEffectiveApprovalStatus() == User.ApprovalStatus.BLOCKED) {
+                throw new ApiException("Tài khoản đã bị admin khóa", HttpStatus.FORBIDDEN);
+            }
+            throw new ApiException("Tài khoản đang chờ admin duyệt", HttpStatus.FORBIDDEN);
         }
 
         // 3. Verify password (same generic error)
@@ -160,4 +157,3 @@ public class AuthService {
                 .build();
     }
 }
-

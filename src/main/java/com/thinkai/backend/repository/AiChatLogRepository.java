@@ -20,4 +20,13 @@ public interface AiChatLogRepository extends JpaRepository<AiChatLog, Long> {
     List<AiChatLog> findByUserIdAndConversationIdOrderByCreatedAtAsc(Long userId, String conversationId);
 
     List<AiChatLog> findByUserIdAndConversationIdOrderByCreatedAtDesc(Long userId, String conversationId);
+
+    // New methods for filtering by source
+    List<AiChatLog> findByUserIdAndSourceOrderByCreatedAtDesc(Long userId, String source);
+
+    List<AiChatLog> findByUserIdAndSourceAndConversationIdOrderByCreatedAtAsc(Long userId, String source, String conversationId);
+
+    List<AiChatLog> findDistinctByUserIdAndSourceOrderByCreatedAtDesc(Long userId, String source);
+
+    long countByUserIdAndSource(Long userId, String source);
 }

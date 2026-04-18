@@ -47,7 +47,7 @@ public class FileController {
     private static final List<String> ALLOWED_EXTENSIONS = List.of(
             ".jpg", ".jpeg", ".png", ".webp", ".gif", ".pdf", ".txt", ".md", ".doc", ".docx");
 
-    @Value("${app.backend-url:http://localhost:8081}")
+    @Value("${app.backend-url:}")
     private String backendUrl;
 
     @GetMapping("/{filename:.+}")
@@ -119,8 +119,11 @@ public class FileController {
 
             Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
 
-            String root = backendUrl.endsWith("/") ? backendUrl.substring(0, backendUrl.length() - 1) : backendUrl;
-            String url = root + "/api/files/" + safeName;
+            String root = backendUrl == null ? "" : backendUrl.trim();
+            if (!root.isBlank() && root.endsWith("/")) {
+                root = root.substring(0, root.length() - 1);
+            }
+            String url = (root.isBlank() ? "" : root) + "/api/files/" + safeName;
             return ResponseEntity.ok(Map.of("url", url));
         } catch (ApiException e) {
             throw e;

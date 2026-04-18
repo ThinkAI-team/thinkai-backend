@@ -1,26 +1,31 @@
 # ==============================================================================
-# ThinkAI Backend - Cấu hình chung (mọi profile)
-# ==============================================================================
-# Default profile: local (Docker MySQL)
-# Staging profile: chạy với --spring.profiles.active=staging
-# ==============================================================================
+# ThinkAI Backend - Configuration
+# Dùng cho cả local và production (Docker/K8s)
+# Ghi đè bằng env variables khi deploy
+# =============================================================================
 
 spring:
-  profiles:
-    active: local
-
   # === Upload file (video/pdf) tối đa 1GB ===
   servlet:
     multipart:
       max-file-size: 1GB
       max-request-size: 1GB
 
-  # === JPA Common ===
+  # === Database ===
   datasource:
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:thinkai_db}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectTimeout=5000&socketTimeout=15000&tcpKeepAlive=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # === JPA / Hibernate ===
   jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:update}
+    show-sql: ${SHOW_SQL:true}
     properties:
       hibernate:
+        format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
 
   # === Email (Gmail SMTP) ===
@@ -40,26 +45,70 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
-# === Server ===
 server:
   port: 8081
   tomcat:
     max-swallow-size: -1
     connection-timeout: 600000
 
-# === JWT (BẮT BUỘC set trong .env, có fallback cho dev) ===
+# === OpenRouter AI ===
+openrouter:
+  api:
+    key: ${OPENROUTER_API_KEY:}
+    keys: ${OPENROUTER_API_KEYS:}
+    models: ${OPENROUTER_API_MODELS:}
+    url: "https://openrouter.ai/api/v1/chat/completions"
+    model: ${OPENROUTER_API_MODEL:}
+    fallback-model: ${OPENROUTER_API_FALLBACK_MODEL:}
+    temperature: ${OPENROUTER_API_TEMPERATURE:0.3}
+    top-p: ${OPENROUTER_API_TOP_P:0.9}
+    max-tokens: ${OPENROUTER_API_MAX_TOKENS:700}
+
+# === JWT ===
 jwt:
   secret: ${JWT_SECRET:thinkai_default_secret_key_that_is_at_least_256_bits_long_abcdef1234567890}
   expiration: 86400000
-
 
 # === App ===
 app:
   backend-url: ${BACKEND_URL:http://localhost:8081}
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  harness:
+    free-max-uses: ${HARNESS_FREE_MAX_USES:10}
+  errors:
+    expose-internal-message: ${EXPOSE_INTERNAL_ERROR_MESSAGE:false}
+  security:
+    content-security-policy: ${CONTENT_SECURITY_POLICY:default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'}
   cors:
-    allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+    allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:8081,http://localhost:8082}
 
 # === Google OAuth ===
 google:
   client-id: ${GOOGLE_CLIENT_ID:}
+
+# === payOS ===
+payos:
+  client-id: ${PAYOS_CLIENT_ID:}
+  api-key: ${PAYOS_API_KEY:}
+  checksum-key: ${PAYOS_CHECKSUM_KEY:}
+  webhook-url: ${PAYOS_WEBHOOK_URL:http://localhost:8081/api/v1/payments/webhook}
+  return-url: ${PAYOS_RETURN_URL:http://localhost:3000/payment/success}
+  cancel-url: ${PAYOS_CANCEL_URL:http://localhost:3000/payment/cancel}
+  base-url: https://api-merchant.payos.vn
+
+# === Actuator (Health Check) ===
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true

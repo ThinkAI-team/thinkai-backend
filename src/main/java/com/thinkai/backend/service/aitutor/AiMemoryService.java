@@ -117,7 +117,7 @@ public class AiMemoryService {
         if (turns == null || turns.isEmpty()) return;
         
         StringBuilder summary = new StringBuilder();
-        summary.append("Tổng quan cuộc trò chuyện với Bò Trang:\n");
+        summary.append("Tổng quan cuộc trò chuyện với BiliBily:\n");
         
         Set<String> topics = new HashSet<>();
         Set<String> agents = new HashSet<>();

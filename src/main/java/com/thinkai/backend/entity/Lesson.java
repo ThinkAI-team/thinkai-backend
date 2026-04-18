@@ -22,6 +22,9 @@ public class Lesson {
     @Column(nullable = false, length = 255)
     private String title;
 
+    @Column(length = 500)
+    private String description;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LessonType type;

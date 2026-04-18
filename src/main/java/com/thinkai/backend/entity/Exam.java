@@ -39,6 +39,14 @@ public class Exam {
     @Builder.Default
     private Integer passingScore = 60;
 
+    @Column(name = "total_questions", nullable = false)
+    @Builder.Default
+    private Integer totalQuestions = 0;
+
+    @Column(name = "duration", nullable = false)
+    @Builder.Default
+    private Integer duration = 120;
+
     @Column(name = "is_random_order", nullable = false)
     @Builder.Default
     private Boolean isRandomOrder = false;

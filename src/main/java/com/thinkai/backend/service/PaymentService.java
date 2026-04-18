@@ -19,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +28,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentService {
+    private static final BigDecimal DIRECT_ENROLL_PRICE_THRESHOLD = new BigDecimal("10000");
+
 
     private final PaymentRepository paymentRepository;
     private final CourseRepository courseRepository;
@@ -42,6 +45,12 @@ public class PaymentService {
         if (!course.getIsPublished()) {
             throw new ApiException("Khóa học chưa được xuất bản", HttpStatus.BAD_REQUEST);
         }
+        if (course.getStatus() == Course.Status.BLOCKED) {
+            throw new ApiException("Khóa học đã bị khóa bởi quản trị viên", HttpStatus.BAD_REQUEST);
+        }
+        if (course.getStatus() != Course.Status.APPROVED) {
+            throw new ApiException("Khóa học chưa sẵn sàng để thanh toán", HttpStatus.BAD_REQUEST);
+        }
 
         if (paymentRepository.existsByUserIdAndCourseIdAndStatus(userId, request.getCourseId(), Payment.PaymentStatus.COMPLETED)) {
             throw new ApiException("Bạn đã mua khóa học này rồi", HttpStatus.BAD_REQUEST);
@@ -56,7 +65,12 @@ public class PaymentService {
                 : course.getTitle();
         }
 
-        int amount = course.getPrice().intValue();
+        BigDecimal coursePrice = course.getPrice() == null ? BigDecimal.ZERO : course.getPrice();
+        int amount = coursePrice.intValue();
+
+        if (coursePrice.compareTo(DIRECT_ENROLL_PRICE_THRESHOLD) < 0) {
+            return createDirectEnrollPayment(userId, course, orderCode, amount, description);
+        }
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("orderCode", orderCode);
@@ -118,6 +132,34 @@ public class PaymentService {
             log.error("Error creating payment link: {}", e.getMessage(), e);
             throw new ApiException("Lỗi khi tạo link thanh toán: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private PaymentResponse createDirectEnrollPayment(
+            Long userId,
+            Course course,
+            Long orderCode,
+            int amount,
+            String description) {
+        Payment payment = Payment.builder()
+                .orderCode(orderCode)
+                .userId(userId)
+                .courseId(course.getId())
+                .amount(amount)
+                .status(Payment.PaymentStatus.COMPLETED)
+                .description(description)
+                .completedAt(LocalDateTime.now())
+                .build();
+
+        payment = paymentRepository.save(payment);
+
+        try {
+            courseService.enrollCourse(course.getId(), userId);
+            log.info("Direct enrolled (price<10000): userId={}, courseId={}", userId, course.getId());
+        } catch (Exception e) {
+            log.warn("Direct enroll skipped (maybe already enrolled): {}", e.getMessage());
+        }
+
+        return PaymentResponse.fromEntity(payment);
     }
 
     public PaymentResponse getPaymentByOrderCode(Long orderCode) {

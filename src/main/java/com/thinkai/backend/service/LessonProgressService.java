@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class LessonProgressService {
+    private static final double VIDEO_COMPLETE_THRESHOLD_PERCENT = 90.0;
 
     private final UserRepository userRepository;
     private final LessonRepository lessonRepository;
@@ -50,6 +51,27 @@ public class LessonProgressService {
                         .isCompleted(false)
                         .watchTimeSeconds(0)
                         .build());
+
+        if (lesson.getType() == Lesson.LessonType.VIDEO) {
+            int effectiveWatchTime = 0;
+            if (request.getWatchTimeSeconds() != null && request.getWatchTimeSeconds() > 0) {
+                effectiveWatchTime = request.getWatchTimeSeconds();
+            } else if (progress.getWatchTimeSeconds() != null && progress.getWatchTimeSeconds() > 0) {
+                effectiveWatchTime = progress.getWatchTimeSeconds();
+            }
+
+            Integer durationSeconds = lesson.getDurationSeconds();
+            if (durationSeconds == null || durationSeconds <= 0) {
+                throw new ApiException("Không thể đánh dấu hoàn thành: thiếu thời lượng video.", HttpStatus.BAD_REQUEST);
+            }
+
+            double lessonPercent = Math.min(100.0, (double) effectiveWatchTime / durationSeconds * 100.0);
+            if (lessonPercent < VIDEO_COMPLETE_THRESHOLD_PERCENT) {
+                throw new ApiException(
+                        "Bạn cần xem ít nhất 90% video trước khi đánh dấu hoàn thành.",
+                        HttpStatus.BAD_REQUEST);
+            }
+        }
 
         progress.setIsCompleted(true);
         progress.setCompletedAt(LocalDateTime.now());

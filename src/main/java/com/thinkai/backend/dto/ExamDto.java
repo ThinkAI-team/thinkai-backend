@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public class ExamDto {
 
     private Long id;
+    private Long courseId;
     private ExamType examType;
     private String title;
     private String description;

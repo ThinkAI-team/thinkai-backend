@@ -69,34 +69,53 @@ public class GoogleAuthService {
         String avatarUrl = (String) payload.get("picture");
 
         // 3. Tìm hoặc tạo user
-        User user = userRepository.findByGoogleId(googleId)
-                .orElseGet(() -> {
-                    // Check nếu email đã tồn tại (đăng ký bằng email trước đó)
-                    User existingUser = userRepository.findByEmail(email).orElse(null);
-                    if (existingUser != null) {
-                        // Liên kết Google vào tài khoản hiện có
-                        existingUser.setGoogleId(googleId);
-                        if (existingUser.getAvatarUrl() == null && avatarUrl != null) {
-                            existingUser.setAvatarUrl(avatarUrl);
-                        }
-                        return userRepository.save(existingUser);
-                    }
+        User user = userRepository.findByGoogleId(googleId).orElse(null);
+        boolean newlyRegistered = false;
 
-                    // Tạo user mới
-                    User newUser = User.builder()
-                            .email(email)
-                            .googleId(googleId)
-                            .fullName(name != null ? name : email.split("@")[0])
-                            .avatarUrl(avatarUrl)
-                            .role(User.Role.STUDENT)
-                            .isActive(true)
-                            .build();
-                    return userRepository.save(newUser);
-                });
+        if (user == null) {
+            // Check nếu email đã tồn tại (đăng ký bằng email trước đó)
+            User existingUser = userRepository.findByEmail(email).orElse(null);
+            if (existingUser != null) {
+                // Liên kết Google vào tài khoản hiện có
+                existingUser.setGoogleId(googleId);
+                if (existingUser.getAvatarUrl() == null && avatarUrl != null) {
+                    existingUser.setAvatarUrl(avatarUrl);
+                }
+                user = userRepository.save(existingUser);
+            } else {
+                // Tạo user mới ở trạng thái chờ duyệt
+                User newUser = User.builder()
+                        .email(email)
+                        .googleId(googleId)
+                        .fullName(name != null ? name : email.split("@")[0])
+                        .avatarUrl(avatarUrl)
+                        .role(User.Role.STUDENT)
+                        .isActive(false)
+                        .approvalStatus(User.ApprovalStatus.PENDING)
+                        .build();
+                user = userRepository.save(newUser);
+                newlyRegistered = true;
+            }
+        }
 
-        // 4. Check tài khoản bị khóa
+        // User mới đăng ký bằng Google: trả thành công nhưng chưa có token
+        if (newlyRegistered) {
+            return AuthResponse.builder()
+                    .email(user.getEmail())
+                    .fullName(user.getFullName())
+                    .role(user.getRole().name())
+                    .hasPassword(user.getPasswordHash() != null)
+                    .isGoogleUser(user.getGoogleId() != null)
+                    .avatarUrl(user.getAvatarUrl())
+                    .build();
+        }
+
+        // 4. Check tài khoản chưa được duyệt / bị khóa
         if (!user.getIsActive()) {
-            throw new ApiException("Tài khoản đã bị khóa", HttpStatus.FORBIDDEN);
+            if (user.getEffectiveApprovalStatus() == User.ApprovalStatus.BLOCKED) {
+                throw new ApiException("Tài khoản đã bị admin khóa", HttpStatus.FORBIDDEN);
+            }
+            throw new ApiException("Tài khoản đang chờ admin duyệt", HttpStatus.FORBIDDEN);
         }
 
         // 5. Generate JWT

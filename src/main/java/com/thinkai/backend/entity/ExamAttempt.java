@@ -30,6 +30,10 @@ public class ExamAttempt {
     @Builder.Default
     private Integer correctCount = 0;
 
+    @Column(name = "correct_answers", nullable = false)
+    @Builder.Default
+    private Integer correctAnswers = 0;
+
     @Column(name = "total_questions", nullable = false)
     private Integer totalQuestions;
 

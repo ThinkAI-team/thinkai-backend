@@ -39,4 +39,11 @@ public class LessonProgress {
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
+    @Column(name = "started_at")
+    private LocalDateTime startedAt;
+
+    @Column(name = "progress_percent")
+    @Builder.Default
+    private Integer progressPercent = 0;
 }

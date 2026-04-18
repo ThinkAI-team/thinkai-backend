@@ -61,6 +61,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -93,6 +94,7 @@ public class AITutorService {
     private final AiChatLogRepository aiChatLogRepository;
     private final UserRepository userRepository;
     private final AiSettingsService aiSettingsService;
+    private final AiRuntimeSettingsService aiRuntimeSettingsService;
     private final CourseRepository courseRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final ExamRepository examRepository;
@@ -109,6 +111,7 @@ public class AITutorService {
             AiChatLogRepository aiChatLogRepository,
             UserRepository userRepository,
             AiSettingsService aiSettingsService,
+            AiRuntimeSettingsService aiRuntimeSettingsService,
             CourseRepository courseRepository,
             EnrollmentRepository enrollmentRepository,
             ExamRepository examRepository,
@@ -123,6 +126,7 @@ public class AITutorService {
         this.aiChatLogRepository = aiChatLogRepository;
         this.userRepository = userRepository;
         this.aiSettingsService = aiSettingsService;
+        this.aiRuntimeSettingsService = aiRuntimeSettingsService;
         this.courseRepository = courseRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.examRepository = examRepository;
@@ -138,13 +142,19 @@ public class AITutorService {
     @Value("${openrouter.api.key}")
     private String apiKey;
 
+    @Value("${openrouter.api.keys:}")
+    private String apiKeys;
+
+    @Value("${openrouter.api.models:}")
+    private String models;
+
     @Value("${openrouter.api.url}")
     private String apiUrl;
 
     @Value("${openrouter.api.model}")
     private String model;
 
-    @Value("${openrouter.api.fallback-model:stepfun/step-3.5-flash:free}")
+    @Value("${openrouter.api.fallback-model:}")
     private String fallbackModel;
 
     @Value("${openrouter.api.temperature:0.3}")
@@ -155,6 +165,7 @@ public class AITutorService {
 
     @Value("${openrouter.api.max-tokens:700}")
     private int maxTokens;
+    private final AtomicInteger apiKeyCursor = new AtomicInteger(0);
 
     private static final class ToolDecision {
         private final String action;
@@ -429,10 +440,12 @@ public class AITutorService {
     }
 
     public AISummarizeResponse summarize(AISummarizeRequest request) {
-        String systemPrompt = "You are an AI English Tutor. Please summarize the following lesson content concisely. "
-                + "Highlight key grammar rules, vocabulary, or structures to help the student review. "
-                + "Only summarize the provided English lesson content. If the content is not related to English learning, refuse to summarize it. "
-                + "Respond in the same language as the user's input content.";
+        String systemPrompt = "You are an AI English Tutor for lesson post-processing tasks. "
+                + "You can produce summaries, key bullet points, or flashcards depending on the user's explicit instruction. "
+                + "STRICT FORMAT POLICY: If the user asks for JSON or a specific output schema, return exactly that format and nothing else. "
+                + "Do not add markdown fences unless user asks for them. "
+                + "If the lesson content is not related to English learning, politely refuse in one short sentence. "
+                + "Respond in the same language as the user's input content unless user explicitly requests another language.";
 
         String responseText = callAiApi(systemPrompt, request.getContent());
         return new AISummarizeResponse(responseText);
@@ -2002,12 +2015,36 @@ public class AITutorService {
     }
 
     private String callAiApi(List<Map<String, Object>> messages) {
-        return callAiApiWithModel(messages, model, true);
+        if (!aiRuntimeSettingsService.isTutorEnabled()) {
+            return "AI Tutor đang tạm thời bị khóa bởi quản trị viên.";
+        }
+
+        String configuredModel = aiRuntimeSettingsService.getSettings().getTutorModel();
+        List<String> modelPool = resolveTutorModelPool(configuredModel);
+        if (modelPool.isEmpty()) {
+            return "System Error: Tutor model is not configured. Please set OPENROUTER_API_MODEL.";
+        }
+        return callAiApiWithModel(messages, modelPool.get(0), true, modelPool);
     }
 
-    private String callAiApiWithModel(List<Map<String, Object>> messages, String modelToUse, boolean allowFallback) {
-        if (apiKey == null || apiKey.trim().isEmpty()) {
+    private String callAiApiWithModel(
+            List<Map<String, Object>> messages,
+            String modelToUse,
+            boolean allowFallback,
+            List<String> modelPool) {
+        List<String> keyPool = resolveApiKeyPool();
+        if (keyPool.isEmpty()) {
             return "System Error: OpenRouter API key is not configured. Please contact the administrator.";
+        }
+        if (aiRuntimeSettingsService.isModelBlocked(modelToUse)) {
+            if (!allowFallback) {
+                return "AI Tutor không khả dụng do model hiện tại đang bị khóa.";
+            }
+            String fallbackCandidate = resolveTutorFallbackModel(modelToUse, modelPool);
+            if (fallbackCandidate == null) {
+                return "AI Tutor không khả dụng vì các model đã bị khóa.";
+            }
+            return callAiApiWithModel(messages, fallbackCandidate, true, modelPool);
         }
 
         Map<String, Object> requestBody = Map.of(
@@ -2017,30 +2054,83 @@ public class AITutorService {
                 "max_tokens", maxTokens,
                 "messages", messages);
 
-        try {
-            Map<?, ?> response = restClient.post()
-                    .uri(apiUrl)
-                    .header("Authorization", "Bearer " + apiKey)
-                    .header("Content-Type", "application/json")
-                    .body(requestBody)
-                    .retrieve()
-                    .body(Map.class);
+        RestClientResponseException lastHttpError = null;
+        Exception lastError = null;
 
-            return extractTextFromResponse(response);
-        } catch (RestClientResponseException e) {
-            if (hasImageParts(messages) && isUnsupportedImageError(e)) {
-                return callAiApiWithModel(stripImageParts(messages), modelToUse, allowFallback);
+        for (int i = 0; i < keyPool.size(); i++) {
+            String currentKey = keyPool.get(i);
+            try {
+                System.out.println("AITutor OpenRouter call: model=" + modelToUse + ", keyAttempt=" + (i + 1) + "/" + keyPool.size());
+                Map<?, ?> response = restClient.post()
+                        .uri(apiUrl)
+                        .header("Authorization", "Bearer " + currentKey)
+                        .header("Content-Type", "application/json")
+                        .body(requestBody)
+                        .retrieve()
+                        .body(Map.class);
+                return extractTextFromResponse(response);
+            } catch (RestClientResponseException e) {
+                lastHttpError = e;
+                lastError = e;
+                String errorBody = e.getResponseBodyAsString();
+                System.err.println("Error calling OpenRouter API. model=" + modelToUse + ", keyAttempt="
+                        + (i + 1) + "/" + keyPool.size() + ", Status: " + e.getStatusCode() + ", Body: " + errorBody);
+
+                boolean retryable = isRateLimitError(e) || e.getStatusCode().value() == 429 || e.getStatusCode().value() >= 500;
+                if (retryable && i < keyPool.size() - 1) {
+                    continue;
+                }
+                break;
+            } catch (Exception e) {
+                lastError = e;
+                System.err.println("Unexpected error calling OpenRouter API: " + e.getMessage());
+                if (i < keyPool.size() - 1) {
+                    continue;
+                }
             }
-            if (allowFallback && isRateLimitError(e) && shouldFallbackFrom(modelToUse)) {
-                return callAiApiWithModel(messages, fallbackModel, false);
-            }
-            System.err.println("Error calling OpenRouter API: " + e.getMessage());
-            return "Sorry, I encountered an error while processing your request. Please try again later.";
-        } catch (Exception e) {
-            System.err.println("Error calling OpenRouter API: " + e.getMessage());
-            e.printStackTrace();
-            return "Sorry, I encountered an error while processing your request. Please try again later.";
         }
+
+        if (allowFallback && shouldFallbackFrom(modelToUse, modelPool) && lastHttpError != null) {
+            if (isRateLimitError(lastHttpError) || lastHttpError.getStatusCode().value() == 429
+                    || lastHttpError.getStatusCode().value() == 400
+                    || lastHttpError.getStatusCode().value() == 404
+                    || lastHttpError.getStatusCode().value() >= 500) {
+                String fallbackCandidate = resolveTutorFallbackModel(modelToUse, modelPool);
+                if (fallbackCandidate != null) {
+                    System.out.println("Attempting fallback to model: " + fallbackCandidate);
+                    return callAiApiWithModel(messages, fallbackCandidate, true, modelPool);
+                }
+            }
+        }
+
+        if (lastHttpError != null) {
+            return buildTutorProviderErrorMessage(lastHttpError, modelToUse);
+        }
+        String msg = lastError != null ? lastError.getMessage() : "Unknown error";
+        return "AI Tutor gặp lỗi kết nối model. Chi tiết: " + msg + ". Vui lòng thử lại sau ít phút.";
+    }
+
+    private List<String> resolveApiKeyPool() {
+        List<String> keys = new ArrayList<>();
+        if (apiKeys != null && !apiKeys.isBlank()) {
+            for (String raw : apiKeys.split(",")) {
+                if (raw != null && !raw.trim().isBlank()) {
+                    keys.add(raw.trim());
+                }
+            }
+        }
+        if (keys.isEmpty() && apiKey != null && !apiKey.isBlank()) {
+            keys.add(apiKey.trim());
+        }
+        if (keys.size() <= 1) {
+            return keys;
+        }
+        int start = Math.floorMod(apiKeyCursor.getAndIncrement(), keys.size());
+        List<String> rotated = new ArrayList<>(keys.size());
+        for (int i = 0; i < keys.size(); i++) {
+            rotated.add(keys.get((start + i) % keys.size()));
+        }
+        return rotated;
     }
 
     private boolean hasImageParts(List<Map<String, Object>> messages) {
@@ -2107,10 +2197,65 @@ public class AITutorService {
         return stripped;
     }
 
-    private boolean shouldFallbackFrom(String currentModel) {
-        return fallbackModel != null
-                && !fallbackModel.isBlank()
-                && !fallbackModel.equalsIgnoreCase(currentModel);
+    private boolean shouldFallbackFrom(String currentModel, List<String> modelPool) {
+        String fallbackCandidate = resolveTutorFallbackModel(currentModel, modelPool);
+        return fallbackCandidate != null && !fallbackCandidate.equalsIgnoreCase(currentModel);
+    }
+
+    private String resolveTutorFallbackModel(String currentModel, List<String> modelPool) {
+        if (modelPool == null || modelPool.isEmpty()) {
+            return null;
+        }
+        int currentIndex = -1;
+        for (int i = 0; i < modelPool.size(); i++) {
+            if (modelPool.get(i).equalsIgnoreCase(currentModel)) {
+                currentIndex = i;
+                break;
+            }
+        }
+        if (currentIndex < 0) {
+            return modelPool.get(0);
+        }
+        for (int i = currentIndex + 1; i < modelPool.size(); i++) {
+            String candidate = modelPool.get(i);
+            if (!aiRuntimeSettingsService.isModelBlocked(candidate)) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private List<String> resolveTutorModelPool(String configuredModel) {
+        LinkedHashSet<String> ordered = new LinkedHashSet<>();
+        addModelCandidate(ordered, configuredModel);
+        addModelCandidate(ordered, aiRuntimeSettingsService.getSettings().getTutorFallbackModel());
+
+        if (models != null && !models.isBlank()) {
+            for (String raw : models.split(",")) {
+                addModelCandidate(ordered, raw);
+            }
+        }
+
+        addModelCandidate(ordered, model);
+        addModelCandidate(ordered, fallbackModel);
+
+        List<String> result = new ArrayList<>();
+        for (String candidate : ordered) {
+            if (!aiRuntimeSettingsService.isModelBlocked(candidate)) {
+                result.add(candidate);
+            }
+        }
+        return result;
+    }
+
+    private void addModelCandidate(Set<String> target, String candidate) {
+        if (candidate == null) {
+            return;
+        }
+        String normalized = candidate.trim();
+        if (!normalized.isBlank()) {
+            target.add(normalized);
+        }
     }
 
     private boolean isRateLimitError(RestClientResponseException e) {
@@ -2119,6 +2264,35 @@ public class AITutorService {
         }
         String body = e.getResponseBodyAsString();
         return body != null && body.toLowerCase(Locale.ROOT).contains("rate limit");
+    }
+
+    private String buildTutorProviderErrorMessage(RestClientResponseException e, String modelName) {
+        int status = e.getStatusCode().value();
+        String body = e.getResponseBodyAsString();
+        String normalized = body == null ? "" : body.toLowerCase(Locale.ROOT);
+
+        if (status == 429 || normalized.contains("rate limit")) {
+            return "AI Tutor đang bị giới hạn tần suất (429) ở model '" + modelName
+                    + "'. Vui lòng thử lại sau 20-60 giây hoặc đổi model/key.";
+        }
+        if (status == 404 && normalized.contains("deprecated")) {
+            return "Model '" + modelName
+                    + "' đã deprecated trên OpenRouter (404). Vui lòng đổi model trong cấu hình.";
+        }
+        if (status == 404) {
+            return "Model '" + modelName
+                    + "' không tồn tại/không truy cập được (404). Vui lòng kiểm tra tên model.";
+        }
+        if (status == 401 || status == 403) {
+            return "OpenRouter API key không hợp lệ hoặc không đủ quyền (" + status
+                    + "). Vui lòng kiểm tra OPENROUTER_API_KEY(S).";
+        }
+        if (status >= 500) {
+            return "OpenRouter/provider đang lỗi tạm thời (" + status
+                    + "). Vui lòng thử lại sau ít phút.";
+        }
+        return "AI Tutor gặp lỗi provider (" + status + ") với model '" + modelName
+                + "'. Vui lòng thử lại hoặc đổi model.";
     }
 
     @SuppressWarnings("unchecked")

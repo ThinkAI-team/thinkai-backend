@@ -7,6 +7,8 @@ import com.thinkai.backend.exception.ApiException;
 import com.thinkai.backend.repository.AiSettingsRepository;
 import com.thinkai.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,8 @@ public class AiSettingsService {
     private final AiSettingsRepository aiSettingsRepository;
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
+    @Cacheable(value = "ai-settings", key = "#email")
     public AiSettingsDto getSettings(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
@@ -34,16 +38,23 @@ public class AiSettingsService {
         return AiSettingsDto.builder()
                 .language(settingsMap.getOrDefault("language", "English"))
                 .responseLength(settingsMap.getOrDefault("responseLength", "detailed"))
+                .communicationStyle(settingsMap.getOrDefault("communicationStyle", "friendly"))
+                .correctionMode(settingsMap.getOrDefault("correctionMode", "balanced"))
+                .answerFormat(settingsMap.getOrDefault("answerFormat", "auto"))
                 .build();
     }
 
     @Transactional
+    @CacheEvict(value = "ai-settings", key = "#email")
     public AiSettingsDto updateSettings(String email, AiSettingsDto dto) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
 
         updateOrInsertSetting(user.getId(), "language", dto.getLanguage(), user.getId());
         updateOrInsertSetting(user.getId(), "responseLength", dto.getResponseLength(), user.getId());
+        updateOrInsertSetting(user.getId(), "communicationStyle", dto.getCommunicationStyle(), user.getId());
+        updateOrInsertSetting(user.getId(), "correctionMode", dto.getCorrectionMode(), user.getId());
+        updateOrInsertSetting(user.getId(), "answerFormat", dto.getAnswerFormat(), user.getId());
 
         return getSettings(email);
     }

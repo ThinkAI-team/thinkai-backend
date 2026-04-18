@@ -24,6 +24,9 @@ public class AiToolRegistryService {
 
         register(map, AiToolDefinition.readOnly("list_shop_courses", AiAgentType.LEARNING, Set.of(
                 User.Role.STUDENT, User.Role.TEACHER, User.Role.ADMIN)));
+        register(map, AiToolDefinition.readOnly("search_courses", AiAgentType.LEARNING, Set.of(
+                User.Role.STUDENT, User.Role.TEACHER, User.Role.ADMIN)));
+        // Legacy alias for backward compatibility
         register(map, AiToolDefinition.readOnly("search_shop_courses", AiAgentType.LEARNING, Set.of(
                 User.Role.STUDENT, User.Role.TEACHER, User.Role.ADMIN)));
         register(map, AiToolDefinition.readOnly("get_course_detail", AiAgentType.LEARNING, Set.of(

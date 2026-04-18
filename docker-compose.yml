@@ -47,9 +47,28 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://thinkai-db:3306/thinkai_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=root  # Username kết nối database
       - SPRING_DATASOURCE_PASSWORD=root  # Password kết nối database
+      - SPRING_DATA_REDIS_HOST=${REDIS_HOST}
+      - SPRING_DATA_REDIS_PORT=${REDIS_PORT}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ---------------------------------------------------------------------------
+  # Redis Cache (cho caching)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: thinkai-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
 
 # ---------------------------------------------------------------------------
 # Volumes: Lưu trữ dữ liệu bền vững
 # ---------------------------------------------------------------------------
 volumes:
-  mysql_data:                           # Volume lưu trữ dữ liệu MySQL
+  mysql_data:
+  redis_data:                           # Volume lưu trữ dữ liệu MySQL

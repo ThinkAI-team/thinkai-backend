@@ -78,12 +78,22 @@ public class User {
         ADMIN       // Quản trị viên
     }
 
+    public enum ApprovalStatus {
+        PENDING,
+        APPROVED,
+        BLOCKED
+    }
+
     // ========================================================================
     // BOOLEAN FIELD
     // ========================================================================
     
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;       // ← Default = true
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "approval_status", length = 20)
+    private ApprovalStatus approvalStatus;
 
     // ========================================================================
     // TIMESTAMP FIELDS - Thời gian tạo/cập nhật
@@ -101,6 +111,9 @@ public class User {
     
     @PrePersist                            // ← Chạy TRƯỚC KHI insert vào DB
     protected void onCreate() {
+        if (approvalStatus == null) {
+            approvalStatus = Boolean.TRUE.equals(isActive) ? ApprovalStatus.APPROVED : ApprovalStatus.PENDING;
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
@@ -108,6 +121,26 @@ public class User {
     @PreUpdate                             // ← Chạy TRƯỚC KHI update
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public ApprovalStatus getEffectiveApprovalStatus() {
+        if (approvalStatus != null) return approvalStatus;
+        return Boolean.TRUE.equals(isActive) ? ApprovalStatus.APPROVED : ApprovalStatus.PENDING;
+    }
+
+    public void markApproved() {
+        this.isActive = true;
+        this.approvalStatus = ApprovalStatus.APPROVED;
+    }
+
+    public void markPending() {
+        this.isActive = false;
+        this.approvalStatus = ApprovalStatus.PENDING;
+    }
+
+    public void markBlocked() {
+        this.isActive = false;
+        this.approvalStatus = ApprovalStatus.BLOCKED;
     }
 
     // ========================================================================

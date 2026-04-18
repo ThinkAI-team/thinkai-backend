@@ -1,6 +1,7 @@
 package com.thinkai.backend.dto;
 
 import lombok.*;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Getter
@@ -8,7 +9,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProfileResponse {
+public class ProfileResponse implements Serializable {
+    private static final long serialVersionUID = 1L;
+    
     private String email;
     private String fullName;
     private String phoneNumber;

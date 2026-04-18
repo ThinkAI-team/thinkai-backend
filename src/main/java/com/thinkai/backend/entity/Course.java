@@ -36,6 +36,9 @@ public class Course {
     @Column(name = "is_published", nullable = false)
     private Boolean isPublished = false;
 
+    @Column(length = 10)
+    private String level;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status = Status.DRAFT;
@@ -44,7 +47,8 @@ public class Course {
         DRAFT,
         PENDING,
         APPROVED,
-        REJECTED
+        REJECTED,
+        BLOCKED
     }
 
     @Column(name = "created_at", nullable = false, updatable = false)

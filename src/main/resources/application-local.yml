@@ -4,12 +4,14 @@
 openrouter:
   api:
     key: ${OPENROUTER_API_KEY:}
+    keys: ${OPENROUTER_API_KEYS:}
+    models: ${OPENROUTER_API_MODELS:}
     url: "https://openrouter.ai/api/v1/chat/completions"
-    model: ${OPENROUTER_MODEL:qwen/qwen3.6-plus-preview:free}
-    fallback-model: ${OPENROUTER_FALLBACK_MODEL:stepfun/step-3.5-flash:free}
-    temperature: ${OPENROUTER_TEMPERATURE:0.3}
-    top-p: ${OPENROUTER_TOP_P:0.9}
-    max-tokens: ${OPENROUTER_MAX_TOKENS:700}
+    model: ${OPENROUTER_API_MODEL:}
+    fallback-model: ${OPENROUTER_API_FALLBACK_MODEL:}
+    temperature: ${OPENROUTER_API_TEMPERATURE:0.3}
+    top-p: ${OPENROUTER_API_TOP_P:0.9}
+    max-tokens: ${OPENROUTER_API_MAX_TOKENS:700}
 
 spring:
   datasource:
@@ -26,6 +28,10 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
+
+app:
+  errors:
+    expose-internal-message: true
 
 # ==============================================================================
 # payOS Configuration
