@@ -63,7 +63,7 @@ jobs:
     name: Trivy Scan
     runs-on: ubuntu-latest
     needs: build
-    if: needs.build.results == 'success'
+    if: ${{ needs.build.result == 'success' }}
 
     steps:
       - name: Download image artifact
