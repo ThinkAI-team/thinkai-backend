@@ -7,6 +7,10 @@ on:
       - "thinkai-backend/**"
       - ".github/workflows/docker.yml"
 
+permissions:
+  contents: read
+  security-events: write
+
 env:
   REGISTRY: docker.io
   IMAGE_NAME: minhtuyetvoi/thinkai-backend
@@ -14,6 +18,8 @@ env:
 jobs:
   build-scan:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
 
     steps:
       - name: Checkout code
