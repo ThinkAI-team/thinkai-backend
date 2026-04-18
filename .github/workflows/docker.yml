@@ -56,12 +56,14 @@ jobs:
         with:
           name: docker-image
           path: /tmp/image.tar
+          retention-days: 1
 
   # ── Job 2: Trivy Vulnerability Scan ────────────────────────────────
   trivy-scan:
     name: Trivy Scan
     runs-on: ubuntu-latest
     needs: build
+    if: needs.build.results == 'success'
 
     steps:
       - name: Download image artifact
