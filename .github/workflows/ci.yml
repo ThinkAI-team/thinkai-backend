@@ -63,6 +63,7 @@ jobs:
 
   # ── Job 4: SonarCloud Scan ─────────────────────────────────────
   sonar:
+    needs: build-and-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -117,7 +118,7 @@ jobs:
 
   # ── Job 6: Build Docker + Scan + SBOM ─────────────────────────────
   build-scan:
-    needs: [secret-scan, code-quality, dependency-check, sonar, build-and-test]
+    needs: [secret-scan, code-quality, dependency-check, build-and-test]
     runs-on: ubuntu-latest
     permissions:
       security-events: write
