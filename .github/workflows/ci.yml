@@ -94,7 +94,7 @@ jobs:
           path: target/surefire-reports/
           retention-days: 7
       - name: SonarCloud Scan
-        run: mvn sonar:sonar -Dsonar.token=${{ secrets.SONAR_TOKEN }} -Dsonar.organization=${{ secrets.SONAR_ORG }} -Dsonar.projectKey=ThinkAI-team_thinkai-backend
+        run: mvn sonar:sonar -Dsonar.token=${{ secrets.SONAR_TOKEN }} -Dsonar.organization=ThinkAI-team -Dsonar.projectKey=ThinkAI-team_thinkai-backend -Dsonar.host.url=https://sonarcloud.io
 
   build-scan:
     needs: build-and-test
