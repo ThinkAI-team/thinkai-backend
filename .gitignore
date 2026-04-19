@@ -26,5 +26,6 @@
 
 ### Environment ###
 .env
+env.production
 
 uploads/
