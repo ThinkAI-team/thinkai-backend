@@ -17,7 +17,6 @@ env:
   JWT_SECRET: ci-test-secret-key-must-be-at-least-256-bits-long-for-hs256
 
 jobs:
-  # ── Job 1: Secret Detection ─────────────────────────────────────────
   secret-scan:
     runs-on: ubuntu-latest
     steps:
@@ -30,7 +29,6 @@ jobs:
         with:
           extra_args: --only-verified
 
-  # ── Job 2: Code Quality ───────────────────────────────────────────────
   code-quality:
     runs-on: ubuntu-latest
     steps:
@@ -45,7 +43,6 @@ jobs:
       - name: Checkstyle
         run: mvn checkstyle:check
 
-  # ── Job 3: Dependency Security ─────────────────────────────
   dependency-check:
     runs-on: ubuntu-latest
     steps:
@@ -61,25 +58,6 @@ jobs:
         run: mvn org.sonatype.ossindex.maven:ossindex-maven-plugin:audit
         continue-on-error: true
 
-  # ── Job 4: SonarCloud Scan (tạm disable - cần artifact sharing) ─────────────────────────────────────
-  # sonar:
-  #   needs: build-and-test
-  #   runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-          cache: maven
-      - name: SonarCloud Scan
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        uses: SonarSource/sonarqube-scan-action@v6
-
-  # ── Job 5: Build & Test ───────────────────────────────────────
   build-and-test:
     runs-on: ubuntu-latest
     services:
@@ -115,10 +93,11 @@ jobs:
           name: test-reports
           path: target/surefire-reports/
           retention-days: 7
+      - name: SonarCloud Scan
+        run: mvn sonar:sonar -Dsonar.token=${{ secrets.SONAR_TOKEN }} -Dsonar.organization=${{ secrets.SONAR_ORG }} -Dsonar.projectKey=ThinkAI-team_thinkai-backend
 
-  # ── Job 6: Build Docker + Scan + SBOM ─────────────────────────────
   build-scan:
-    needs: [secret-scan, code-quality, dependency-check, build-and-test]
+    needs: build-and-test
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -167,7 +146,6 @@ jobs:
           name: sbom
           path: sbom.json
 
-  # ── Job 7: Sign Image ───────────────────────────────────────
   sign:
     needs: build-scan
     runs-on: ubuntu-latest
@@ -187,7 +165,6 @@ jobs:
       - name: Verify
         run: cosign verify ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
-  # ── Job 8: Push to Registry ───────────────────────────────
   push:
     needs: sign
     runs-on: ubuntu-latest
