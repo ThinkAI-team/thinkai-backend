@@ -12,8 +12,11 @@ import com.thinkai.backend.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -50,13 +53,13 @@ public class UserContextLoader {
             }
 
             Optional<UserMemory> userMemoryOpt = userMemoryRepository.findByUserId(userId);
-            
+
             String level;
             String targetExam;
             Integer targetScore;
             List<String> weakPoints;
             List<String> strongPoints;
-            
+
             if (userMemoryOpt.isPresent()) {
                 UserMemory um = userMemoryOpt.get();
                 level = um.getUserLevel();
@@ -71,7 +74,7 @@ public class UserContextLoader {
                 weakPoints = getWeakPoints(userId);
                 strongPoints = getStrongPoints(userId);
             }
-            
+
             int completedLessons = (int) lessonProgressRepository.findByUserIdAndIsCompletedTrue(userId).size();
             int streak = calculateStreak(userId);
 

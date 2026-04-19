@@ -30,7 +30,10 @@
         <module name="LocalVariableName"/>
         <module name="ParameterName"/>
         <module name="MemberName"/>
-        <module name="ConstantName"/>
+        <module name="ConstantName">
+            <!-- Allow Lombok @Slf4j / @Log4j2 generated 'log' and 'logger' fields -->
+            <property name="format" value="^log(ger)?$|^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$"/>
+        </module>
         <module name="PackageName">
             <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
         </module>

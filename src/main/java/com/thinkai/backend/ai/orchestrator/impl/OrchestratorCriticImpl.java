@@ -11,8 +11,9 @@ import java.util.List;
 
 /**
  * Phase 6: Critic Agent Implementation
- * Review quality của response (20% sampling)
+ * Review quality c???a response (20% sampling)
  */
+@SuppressWarnings("checkstyle:ConstantName")
 @Service
 public class OrchestratorCriticImpl implements OrchestratorCritic {
 
@@ -69,7 +70,7 @@ public class OrchestratorCriticImpl implements OrchestratorCritic {
         }
 
         return new ReviewResult(
-            response, // chưa modify, chỉ review
+            response, // ch??a modify, ch??? review
             qualityScore,
             issues,
             suggestions,

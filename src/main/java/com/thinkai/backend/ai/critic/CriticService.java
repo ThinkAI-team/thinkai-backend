@@ -1,7 +1,6 @@
 package com.thinkai.backend.ai.critic;
 
 import com.thinkai.backend.ai.config.AgentType;
-import com.thinkai.backend.ai.llm.LLMService;
 import com.thinkai.backend.ai.validator.SafetyChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("checkstyle:ConstantName")
 @Component
 public class CriticService {
 
@@ -30,11 +30,11 @@ public class CriticService {
         if (response == null || response.isBlank()) {
             return false;
         }
-        
+
         if (response.length() > LONG_RESPONSE_THRESHOLD) {
             return true;
         }
-        
+
         return Math.random() < CRITIC_PROBABILITY;
     }
 
@@ -64,15 +64,15 @@ public class CriticService {
 
         var qualityScore = qualityScorer.score(response, agent);
         boolean needsImprovement = qualityScore.totalScore() < MIN_QUALITY_THRESHOLD;
-        
+
         List<String> suggestions = new ArrayList<>();
         if (needsImprovement) {
             suggestions.addAll(qualityScore.failures());
-            
+
             if (response.length() < 50) {
                 suggestions.add("Add more detail and examples");
             }
-            
+
             if (agent.isToeicAgent() || agent.isIeltsAgent()) {
                 if (!response.toLowerCase().contains("example")) {
                     suggestions.add("Add specific examples for better understanding");
@@ -81,7 +81,7 @@ public class CriticService {
                     suggestions.add("Include explanation for answers");
                 }
             }
-            
+
             if (agent == AgentType.CONVERSATION) {
                 if (!response.contains("?")) {
                     suggestions.add("Consider asking follow-up questions");

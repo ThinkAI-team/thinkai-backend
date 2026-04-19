@@ -169,7 +169,9 @@ public class AdminPanelController {
 
         List<Long> userIds = userIdListRaw.stream()
                 .map(item -> {
-                    if (item instanceof Number number) return number.longValue();
+                    if (item instanceof Number number) {
+                        return number.longValue();
+                    }
                     if (item instanceof String value && !value.isBlank()) {
                         try {
                             return Long.parseLong(value.trim());

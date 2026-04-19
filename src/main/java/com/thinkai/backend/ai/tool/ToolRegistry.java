@@ -3,7 +3,11 @@ package com.thinkai.backend.ai.tool;
 import com.thinkai.backend.ai.config.AgentType;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class ToolRegistry {

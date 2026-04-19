@@ -6,13 +6,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Hybrid Router - kết hợp Keyword + Embedding routing
  * Sử dụng weighted scoring để chọn agent phù hợp nhất
  */
 @Component
+@SuppressWarnings("checkstyle:ConstantName")
 public class HybridRouter {
 
     private static final Logger logger = LoggerFactory.getLogger(HybridRouter.class);
@@ -185,7 +189,9 @@ public class HybridRouter {
             reason.append("keyword_match");
         }
         if (score.embeddingScore() > 0) {
-            if (reason.length() > 0) reason.append("+");
+            if (reason.length() > 0) {
+                reason.append("+");
+            }
             reason.append("embedding_match");
         }
 
@@ -234,9 +240,15 @@ public class HybridRouter {
         }
 
         public String confidenceLevel() {
-            if (confidence >= CONFIDENCE_HIGH) return "HIGH";
-            if (confidence >= CONFIDENCE_MEDIUM) return "MEDIUM";
-            if (confidence >= CONFIDENCE_LOW) return "LOW";
+            if (confidence >= CONFIDENCE_HIGH) {
+                return "HIGH";
+            }
+            if (confidence >= CONFIDENCE_MEDIUM) {
+                return "MEDIUM";
+            }
+            if (confidence >= CONFIDENCE_LOW) {
+                return "LOW";
+            }
             return "VERY_LOW";
         }
 

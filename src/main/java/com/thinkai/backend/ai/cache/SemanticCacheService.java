@@ -7,8 +7,12 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -38,27 +42,27 @@ public class SemanticCacheService {
         try {
             String key = keyGenerator.generateKey(agent, userId);
             List<Object> cachedQueries = getCachedQueries(key);
-            
+
             if (cachedQueries == null || cachedQueries.isEmpty()) {
                 metrics.recordMiss();
                 return Optional.empty();
             }
 
             double[] queryEmbedding = toDoubleArray(embeddingService.embed(query));
-            
+
             CachedResponse bestMatch = null;
             double bestSimilarity = 0;
-            
+
             for (Object item : cachedQueries) {
                 if (item instanceof Map) {
                     Map<String, Object> entry = (Map<String, Object>) item;
                     String cachedQuery = (String) entry.get("query");
                     Object embeddingObj = entry.get("embedding");
-                    
+
                     if (cachedQuery != null && embeddingObj != null) {
                         double[] cachedEmbedding = convertEmbedding(embeddingObj);
                         double similarity = cosineSimilarity(queryEmbedding, cachedEmbedding);
-                        
+
                         if (similarity > SIMILARITY_THRESHOLD && similarity > bestSimilarity) {
                             bestSimilarity = similarity;
                             bestMatch = new CachedResponse(
@@ -71,7 +75,7 @@ public class SemanticCacheService {
                     }
                 }
             }
-            
+
             if (bestMatch != null) {
                 metrics.recordHit();
                 log.debug("Cache hit: agent={}, similarity={}", agent, bestSimilarity);
@@ -80,7 +84,7 @@ public class SemanticCacheService {
                 metrics.recordMiss();
                 return Optional.empty();
             }
-            
+
         } catch (Exception e) {
             log.error("Cache get error: {}", e.getMessage());
             metrics.recordError();
@@ -92,29 +96,30 @@ public class SemanticCacheService {
         try {
             String key = keyGenerator.generateKey(agent, userId);
             double[] embedding = toDoubleArray(embeddingService.embed(query));
-            
+
             Map<String, Object> entry = new HashMap<>();
             entry.put("query", query);
             entry.put("response", response);
             entry.put("embedding", embedding);
             entry.put("timestamp", System.currentTimeMillis());
-            
+
             List<Object> cachedQueries = getCachedQueries(key);
             if (cachedQueries == null) {
                 cachedQueries = new ArrayList<>();
             }
-            
+
             cachedQueries.add(entry);
-            
+
             while (cachedQueries.size() > MAX_CACHED_QUERIES) {
                 cachedQueries.remove(0);
             }
-            
+
             redisTemplate.opsForValue().set(key, cachedQueries, DEFAULT_TTL);
             metrics.recordSave();
-            
-            log.debug("Cache saved: agent={}, query={}", agent, query.substring(0, Math.min(30, query.length())));
-            
+
+            log.debug("Cache saved: agent={}, query={}",
+                agent, query.substring(0, Math.min(30, query.length())));
+
         } catch (Exception e) {
             log.error("Cache put error: {}", e.getMessage());
             metrics.recordError();
@@ -190,17 +195,17 @@ public class SemanticCacheService {
         if (a.length != b.length || a.length == 0) {
             return 0;
         }
-        
+
         double dotProduct = 0;
         double normA = 0;
         double normB = 0;
-        
+
         for (int i = 0; i < a.length; i++) {
             dotProduct += a[i] * b[i];
             normA += a[i] * a[i];
             normB += b[i] * b[i];
         }
-        
+
         double denominator = Math.sqrt(normA) * Math.sqrt(normB);
         return denominator == 0 ? 0 : dotProduct / denominator;
     }

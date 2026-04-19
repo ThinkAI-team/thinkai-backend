@@ -51,9 +51,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -826,7 +824,11 @@ public class AITutorService {
             if (payload == null) {
                 return ToolExecutionResult.needInfo(
                         "create_exam",
-                        "Mẫu đúng: /tool create-exam {\"courseId\":1,\"title\":\"...\",\"examType\":\"TOEIC\",\"description\":\"...\",\"timeLimitMinutes\":90,\"passingScore\":60,\"isRandomOrder\":false}",
+                        "Mẫu đúng: /tool create-exam "
+                        + "{\"courseId\":1,\"title\":\"...\","
+                        + "\"examType\":\"TOEIC\",\"description\":\"...\","
+                        + "\"timeLimitMinutes\":90,\"passingScore\":60,"
+                        + "\"isRandomOrder\":false}",
                         List.of());
             }
             try {
@@ -869,8 +871,14 @@ public class AITutorService {
             if (payload == null) {
                 return ToolExecutionResult.needInfo(
                         "create_lesson",
-                        "Mẫu đúng: /tool create-lesson {\"courseId\":1,\"title\":\"...\",\"type\":\"VIDEO\",\"contentUrl\":\"...\",\"contentText\":\"...\",\"durationSeconds\":300,\"orderIndex\":1}",
-                        List.of(uploadFileAction("contentUrl", "Chọn file bài học", "image/*,.pdf,.mp4,.mp3,.txt,.md")));
+                        "Mẫu đúng: /tool create-lesson "
+                        + "{\"courseId\":1,\"title\":\"...\","
+                        + "\"type\":\"VIDEO\",\"contentUrl\":\"...\","
+                        + "\"contentText\":\"...\","
+                        + "\"durationSeconds\":300,\"orderIndex\":1}",
+                        List.of(uploadFileAction("contentUrl",
+                            "Chọn file bài học",
+                            "image/*,.pdf,.mp4,.mp3,.txt,.md")));
             }
             try {
                 return executeCreateLesson(user, objectMapper.readTree(payload), false);
@@ -1034,9 +1042,19 @@ public class AITutorService {
                 + "- /tool my-exams [limit]\n"
                 + "- /tool enroll {\"courseId\":123}\n"
                 + "- /tool create-course {\"title\":\"...\",\"description\":\"...\",\"price\":199000,\"thumbnailUrl\":\"...\"}\n"
-                + "- /tool create-exam {\"courseId\":1,\"title\":\"...\",\"examType\":\"TOEIC\",\"description\":\"...\",\"timeLimitMinutes\":90,\"passingScore\":60,\"isRandomOrder\":false}\n"
+                + "- /tool create-exam "
+                + "{\"courseId\":1,\"title\":\"...\","
+                + "\"examType\":\"TOEIC\",\"description\":\"...\","
+                + "\"timeLimitMinutes\":90,"
+                + "\"passingScore\":60,"
+                + "\"isRandomOrder\":false}\n"
                 + "- /tool publish-course {\"courseId\":123}\n"
-                + "- /tool create-lesson {\"courseId\":1,\"title\":\"...\",\"type\":\"VIDEO\",\"contentUrl\":\"...\",\"contentText\":\"...\",\"durationSeconds\":300,\"orderIndex\":1}";
+                + "- /tool create-lesson "
+                + "{\"courseId\":1,\"title\":\"...\","
+                + "\"type\":\"VIDEO\",\"contentUrl\":\"...\","
+                + "\"contentText\":\"...\","
+                + "\"durationSeconds\":300,"
+                + "\"orderIndex\":1}";
     }
 
     private String toolListShopCourses(int limit) {

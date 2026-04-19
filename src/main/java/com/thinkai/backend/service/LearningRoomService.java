@@ -291,7 +291,9 @@ public class LearningRoomService {
                     .replaceAll("\\s+", " ")
                     .trim();
             if (!plain.isBlank()) {
-                if (out.length() > 0) out.append(' ');
+                if (out.length() > 0) {
+                    out.append(' ');
+                }
                 out.append(plain);
             }
         }
@@ -299,7 +301,9 @@ public class LearningRoomService {
     }
 
     private String trimMax(String text) {
-        if (text == null) return "";
+        if (text == null) {
+            return "";
+        }
         if (text.length() <= SUMMARY_MAX_CHARS) {
             return text;
         }

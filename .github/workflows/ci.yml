@@ -74,10 +74,9 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        with:
-          organization: ${{ secrets.SONAR_ORG }}
-          token: ${{ secrets.SONAR_TOKEN }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        uses: SonarSource/sonarqube-scan-action@v5
 
   # ── Job 5: Build & Test ───────────────────────────────────────
   build-and-test:

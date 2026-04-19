@@ -5,7 +5,6 @@ import com.thinkai.backend.ai.state.AiHarnessRequest;
 import com.thinkai.backend.ai.state.AiHarnessResponse;
 import com.thinkai.backend.dto.AIChatRequest;
 import com.thinkai.backend.dto.AIChatResponse;
-import com.thinkai.backend.dto.AiTutorUiAction;
 import com.thinkai.backend.service.aitutor.AiAgentType;
 import org.springframework.stereotype.Component;
 
@@ -16,10 +15,10 @@ import java.util.UUID;
 @Component
 public class AiHarnessAdapter {
 
-    public AiHarnessRequest toHarnessRequest(AIChatRequest request, Long userId, 
+    public AiHarnessRequest toHarnessRequest(AIChatRequest request, Long userId,
             String userLevel, String targetExam, Integer targetScore,
             List<String> weakPoints, List<String> strongPoints) {
-        
+
         return AiHarnessRequest.builder()
             .traceId(UUID.randomUUID().toString())
             .userId(userId)
@@ -44,12 +43,12 @@ public class AiHarnessAdapter {
 
         // Get thinking steps
         List<Map<String, Object>> thinkingStepsList = getThinkingSteps(harnessResponse);
-        
+
         AIChatResponse response;
-        
+
         if (harnessResponse.errorCode() != null) {
             response = new AIChatResponse(
-                harnessResponse.errorMessage() != null 
+                harnessResponse.errorMessage() != null
                     ? harnessResponse.errorMessage()
                     : "An error occurred. Please try again.",
                 harnessResponse.conversationId(),
@@ -66,7 +65,7 @@ public class AiHarnessAdapter {
                 mapAgentType(harnessResponse.agentType())
             );
         }
-        
+
         response.setThinkingSteps(thinkingStepsList);
         return response;
     }
@@ -78,7 +77,7 @@ public class AiHarnessAdapter {
         if (harnessResponse == null || harnessResponse.thinkingSteps() == null) {
             return List.of();
         }
-        
+
         return harnessResponse.thinkingSteps().stream()
             .map(step -> {
                 Map<String, Object> map = new java.util.HashMap<>();

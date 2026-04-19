@@ -42,8 +42,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
-
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -228,7 +226,9 @@ public class AiHarnessController {
         String[] words = message.split("\\s+");
         StringBuilder title = new StringBuilder();
         for (int i = 0; i < Math.min(5, words.length); i++) {
-            if (i > 0) title.append(" ");
+            if (i > 0) {
+                title.append(" ");
+            }
             title.append(words[i]);
         }
         return title.length() > 30 ? title.substring(0, 27) + "..." : title.toString();
@@ -327,7 +327,9 @@ public class AiHarnessController {
     }
 
     private String escapeJson(String input) {
-        if (input == null) return "";
+        if (input == null) {
+            return "";
+        }
         return input
             .replace("\\", "\\\\")
             .replace("\"", "\\\"")

@@ -1,6 +1,5 @@
 package com.thinkai.backend.dto;
 
-import com.thinkai.backend.entity.CartItem;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

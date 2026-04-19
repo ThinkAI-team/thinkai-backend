@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+@SuppressWarnings("checkstyle:ConstantName")
 @Service
 public class OrchestratorContextBuilderImpl implements OrchestratorContextBuilder {
 
@@ -36,9 +37,9 @@ public class OrchestratorContextBuilderImpl implements OrchestratorContextBuilde
         try {
             if (request.userId() != null) {
                 profile = userContextLoader.load(request.userId());
-                
+
                 context.append("User Level: ").append(profile.level()).append("\n");
-                
+
                 if (profile.targetExam() != null) {
                     context.append("Target Exam: ").append(profile.targetExam());
                     if (profile.targetScore() != null) {
@@ -46,14 +47,14 @@ public class OrchestratorContextBuilderImpl implements OrchestratorContextBuilde
                     }
                     context.append("\n");
                 }
-                
+
                 if (!profile.weakPoints().isEmpty()) {
                     context.append("Weak Areas: ").append(String.join(", ", profile.weakPoints())).append("\n");
                 }
                 if (!profile.strongPoints().isEmpty()) {
                     context.append("Strong Areas: ").append(String.join(", ", profile.strongPoints())).append("\n");
                 }
-                
+
                 context.append("Lessons Completed: ").append(profile.totalLessonsCompleted()).append("\n");
                 context.append("Daily Streak: ").append(profile.dailyStreak()).append(" days\n");
             } else {
@@ -83,8 +84,8 @@ public class OrchestratorContextBuilderImpl implements OrchestratorContextBuilde
 
             if (request.conversationId() != null && request.userId() != null) {
                 String convHistory = conversationContextLoader.load(
-                    request.userId(), 
-                    request.conversationId(), 
+                    request.userId(),
+                    request.conversationId(),
                     6
                 );
                 if (!convHistory.isBlank()) {

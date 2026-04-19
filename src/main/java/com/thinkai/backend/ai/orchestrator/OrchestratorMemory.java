@@ -1,7 +1,6 @@
 package com.thinkai.backend.ai.orchestrator;
 
 import com.thinkai.backend.ai.config.AgentType;
-import com.thinkai.backend.ai.state.AiHarnessRequest;
 import com.thinkai.backend.ai.state.AiHarnessResponse;
 import org.springframework.stereotype.Component;
 
@@ -11,8 +10,8 @@ import java.util.Optional;
 
 /**
  * Memory Interface - Phase 7 implement
- * Lưu trữ conversation history và user progress
- * Tích hợp: Redis (short-term) + MySQL (long-term)
+ * Luu tru conversation history va user progress
+ * Tich hop: Redis (short-term) + MySQL (long-term)
  */
 @Component
 public interface OrchestratorMemory {

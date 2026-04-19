@@ -4,7 +4,12 @@ import com.thinkai.backend.ai.config.AgentType;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Registry cho các agent với metadata và routing patterns

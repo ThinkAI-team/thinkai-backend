@@ -124,7 +124,9 @@ public class User {
     }
 
     public ApprovalStatus getEffectiveApprovalStatus() {
-        if (approvalStatus != null) return approvalStatus;
+        if (approvalStatus != null) {
+            return approvalStatus;
+        }
         return Boolean.TRUE.equals(isActive) ? ApprovalStatus.APPROVED : ApprovalStatus.PENDING;
     }
 

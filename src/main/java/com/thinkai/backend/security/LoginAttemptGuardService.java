@@ -22,7 +22,9 @@ public class LoginAttemptGuardService {
     public void assertNotBlocked(String email, String clientIp) {
         cleanupIfNeeded();
         AttemptState state = states.get(buildKey(email, clientIp));
-        if (state == null) return;
+        if (state == null) {
+            return;
+        }
 
         long now = System.currentTimeMillis();
         synchronized (state) {
@@ -87,7 +89,9 @@ public class LoginAttemptGuardService {
 
     private void cleanupIfNeeded() {
         long now = System.currentTimeMillis();
-        if (now - lastCleanupAt < CLEANUP_INTERVAL_MS) return;
+        if (now - lastCleanupAt < CLEANUP_INTERVAL_MS) {
+            return;
+        }
         lastCleanupAt = now;
         states.entrySet().removeIf(entry -> {
             AttemptState state = entry.getValue();

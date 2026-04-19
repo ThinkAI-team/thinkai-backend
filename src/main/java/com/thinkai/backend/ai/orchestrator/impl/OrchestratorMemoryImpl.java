@@ -2,7 +2,6 @@ package com.thinkai.backend.ai.orchestrator.impl;
 
 import com.thinkai.backend.ai.config.AgentType;
 import com.thinkai.backend.ai.orchestrator.OrchestratorMemory;
-import com.thinkai.backend.ai.state.AiHarnessRequest;
 import com.thinkai.backend.ai.state.AiHarnessResponse;
 import org.springframework.stereotype.Service;
 
@@ -15,13 +14,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Phase 7: Memory Implementation
- * Tích hợp: Redis (short-term) + MySQL (long-term)
- * Tạm thờị dùng in-memory store
+ * Tich hop: Redis (short-term) + MySQL (long-term)
+ * Tam thoi dung in-memory store
  */
 @Service
 public class OrchestratorMemoryImpl implements OrchestratorMemory {
 
-    // In-memory storage (sẽ thay bằng Redis/MySQL ở Phase 7)
+    // In-memory storage (se thay bang Redis/MySQL o Phase 7)
     private final Map<String, List<ConversationTurn>> conversationStore = new ConcurrentHashMap<>();
     private final Map<Long, List<UserSkill>> userSkillsStore = new ConcurrentHashMap<>();
     private final Map<Long, List<MistakeLog>> mistakeStore = new ConcurrentHashMap<>();
@@ -103,11 +102,15 @@ public class OrchestratorMemoryImpl implements OrchestratorMemory {
 
     public void incrementMessageCount(Long userId, String conversationId) {
         List<ConversationSummary> list = userConversationStore.get(userId);
-        if (list == null) return;
+        if (list == null) {
+            return;
+        }
         for (int i = 0; i < list.size(); i++) {
             ConversationSummary c = list.get(i);
             if (c.conversationId().equals(conversationId)) {
-                list.set(i, new ConversationSummary(c.conversationId(), c.title(), c.lastMessagePreview(), c.lastMessageAt(), c.messageCount() + 1));
+                list.set(i, new ConversationSummary(
+                    c.conversationId(), c.title(), c.lastMessagePreview(),
+                    c.lastMessageAt(), c.messageCount() + 1));
                 break;
             }
         }

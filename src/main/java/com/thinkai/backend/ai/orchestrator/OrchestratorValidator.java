@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Validator Interface - Phase 6 implement
- * Kiểm tra quality của response
+ * Kiem tra quality cua response
  */
 @Component
 public interface OrchestratorValidator {
@@ -15,18 +15,18 @@ public interface OrchestratorValidator {
      *
      * @param response Raw LLM response
      * @param agent Agent type
-     * @return Validated response (có thể sửa đổi)
-     * @throws ValidationException nếu không đạt requirements
+     * @return Validated response (co the sua doi)
+     * @throws ValidationException neu khong dat requirements
      */
     String validate(String response, AgentType agent) throws ValidationException;
 
     /**
-     * Validate với detailed result
+     * Validate voi detailed result
      */
     ValidationResult validateDetailed(String response, AgentType agent);
 
     /**
-     * Check nhanh (không throw exception)
+     * Check nhanh (khong throw exception)
      */
     boolean isValid(String response, AgentType agent);
 
@@ -43,8 +43,12 @@ public interface OrchestratorValidator {
         java.util.List<String> warnings
     ) {
         public ValidationResult {
-            if (errors == null) errors = java.util.List.of();
-            if (warnings == null) warnings = java.util.List.of();
+            if (errors == null) {
+                errors = java.util.List.of();
+            }
+            if (warnings == null) {
+                warnings = java.util.List.of();
+            }
         }
     }
 }

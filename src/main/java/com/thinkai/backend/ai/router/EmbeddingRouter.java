@@ -8,13 +8,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Embedding-based Router
  * Định tuyến dựa trên semantic similarity với pre-defined queries
  */
 @Component
+@SuppressWarnings("checkstyle:ConstantName")
 public class EmbeddingRouter {
 
     private static final Logger logger = LoggerFactory.getLogger(EmbeddingRouter.class);
@@ -251,7 +257,9 @@ public class EmbeddingRouter {
      */
     private AgentType parseAgentFromKey(String key) {
         int separatorIndex = key.indexOf(':');
-        if (separatorIndex < 0) return null;
+        if (separatorIndex < 0) {
+            return null;
+        }
 
         String agentName = key.substring(0, separatorIndex);
         try {

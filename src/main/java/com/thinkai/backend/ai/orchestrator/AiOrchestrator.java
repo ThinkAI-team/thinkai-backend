@@ -28,18 +28,19 @@ import java.util.regex.Pattern;
 
 /**
  * Core Orchestrator cho AI Harness English Learning System
- * Điều phối flow từ request → response qua state machine
+ * Dieu phoi flow tu request -> response qua state machine
  *
- * Flow: START → ROUTED → CACHE_CHECK → CONTEXT_BUILT → LLM_CALLED →
- *       [TOOL_CALLED] → VALIDATED → [CRITIC_CHECK] → DONE
+ * Flow: START -> ROUTED -> CACHE_CHECK -> CONTEXT_BUILT -> LLM_CALLED ->
+ *       [TOOL_CALLED] -> VALIDATED -> [CRITIC_CHECK] -> DONE
  */
+@SuppressWarnings("checkstyle:ConstantName")
 @Component
 public class AiOrchestrator {
 
     private static final Logger logger = LoggerFactory.getLogger(AiOrchestrator.class);
     private static final int MAX_TOOL_CYCLES = 3;
 
-    // Dependencies (sẽ inject ở các phase sau)
+    // Dependencies (se inject o cac phase sau)
     private final OrchestratorRouter router;
     private final OrchestratorCache cache;
     private final OrchestratorContextBuilder contextBuilder;
@@ -78,7 +79,7 @@ public class AiOrchestrator {
     }
 
     /**
-     * Main entry point - xử lý request qua state machine
+     * Main entry point - xu ly request qua state machine
      */
     public AiHarnessResponse handle(AiHarnessRequest request) {
         String traceId = request.traceId() != null ? request.traceId() : UUID.randomUUID().toString();
@@ -93,7 +94,10 @@ public class AiOrchestrator {
 
         // Record start
         transitions.add(AiStateTransition.start(traceId));
-        traceLogger.startTrace(traceId, request.userId() != null ? request.userId().toString() : "anonymous", request.message());
+        traceLogger.startTrace(
+            traceId,
+            request.userId() != null ? request.userId().toString() : "anonymous",
+            request.message());
 
         try {
             logger.info("[{}] Starting AI Harness flow for user {}", traceId, request.userId());
@@ -109,12 +113,17 @@ public class AiOrchestrator {
                 true
             ));
             logStateTransition(traceId, currentState, "Agent selected: " + agent);
-            appendTransition(traceId, transitions, currentState, "Agent selected: " + agent.getCode(), routeTime);
-            addRunGraphNode(runGraph, "route", "router", "ok", routeTime, Map.of("agent", agent.getCode()));
+            appendTransition(
+                traceId, transitions, currentState,
+                "Agent selected: " + agent.getCode(), routeTime);
+            addRunGraphNode(
+                runGraph, "route", "router", "ok", routeTime,
+                Map.of("agent", agent.getCode()));
 
             // Step 2: Check semantic cache
             stepStartTime = System.currentTimeMillis();
-            Optional<AiHarnessResponse> cachedResponse = checkCache(request, agent, traceId, transitions);
+            Optional<AiHarnessResponse> cachedResponse = checkCache(
+                request, agent, traceId, transitions);
             long cacheTime = System.currentTimeMillis() - stepStartTime;
             if (cachedResponse.isPresent()) {
                 thinkingSteps.add(new AiHarnessResponse.ThinkingStep(
@@ -126,7 +135,9 @@ public class AiOrchestrator {
                 currentState = AiState.DONE;
                 logStateTransition(traceId, currentState, "Cache hit - returning cached response");
                 appendTransition(traceId, transitions, currentState, "Cache hit", cacheTime);
-                addRunGraphNode(runGraph, "cache", "semantic_cache", "hit", cacheTime, Map.of("agent", agent.getCode()));
+                addRunGraphNode(
+                    runGraph, "cache", "semantic_cache", "hit",
+                    cacheTime, Map.of("agent", agent.getCode()));
                 long cacheHitTime = System.currentTimeMillis() - startTime.toEpochMilli();
                 traceLogger.endTrace(traceId, currentState.name(), agent.getCode(), cacheHitTime);
                 return cachedResponse.get().withThinkingSteps(thinkingSteps);
@@ -140,7 +151,9 @@ public class AiOrchestrator {
             currentState = AiState.CACHE_CHECK;
             logStateTransition(traceId, currentState, "Cache miss - proceeding");
             appendTransition(traceId, transitions, currentState, "Cache miss", cacheTime);
-            addRunGraphNode(runGraph, "cache", "semantic_cache", "miss", cacheTime, Map.of("agent", agent.getCode()));
+            addRunGraphNode(
+                runGraph, "cache", "semantic_cache", "miss",
+                cacheTime, Map.of("agent", agent.getCode()));
 
             // Step 3: Build context
             stepStartTime = System.currentTimeMillis();
@@ -148,25 +161,33 @@ public class AiOrchestrator {
             long contextTime = System.currentTimeMillis() - stepStartTime;
             thinkingSteps.add(new AiHarnessResponse.ThinkingStep(
                 "3. Context Builder",
-                "Xay dung context tu user profile va lich su. Do dai message: " + request.message().length() + " ky tu",
+                "Xay dung context tu user profile va lich su. Do dai message: "
+                    + request.message().length() + " ky tu",
                 contextTime,
                 true
             ));
             currentState = AiState.CONTEXT_BUILT;
             logStateTransition(traceId, currentState, "Context built");
-            appendTransition(traceId, transitions, currentState, "Context built", contextTime);
-            addRunGraphNode(runGraph, "context", "context_builder", "ok", contextTime, Map.of());
+            appendTransition(
+                traceId, transitions, currentState, "Context built", contextTime);
+            addRunGraphNode(
+                runGraph, "context", "context_builder", "ok", contextTime, Map.of());
 
             boolean adaptiveApplied = context.contains("Adaptive Rules:");
             thinkingSteps.add(new AiHarnessResponse.ThinkingStep(
                 "3.8. Adaptive Rules",
-                adaptiveApplied ? "Da ap dung rule-based adaptive tu user profile" : "Khong co adaptive rule phu hop",
+                adaptiveApplied
+                    ? "Da ap dung rule-based adaptive tu user profile"
+                    : "Khong co adaptive rule phu hop",
                 0,
                 true
             ));
-            addRunGraphNode(runGraph, "adaptive", "rule_based_adaptive", adaptiveApplied ? "applied" : "skipped", 0, Map.of());
+            addRunGraphNode(
+                runGraph, "adaptive", "rule_based_adaptive",
+                adaptiveApplied ? "applied" : "skipped", 0, Map.of());
 
-            // Step 3.5: Check if this is a tool query (system tools OR user data) - execute BEFORE LLM call
+            // Step 3.5: Check if this is a tool query (system tools OR user data)
+            // - execute BEFORE LLM call
             String toolInfo = "";
             String toolInfoLabel = "";
             stepStartTime = System.currentTimeMillis();
@@ -175,15 +196,20 @@ public class AiOrchestrator {
             if (isToolQuery) {
                 toolInfo = executeToolBeforeLLM(request, traceId, runGraph);
                 toolInfoLabel = determineToolLabel(request.message(), detectedTool);
-                logger.info("[{}] Tool query detected: label={}, output length={}", traceId, toolInfoLabel, toolInfo.length());
+                logger.info("[{}] Tool query detected: label={}, output length={}",
+                    traceId, toolInfoLabel, toolInfo.length());
                 if (toolInfo.startsWith("CONFIRMATION_REQUIRED:")) {
                     contextHints.put("confirmationRequired", true);
                     contextHints.put("pendingAction", detectedTool);
-                    contextHints.put("pendingArgs", buildToolArgumentsForQuery(detectedTool, request.message(), request.userId()));
+                    contextHints.put("pendingArgs",
+                        buildToolArgumentsForQuery(
+                            detectedTool, request.message(), request.userId()));
                 } else if (toolInfo.startsWith("DRY_RUN:")) {
                     contextHints.put("dryRun", true);
                     contextHints.put("pendingAction", detectedTool);
-                    contextHints.put("pendingArgs", buildToolArgumentsForQuery(detectedTool, request.message(), request.userId()));
+                    contextHints.put("pendingArgs",
+                        buildToolArgumentsForQuery(
+                            detectedTool, request.message(), request.userId()));
                 }
             }
             long toolDetectionTime = System.currentTimeMillis() - stepStartTime;
@@ -202,8 +228,10 @@ public class AiOrchestrator {
             String finalContext = context;
             if (!toolInfo.isBlank()) {
                 // Format context for better LLM understanding
-                finalContext = context + "\n\n=== USER ENROLLMENT DATA ===\n" + toolInfo + "\n=== END DATA ===";
-                logger.debug("[{}] Context with tool data length: {}", traceId, finalContext.length());
+                finalContext = context + "\n\n=== USER ENROLLMENT DATA ===\n"
+                    + toolInfo + "\n=== END DATA ===";
+                logger.debug("[{}] Context with tool data length: {}",
+                    traceId, finalContext.length());
             }
 
             // Step 4: Call LLM
@@ -220,19 +248,24 @@ public class AiOrchestrator {
             currentState = AiState.LLM_CALLED;
             logStateTransition(traceId, currentState, "LLM responded");
             appendTransition(traceId, transitions, currentState, "LLM responded", llmTime);
-            addRunGraphNode(runGraph, "llm", "openrouter", "ok", llmTime, Map.of("agent", agent.getCode()));
+            addRunGraphNode(
+                runGraph, "llm", "openrouter", "ok", llmTime,
+                Map.of("agent", agent.getCode()));
 
             // Step 4.5: Execute tools if needed (based on LLM response)
             // Note: Primary tool execution already done in Step 3.5 for user data queries
             // This step only handles additional tools if LLM response indicates need
             stepStartTime = System.currentTimeMillis();
             boolean toolsExecutedInStep3 = isToolQuery && !toolInfo.isBlank();
-            String contextWithTools = executeToolsIfNeeded(request, llmResponse, agent, traceId, transitions, runGraph);
+            String contextWithTools = executeToolsIfNeeded(
+                request, llmResponse, agent, traceId, transitions, runGraph);
             long toolTime = System.currentTimeMillis() - stepStartTime;
             if (toolsExecutedInStep3 || !contextWithTools.equals(llmResponse)) {
                 thinkingSteps.add(new AiHarnessResponse.ThinkingStep(
                     "5. Tool Execution",
-                    toolsExecutedInStep3 ? "Da thuc thi trong step 3.5" : "Planner tool-loop hoan tat",
+                    toolsExecutedInStep3
+                        ? "Da thuc thi trong step 3.5"
+                        : "Planner tool-loop hoan tat",
                     toolTime,
                     true
                 ));
@@ -246,11 +279,13 @@ public class AiOrchestrator {
             }
             currentState = AiState.TOOL_CALLED;
             logStateTransition(traceId, currentState, "Tool phase completed");
-            appendTransition(traceId, transitions, currentState, "Tool phase completed", toolTime);
+            appendTransition(
+                traceId, transitions, currentState, "Tool phase completed", toolTime);
 
             // Step 5: Validate response
             stepStartTime = System.currentTimeMillis();
-            String validatedResponse = validate(contextWithTools, agent, traceId, transitions);
+            String validatedResponse = validate(
+                contextWithTools, agent, traceId, transitions);
             long validationTime = System.currentTimeMillis() - stepStartTime;
             thinkingSteps.add(new AiHarnessResponse.ThinkingStep(
                 "6. Validation",
@@ -260,24 +295,27 @@ public class AiOrchestrator {
             ));
             currentState = AiState.VALIDATED;
             logStateTransition(traceId, currentState, "Response validated");
-            appendTransition(traceId, transitions, currentState, "Response validated", validationTime);
+            appendTransition(
+                traceId, transitions, currentState, "Response validated", validationTime);
 
-            // Step 6: Critic review (20% sampling hoặc response dài)
+            // Step 6: Critic review (20% sampling hoac response dai)
             stepStartTime = System.currentTimeMillis();
             boolean wasReviewed = shouldCriticReview(validatedResponse);
-            String finalResponse = criticReview(validatedResponse, agent, traceId, transitions);
+            String finalResponse = criticReview(
+                validatedResponse, agent, traceId, transitions);
             long criticTime = System.currentTimeMillis() - stepStartTime;
             thinkingSteps.add(new AiHarnessResponse.ThinkingStep(
                 "7. Critic Review",
                 wasReviewed
-                        ? "Lấy mẫu 20% hoặc phản hồi dài để kiểm định chất lượng."
-                        : "Bỏ qua critic review vì phản hồi ngắn.",
+                        ? "Lay mau 20% hoac phan hoi dai de kiem dinh chat luong."
+                        : "Bo qua critic review vi phan hoi ngan.",
                 criticTime,
                 true
             ));
             currentState = AiState.CRITIC_CHECK;
             logStateTransition(traceId, currentState, "Critic check completed");
-            appendTransition(traceId, transitions, currentState, "Critic completed", criticTime);
+            appendTransition(
+                traceId, transitions, currentState, "Critic completed", criticTime);
 
             // Step 7: Save to memory
             stepStartTime = System.currentTimeMillis();
@@ -291,17 +329,19 @@ public class AiOrchestrator {
             ));
             currentState = AiState.DONE;
             logStateTransition(traceId, currentState, "Saved to memory");
-            appendTransition(traceId, transitions, currentState, "Saved to memory", memoryTime);
+            appendTransition(
+                traceId, transitions, currentState, "Saved to memory", memoryTime);
 
             // Build response
-            int responseTimeMs = (int) (Instant.now().toEpochMilli() - startTime.toEpochMilli());
-            
+            int responseTimeMs = (int) (Instant.now().toEpochMilli()
+                - startTime.toEpochMilli());
+
             // Calculate token usage if available
             int tokensUsed = 0;
             try {
                 var tokenUsage = llmService.getLastTokenUsage();
                 tokensUsed = tokenUsage.totalTokens();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) { }
 
             AiHarnessResponse response = AiHarnessResponse.builder()
                     .content(finalResponse)
@@ -339,30 +379,37 @@ public class AiOrchestrator {
                     null
             );
 
-            traceLogger.endTrace(traceId, currentState.name(), agent.getCode(), responseTimeMs);
-            logger.info("[{}] Flow completed in {}ms - Steps: {}", traceId, responseTimeMs, thinkingSteps.size());
+            traceLogger.endTrace(
+                traceId, currentState.name(), agent.getCode(), responseTimeMs);
+            logger.info("[{}] Flow completed in {}ms - Steps: {}",
+                traceId, responseTimeMs, thinkingSteps.size());
 
             return response;
 
         } catch (Exception e) {
             logger.error("[{}] Error in AI Harness flow: {}", traceId, e.getMessage(), e);
             currentState = AiState.ERROR;
-            
+
             // Add error step
             thinkingSteps.add(new AiHarnessResponse.ThinkingStep(
-                "❌ Error",
+                "Error",
                 "Error: " + e.getMessage(),
                 0,
                 false
             ));
-            
-            appendTransition(traceId, transitions, currentState, "Error: " + e.getMessage(), 0);
 
-            int responseTimeMs = (int) (Instant.now().toEpochMilli() - startTime.toEpochMilli());
-            AiHarnessResponse errorResponse = AiHarnessResponse.error(traceId, "ORCHESTRATOR_ERROR",
-                    e.getMessage(), responseTimeMs).withThinkingSteps(thinkingSteps);
+            appendTransition(
+                traceId, transitions, currentState,
+                "Error: " + e.getMessage(), 0);
 
-            traceLogger.endTrace(traceId, currentState.name(), "error", responseTimeMs);
+            int responseTimeMs = (int) (Instant.now().toEpochMilli()
+                - startTime.toEpochMilli());
+            AiHarnessResponse errorResponse = AiHarnessResponse.error(
+                traceId, "ORCHESTRATOR_ERROR",
+                e.getMessage(), responseTimeMs).withThinkingSteps(thinkingSteps);
+
+            traceLogger.endTrace(
+                traceId, currentState.name(), "error", responseTimeMs);
             return errorResponse;
         }
     }
@@ -371,18 +418,21 @@ public class AiOrchestrator {
 
     /**
      * Step 1: Route request to appropriate agent
-     * Sử dụng Hybrid Router (keyword + embedding)
+     * Su dung Hybrid Router (keyword + embedding)
      */
-    private AgentType routeToAgent(AiHarnessRequest request, String traceId, List<AiStateTransition> transitions) {
+    private AgentType routeToAgent(
+            AiHarnessRequest request, String traceId,
+            List<AiStateTransition> transitions) {
         // Use injected router
         return router.route(request);
     }
 
     /**
      * Step 2: Check semantic cache
-     * Redis-based semantic cache với embedding similarity
+     * Redis-based semantic cache voi embedding similarity
      */
-    private Optional<AiHarnessResponse> checkCache(AiHarnessRequest request, AgentType agent,
+    private Optional<AiHarnessResponse> checkCache(
+            AiHarnessRequest request, AgentType agent,
             String traceId, List<AiStateTransition> transitions) {
         // Use injected cache service
         try {
@@ -407,7 +457,8 @@ public class AiOrchestrator {
      * Step 3: Build context from user profile
      * User profile + conversation history + lesson context
      */
-    private String buildContext(AiHarnessRequest request, AgentType agent,
+    private String buildContext(
+            AiHarnessRequest request, AgentType agent,
             String traceId, List<AiStateTransition> transitions) {
         // Use injected context builder
         return contextBuilder.build(request, agent);
@@ -421,17 +472,19 @@ public class AiOrchestrator {
     }
 
     /**
-     * Step 4: Call LLM với agent config
-     * Sử dụng OpenRouter API
+     * Step 4: Call LLM voi agent config
+     * Su dung OpenRouter API
      */
-    private String callLLM(AgentType agent, String context, AgentConfig config,
+    private String callLLM(
+            AgentType agent, String context, AgentConfig config,
             String traceId, List<AiStateTransition> transitions) {
         // Use injected LLM service
         try {
             return llmService.call(agent, context, config);
         } catch (Exception e) {
             logger.error("[{}] LLM call failed: {}", traceId, e.getMessage());
-            return "I apologize, but I encountered an error processing your request. Please try again.";
+            return "I apologize, but I encountered an error processing your request. "
+                + "Please try again.";
         }
     }
 
@@ -439,8 +492,11 @@ public class AiOrchestrator {
      * Step 4.5: Execute tools if needed
      * Check if LLM response contains tool calls and execute them
      */
-    private String executeToolsIfNeeded(AiHarnessRequest request, String llmResponse, 
-            AgentType agent, String traceId, List<AiStateTransition> transitions, List<Map<String, Object>> runGraph) {
+    private String executeToolsIfNeeded(
+            AiHarnessRequest request, String llmResponse,
+            AgentType agent, String traceId,
+            List<AiStateTransition> transitions,
+            List<Map<String, Object>> runGraph) {
         String message = request.message() != null ? request.message() : "";
         String plannerSignal = (llmResponse == null ? "" : llmResponse) + "\n" + message;
         StringBuilder additionalToolContext = new StringBuilder();
@@ -454,28 +510,38 @@ public class AiOrchestrator {
                 if (plannedTool == null) {
                     break;
                 }
-                Map<String, Object> plannedArgs = buildToolArgumentsForQuery(plannedTool, message, userId);
+                Map<String, Object> plannedArgs =
+                    buildToolArgumentsForQuery(plannedTool, message, userId);
                 List<String> missingArgs = validateToolArgs(plannedTool, plannedArgs);
                 if (!missingArgs.isEmpty()) {
-                    addRunGraphNode(runGraph, "tool", plannedTool, "invalid_args", 0, Map.of("missing", missingArgs, "cycle", cycle));
+                    addRunGraphNode(
+                        runGraph, "tool", plannedTool, "invalid_args", 0,
+                        Map.of("missing", missingArgs, "cycle", cycle));
                     break;
                 }
 
                 long t0 = System.currentTimeMillis();
                 var result = toolExecutor.execute(
-                    new com.thinkai.backend.ai.tool.ToolCall(plannedTool, plannedArgs, traceId),
+                    new com.thinkai.backend.ai.tool.ToolCall(
+                        plannedTool, plannedArgs, traceId),
                     userId
                 );
                 long elapsed = System.currentTimeMillis() - t0;
                 executedTools.add(plannedTool);
                 String status = result.success() ? "ok" : "error";
-                addRunGraphNode(runGraph, "tool", plannedTool, status, elapsed, Map.of("cycle", cycle));
+                addRunGraphNode(
+                    runGraph, "tool", plannedTool, status, elapsed,
+                    Map.of("cycle", cycle));
 
-                if (result.success() && result.output() != null && !result.output().isBlank()) {
-                    additionalToolContext.append("- ").append(plannedTool).append(": ").append(result.output()).append("\n");
-                    plannerSignal = plannerSignal + "\nObservation[" + plannedTool + "]: " + result.output();
+                if (result.success() && result.output() != null
+                        && !result.output().isBlank()) {
+                    additionalToolContext.append("- ").append(plannedTool)
+                        .append(": ").append(result.output()).append("\n");
+                    plannerSignal = plannerSignal + "\nObservation["
+                        + plannedTool + "]: " + result.output();
                 } else if (!result.success() && result.error() != null) {
-                    additionalToolContext.append("- ").append(plannedTool).append("_error: ").append(result.error()).append("\n");
+                    additionalToolContext.append("- ").append(plannedTool)
+                        .append("_error: ").append(result.error()).append("\n");
                     break;
                 } else {
                     break;
@@ -483,60 +549,64 @@ public class AiOrchestrator {
             }
         } catch (Exception e) {
             logger.warn("[{}] Tool execution failed: {}", traceId, e.getMessage());
-            addRunGraphNode(runGraph, "tool", "planner_loop", "error", 0, Map.of("message", e.getMessage()));
+            addRunGraphNode(
+                runGraph, "tool", "planner_loop", "error", 0,
+                Map.of("message", e.getMessage()));
         }
-        
+
         if (additionalToolContext.isEmpty()) {
             return llmResponse;
         }
-        return llmResponse + "\n\n[Additional tool context]\n" + additionalToolContext;
+        return llmResponse + "\n\n[Additional tool context]\n"
+            + additionalToolContext;
     }
 
     /**
      * Check if the user message is asking about system tools OR user data
      */
     private boolean isSystemToolQuery(String message) {
-        if (message == null || message.isBlank()) return false;
+        if (message == null || message.isBlank()) {
+            return false;
+        }
         String lower = message.toLowerCase();
-        
+
         // System tool queries
-        if (lower.contains("tool") || 
-            lower.contains("công cụ") ||
-            lower.contains("hệ thống") ||
-            lower.contains("api") ||
-            lower.contains("chức năng") ||
-            lower.contains("features") ||
-            lower.contains("functionality") ||
-            lower.contains("bạn có thể làm gì") ||
-            lower.contains("những gì bạn có thể làm") ||
-            lower.contains("what can you do") ||
-            lower.contains("your capabilities") ||
-            lower.contains("những tool") ||
-            lower.contains("có những tool")) {
+        if (lower.contains("tool")
+                || lower.contains("cong cu")
+                || lower.contains("he thong")
+                || lower.contains("api")
+                || lower.contains("chuc nang")
+                || lower.contains("features")
+                || lower.contains("functionality")
+                || lower.contains("ban co the lam gi")
+                || lower.contains("nhung gi ban co the lam")
+                || lower.contains("what can you do")
+                || lower.contains("your capabilities")
+                || lower.contains("nhung tool")
+                || lower.contains("co nhung tool")) {
             return true;
         }
-        
+
         // User data queries (about their own information)
-        if (lower.contains("khoá học") ||
-            lower.contains("khóa học") ||
-            lower.contains("đăng ký") ||
-            lower.contains("tiến độ") ||
-            lower.contains("bài học") ||
-            lower.contains("level") ||
-            lower.contains("trình độ") ||
-            lower.contains("điểm") ||
-            lower.contains("lịch sử thi") ||
-            lower.contains("courses") ||
-            lower.contains("enrolled") ||
-            lower.contains("my courses") ||
-            lower.contains("progress") ||
-            lower.contains("completed") ||
-            lower.contains("lessons") ||
-            lower.contains("exam") ||
-            lower.contains("score")) {
+        if (lower.contains("khoa hoc")
+                || lower.contains("dang ky")
+                || lower.contains("tien do")
+                || lower.contains("bai hoc")
+                || lower.contains("level")
+                || lower.contains("trinh do")
+                || lower.contains("diem")
+                || lower.contains("lich su thi")
+                || lower.contains("courses")
+                || lower.contains("enrolled")
+                || lower.contains("my courses")
+                || lower.contains("progress")
+                || lower.contains("completed")
+                || lower.contains("lessons")
+                || lower.contains("exam")
+                || lower.contains("score")) {
             return true;
         }
-        
+
         return false;
     }
 
@@ -544,20 +614,25 @@ public class AiOrchestrator {
      * Execute tool BEFORE LLM call - for both system tools AND user data queries
      * Include tool output in context
      */
-    private String executeToolBeforeLLM(AiHarnessRequest request, String traceId, List<Map<String, Object>> runGraph) {
+    private String executeToolBeforeLLM(
+            AiHarnessRequest request, String traceId,
+            List<Map<String, Object>> runGraph) {
         try {
             Long userId = request.userId();
             String message = request.message();
             String lower = message != null ? message.toLowerCase() : "";
-            
+
             // Determine which tool to call based on query type
             String toolName = determineToolForQuery(message);
-            
+
             if (toolName != null) {
-                Map<String, Object> toolArgs = buildToolArgumentsForQuery(toolName, message, userId);
+                Map<String, Object> toolArgs =
+                    buildToolArgumentsForQuery(toolName, message, userId);
                 List<String> missingArgs = validateToolArgs(toolName, toolArgs);
                 if (!missingArgs.isEmpty()) {
-                    addRunGraphNode(runGraph, "tool", toolName, "invalid_args", 0, Map.of("missing", missingArgs));
+                    addRunGraphNode(
+                        runGraph, "tool", toolName, "invalid_args", 0,
+                        Map.of("missing", missingArgs));
                     return "MISSING_ARGS: " + toolName + " requires " + missingArgs;
                 }
                 if (isMutatingTool(toolName)) {
@@ -565,127 +640,146 @@ public class AiOrchestrator {
                         return "DRY_RUN: " + toolName + " with args " + toolArgs;
                     }
                     if (!hasMutatingConfirmation(request, message)) {
-                        return "CONFIRMATION_REQUIRED: Action `" + toolName + "` needs explicit confirmation. "
-                                + "Reply with `xác nhận` (or `confirm`) and include course/exam identifier.";
+                        return "CONFIRMATION_REQUIRED: Action `" + toolName
+                            + "` needs explicit confirmation. "
+                            + "Reply with `xac nhan` (or `confirm`) "
+                            + "and include course/exam identifier.";
                     }
                 }
                 var result = toolExecutor.execute(
-                    new com.thinkai.backend.ai.tool.ToolCall(toolName, 
-                        toolArgs, traceId),
+                    new com.thinkai.backend.ai.tool.ToolCall(
+                        toolName, toolArgs, traceId),
                     userId
                 );
-                
+
                 if (result.success()) {
-                    logger.info("[{}] Executed tool '{}' for user data query", traceId, toolName);
-                    addRunGraphNode(runGraph, "tool", toolName, "ok", 0, Map.of("phase", "pre_llm"));
+                    logger.info("[{}] Executed tool '{}' for user data query",
+                        traceId, toolName);
+                    addRunGraphNode(
+                        runGraph, "tool", toolName, "ok", 0,
+                        Map.of("phase", "pre_llm"));
                     if (isMutatingTool(toolName) && userId != null) {
                         invalidateAllAgentCaches(userId);
                     }
                     return result.output();
                 }
-                logger.info("[{}] Tool '{}' failed: {}", traceId, toolName, result.error());
-                addRunGraphNode(runGraph, "tool", toolName, "error", 0, Map.of("phase", "pre_llm", "error", result.error() == null ? "" : result.error()));
+                logger.info("[{}] Tool '{}' failed: {}",
+                    traceId, toolName, result.error());
+                String errorStr = result.error() == null ? "" : result.error();
+                addRunGraphNode(
+                    runGraph, "tool", toolName, "error", 0,
+                    Map.of("phase", "pre_llm", "error", errorStr));
             }
-            
+
             // Fallback: if message is about system tools, get full tool list
-            if (lower.contains("tool") || lower.contains("công cụ") || lower.contains("hệ thống")) {
+            if (lower.contains("tool") || lower.contains("cong cu")
+                    || lower.contains("he thong")) {
                 Map<String, Object> fallbackArgs = new HashMap<>();
                 if (message != null) {
                     fallbackArgs.put("userMessage", message);
                 }
                 var result = toolExecutor.execute(
-                    new com.thinkai.backend.ai.tool.ToolCall("auto_detect_system_tools", 
-                        fallbackArgs, traceId),
+                    new com.thinkai.backend.ai.tool.ToolCall(
+                        "auto_detect_system_tools", fallbackArgs, traceId),
                     userId
                 );
                 if (result.success()) {
-                    addRunGraphNode(runGraph, "tool", "auto_detect_system_tools", "ok", 0, Map.of("phase", "pre_llm"));
+                    addRunGraphNode(
+                        runGraph, "tool", "auto_detect_system_tools", "ok", 0,
+                        Map.of("phase", "pre_llm"));
                     return result.output();
                 }
             }
-            
+
         } catch (Exception e) {
-            logger.warn("[{}] Tool execution before LLM failed: {}", traceId, e.getMessage());
+            logger.warn("[{}] Tool execution before LLM failed: {}",
+                traceId, e.getMessage());
         }
         return "";
     }
-    
+
     /**
      * Determine which tool to call based on user query
      */
     private String determineToolForQuery(String message) {
-        if (message == null) return null;
+        if (message == null) {
+            return null;
+        }
         String lower = message.toLowerCase();
         Long courseId = extractFirstLong(message);
 
         // Unenroll intent must be prioritized before generic "my courses" / "enroll"
-        if ((lower.contains("hủy đăng ký") || lower.contains("huỷ đăng ký") ||
-             lower.contains("bỏ đăng ký") || lower.contains("cancel enrollment") ||
-             lower.contains("unenroll")) &&
-            (lower.contains("khóa học") || lower.contains("course"))) {
+        if ((lower.contains("huy dang ky") || lower.contains("huy dang ky")
+                || lower.contains("bo dang ky")
+                || lower.contains("cancel enrollment")
+                || lower.contains("unenroll"))
+                && (lower.contains("khoa hoc") || lower.contains("course"))) {
             return "unenroll_course";
         }
 
-        // Explicit enroll action (requires a concrete course id to avoid false positive for list queries)
-        if ((lower.contains("đăng ký") || lower.contains("enroll")) &&
-            (lower.contains("khóa học") || lower.contains("course")) &&
-            courseId != null) {
+        // Explicit enroll action (requires a concrete course id)
+        if ((lower.contains("dang ky") || lower.contains("enroll"))
+                && (lower.contains("khoa hoc") || lower.contains("course"))
+                && courseId != null) {
             return "enroll_course";
         }
-        
+
         // User's enrolled courses (user's personal courses)
-        if (lower.contains("khoá học") || lower.contains("khóa học") || 
-            lower.contains("đăng ký") || lower.contains("courses") || 
-            lower.contains("enrolled") || lower.contains("my courses") ||
-            lower.contains("của tôi") || lower.contains("của mình")) {
+        if (lower.contains("khoa hoc")
+                || lower.contains("dang ky") || lower.contains("courses")
+                || lower.contains("enrolled") || lower.contains("my courses")
+                || lower.contains("cua toi") || lower.contains("cua minh")) {
             return "get_enrolled_courses";
         }
-        
+
         // User's progress
-        if (lower.contains("tiến độ") || lower.contains("progress") || 
-            lower.contains("completed") || lower.contains("bài học") ||
-            lower.contains("hoàn thành")) {
+        if (lower.contains("tien do") || lower.contains("progress")
+                || lower.contains("completed") || lower.contains("bai hoc")
+                || lower.contains("hoan thanh")) {
             return "get_user_progress";
         }
-        
+
         // User's level
-        if (lower.contains("level") || lower.contains("trình độ")) {
+        if (lower.contains("level") || lower.contains("trinh do")) {
             return "get_user_level";
         }
-        
+
         // User's exam history
-        if (lower.contains("thi") || lower.contains("exam") || 
-            lower.contains("điểm") || lower.contains("score") || 
-            lower.contains("lịch sử") || lower.contains("bài thi")) {
+        if (lower.contains("thi") || lower.contains("exam")
+                || lower.contains("diem") || lower.contains("score")
+                || lower.contains("lich su") || lower.contains("bai thi")) {
             return "get_user_exam_history";
         }
-        
+
         // Shop courses - all published courses
-        if (lower.contains("danh sách khóa học") || lower.contains("shop") ||
-            lower.contains("tất cả khóa học") || lower.contains("các khóa học")) {
+        if (lower.contains("danh sach khoa hoc") || lower.contains("shop")
+                || lower.contains("tat ca khoa hoc")
+                || lower.contains("cac khoa hoc")) {
             return "list_shop_courses";
         }
-        
+
         // Search courses
-        if (lower.contains("tìm") && (lower.contains("khóa học") || lower.contains("course"))) {
+        if (lower.contains("tim")
+                && (lower.contains("khoa hoc") || lower.contains("course"))) {
             return "search_courses";
         }
-        
+
         // Course detail - when user asks about specific course info
-        if ((lower.contains("chi tiết") || lower.contains("thông tin")) && 
-            (lower.contains("khóa học") || lower.contains("course"))) {
+        if ((lower.contains("chi tiet") || lower.contains("thong tin"))
+                && (lower.contains("khoa hoc") || lower.contains("course"))) {
             return "get_course_detail";
         }
-        
+
         // Course lessons - list of lessons in a course
-        if (lower.contains("bài học") && lower.contains("khóa")) {
+        if (lower.contains("bai hoc") && lower.contains("khoa")) {
             return "list_course_lessons";
         }
-        
+
         return null;
     }
 
-    private Map<String, Object> buildToolArgumentsForQuery(String toolName, String message, Long userId) {
+    private Map<String, Object> buildToolArgumentsForQuery(
+            String toolName, String message, Long userId) {
         Map<String, Object> args = new HashMap<>();
         if (userId != null) {
             args.put("userId", userId);
@@ -693,7 +787,8 @@ public class AiOrchestrator {
 
         Long courseId = extractFirstLong(message);
         switch (toolName) {
-            case "get_course_detail", "list_course_lessons", "enroll_course", "unenroll_course" -> {
+            case "get_course_detail", "list_course_lessons",
+                    "enroll_course", "unenroll_course" -> {
                 if (courseId != null) {
                     args.put("courseId", courseId);
                 }
@@ -732,36 +827,50 @@ public class AiOrchestrator {
             return null;
         }
         String lower = plannerSignal.toLowerCase();
-        if ((lower.contains("tool") || lower.contains("công cụ") || lower.contains("capabilities")) && !executedTools.contains("auto_detect_system_tools")) {
+        if ((lower.contains("tool") || lower.contains("cong cu")
+                || lower.contains("capabilities"))
+                && !executedTools.contains("auto_detect_system_tools")) {
             return "auto_detect_system_tools";
         }
-        if ((lower.contains("progress") || lower.contains("tiến độ") || lower.contains("lesson")) && !executedTools.contains("get_user_progress")) {
+        if ((lower.contains("progress") || lower.contains("tien do")
+                || lower.contains("lesson"))
+                && !executedTools.contains("get_user_progress")) {
             return "get_user_progress";
         }
-        if ((lower.contains("vocab") || lower.contains("từ vựng") || lower.contains("word")) && !executedTools.contains("get_user_vocab_progress")) {
+        if ((lower.contains("vocab") || lower.contains("tu vung")
+                || lower.contains("word"))
+                && !executedTools.contains("get_user_vocab_progress")) {
             return "get_user_vocab_progress";
         }
-        if ((lower.contains("exam") || lower.contains("thi") || lower.contains("score")) && !executedTools.contains("get_user_exam_history")) {
+        if ((lower.contains("exam") || lower.contains("thi")
+                || lower.contains("score"))
+                && !executedTools.contains("get_user_exam_history")) {
             return "get_user_exam_history";
         }
         return null;
     }
 
-    private List<String> validateToolArgs(String toolName, Map<String, Object> args) {
+    private List<String> validateToolArgs(
+            String toolName, Map<String, Object> args) {
         List<String> missing = new ArrayList<>();
         if (toolName == null) {
             return missing;
         }
-        if (("get_course_detail".equals(toolName) || "list_course_lessons".equals(toolName)
-                || "enroll_course".equals(toolName) || "unenroll_course".equals(toolName))
+        if (("get_course_detail".equals(toolName)
+                || "list_course_lessons".equals(toolName)
+                || "enroll_course".equals(toolName)
+                || "unenroll_course".equals(toolName))
                 && args.get("courseId") == null) {
             missing.add("courseId");
         }
-        if (("create_question".equals(toolName) || "bulk_import_questions".equals(toolName))
-                && args.get("examId") == null && args.get("courseId") == null) {
+        if (("create_question".equals(toolName)
+                || "bulk_import_questions".equals(toolName))
+                && args.get("examId") == null
+                && args.get("courseId") == null) {
             missing.add("examId|courseId");
         }
-        if ("search_courses".equals(toolName) && args.get("query") == null) {
+        if ("search_courses".equals(toolName)
+                && args.get("query") == null) {
             missing.add("query");
         }
         return missing;
@@ -777,23 +886,25 @@ public class AiOrchestrator {
         if ("enroll_course".equals(detectedTool)) {
             return "dang ky khoa hoc";
         }
-        if (message == null) return "tools";
+        if (message == null) {
+            return "tools";
+        }
         String lower = message.toLowerCase();
-        
-        if (lower.contains("khoá học") || lower.contains("khóa học") || 
-            lower.contains("đăng ký") || lower.contains("courses") || 
-            lower.contains("enrolled")) {
+
+        if (lower.contains("khoa hoc")
+                || lower.contains("dang ky") || lower.contains("courses")
+                || lower.contains("enrolled")) {
             return "khoa hoc";
         }
-        if (lower.contains("tiến độ") || lower.contains("progress") || 
-            lower.contains("completed") || lower.contains("bài học")) {
+        if (lower.contains("tien do") || lower.contains("progress")
+                || lower.contains("completed") || lower.contains("bai hoc")) {
             return "tien do hoc tap";
         }
-        if (lower.contains("level") || lower.contains("trình độ")) {
+        if (lower.contains("level") || lower.contains("trinh do")) {
             return "trinh do";
         }
-        if (lower.contains("thi") || lower.contains("exam") || 
-            lower.contains("điểm") || lower.contains("score")) {
+        if (lower.contains("thi") || lower.contains("exam")
+                || lower.contains("diem") || lower.contains("score")) {
             return "lich su thi";
         }
         return "tools";
@@ -803,7 +914,8 @@ public class AiOrchestrator {
      * Step 5: Validate response
      * Safety + Quality validation
      */
-    private String validate(String response, AgentType agent,
+    private String validate(
+            String response, AgentType agent,
             String traceId, List<AiStateTransition> transitions) {
         // Use injected validator
         try {
@@ -816,9 +928,10 @@ public class AiOrchestrator {
 
     /**
      * Step 6: Critic review
-     * Quality scoring với 20% sampling
+     * Quality scoring voi 20% sampling
      */
-    private String criticReview(String response, AgentType agent,
+    private String criticReview(
+            String response, AgentType agent,
             String traceId, List<AiStateTransition> transitions) {
         // Use injected critic
         if (shouldCriticReview(response)) {
@@ -830,34 +943,43 @@ public class AiOrchestrator {
     }
 
     private boolean shouldCriticReview(String response) {
-        // 20% sampling hoặc response > 300 chars
-        return response != null && (response.length() > 300 || Math.random() < 0.2);
+        // 20% sampling hoac response > 300 chars
+        return response != null
+            && (response.length() > 300 || Math.random() < 0.2);
     }
 
     /**
      * Step 7: Save to memory
      * Note: Saving to database is handled by AiHarnessController
      */
-    private void saveToMemory(AiHarnessRequest request, AgentType agent, String response,
+    private void saveToMemory(
+            AiHarnessRequest request, AgentType agent, String response,
             String traceId, List<AiStateTransition> transitions) {
         // Save to memory for conversation tracking
         try {
-            memory.saveTurn(request.conversationId(), request.userId(), request.message(), response, agent);
-            
+            memory.saveTurn(
+                request.conversationId(), request.userId(),
+                request.message(), response, agent);
+
             // Update conversation summary
             if (request.userId() != null && request.conversationId() != null) {
                 String title = generateConversationTitle(request.message());
-                String preview = response != null && response.length() > 100 
-                    ? response.substring(0, 100) + "..." 
+                String preview = response != null && response.length() > 100
+                    ? response.substring(0, 100) + "..."
                     : response;
-                
-                // Use reflection or cast to implementation to call updateConversationSummary
-                if (memory instanceof com.thinkai.backend.ai.orchestrator.impl.OrchestratorMemoryImpl) {
-                    ((com.thinkai.backend.ai.orchestrator.impl.OrchestratorMemoryImpl) memory)
-                        .updateConversationSummary(request.userId(), request.conversationId(), title, preview);
+
+                // Use reflection or cast to implementation
+                if (memory instanceof
+                        com.thinkai.backend.ai.orchestrator.impl
+                            .OrchestratorMemoryImpl) {
+                    ((com.thinkai.backend.ai.orchestrator.impl
+                        .OrchestratorMemoryImpl) memory)
+                        .updateConversationSummary(
+                            request.userId(), request.conversationId(),
+                            title, preview);
                 }
             }
-            
+
             logger.debug("[{}] Memory save completed", traceId);
         } catch (Exception e) {
             logger.warn("Memory save failed: {}", e.getMessage());
@@ -872,27 +994,39 @@ public class AiOrchestrator {
         String[] words = userMessage.split("\\s+");
         StringBuilder title = new StringBuilder();
         for (int i = 0; i < Math.min(5, words.length); i++) {
-            if (i > 0) title.append(" ");
+            if (i > 0) {
+                title.append(" ");
+            }
             title.append(words[i]);
         }
-        return title.length() > 30 ? title.substring(0, 27) + "..." : title.toString();
+        return title.length() > 30
+            ? title.substring(0, 27) + "..."
+            : title.toString();
     }
 
     // ========== UTILITY METHODS ==========
 
-    private void logStateTransition(String traceId, AiState state, String reason) {
+    private void logStateTransition(
+            String traceId, AiState state, String reason) {
         logger.debug("[{}] State: {} - {}", traceId, state, reason);
     }
 
-    private void appendTransition(String traceId, List<AiStateTransition> transitions, AiState toState, String reason, long latencyMs) {
-        AiState fromState = transitions.isEmpty() ? null : transitions.get(transitions.size() - 1).toState();
+    private void appendTransition(
+            String traceId, List<AiStateTransition> transitions,
+            AiState toState, String reason, long latencyMs) {
+        AiState fromState = transitions.isEmpty()
+            ? null
+            : transitions.get(transitions.size() - 1).toState();
         if (fromState == toState) {
             return;
         }
-        transitions.add(AiStateTransition.create(traceId, fromState, toState, reason, latencyMs));
+        transitions.add(AiStateTransition.create(
+            traceId, fromState, toState, reason, latencyMs));
     }
 
-    private void addRunGraphNode(List<Map<String, Object>> runGraph, String kind, String name, String status, long latencyMs, Map<String, Object> meta) {
+    private void addRunGraphNode(
+            List<Map<String, Object>> runGraph, String kind, String name,
+            String status, long latencyMs, Map<String, Object> meta) {
         if (runGraph == null) {
             return;
         }
@@ -907,15 +1041,21 @@ public class AiOrchestrator {
     }
 
     private boolean isMutatingTool(String toolName) {
-        return "enroll_course".equals(toolName) || "unenroll_course".equals(toolName) ||
-                "create_course".equals(toolName) || "update_course".equals(toolName) ||
-                "publish_course".equals(toolName) || "delete_course".equals(toolName) ||
-                "create_lesson".equals(toolName) ||
-                "update_lesson".equals(toolName) || "delete_lesson".equals(toolName) ||
-                "create_exam".equals(toolName) || "update_exam".equals(toolName) ||
-                "publish_exam".equals(toolName) ||
-                "delete_exam".equals(toolName) ||
-                "create_question".equals(toolName) || "bulk_import_questions".equals(toolName);
+        return "enroll_course".equals(toolName)
+                || "unenroll_course".equals(toolName)
+                || "create_course".equals(toolName)
+                || "update_course".equals(toolName)
+                || "publish_course".equals(toolName)
+                || "delete_course".equals(toolName)
+                || "create_lesson".equals(toolName)
+                || "update_lesson".equals(toolName)
+                || "delete_lesson".equals(toolName)
+                || "create_exam".equals(toolName)
+                || "update_exam".equals(toolName)
+                || "publish_exam".equals(toolName)
+                || "delete_exam".equals(toolName)
+                || "create_question".equals(toolName)
+                || "bulk_import_questions".equals(toolName);
     }
 
     private void invalidateAllAgentCaches(Long userId) {
@@ -923,12 +1063,15 @@ public class AiOrchestrator {
             try {
                 cache.invalidate(userId, agentType);
             } catch (Exception e) {
-                logger.debug("Cache invalidate failed for userId={} agent={}: {}", userId, agentType, e.getMessage());
+                logger.debug(
+                    "Cache invalidate failed for userId={} agent={}: {}",
+                    userId, agentType, e.getMessage());
             }
         }
     }
 
-    private boolean hasMutatingConfirmation(AiHarnessRequest request, String message) {
+    private boolean hasMutatingConfirmation(
+            AiHarnessRequest request, String message) {
         if (request != null && request.metadata() != null) {
             Object confirmed = request.metadata().get("confirmAction");
             if (confirmed instanceof Boolean b && b) {
@@ -939,10 +1082,13 @@ public class AiOrchestrator {
             return false;
         }
         String lower = message.toLowerCase();
-        return lower.contains("xác nhận") || lower.contains("confirm") || lower.contains("đồng ý");
+        return lower.contains("xac nhan")
+            || lower.contains("confirm")
+            || lower.contains("dong y");
     }
 
-    private boolean isDryRunRequest(AiHarnessRequest request, String message) {
+    private boolean isDryRunRequest(
+            AiHarnessRequest request, String message) {
         if (request != null && request.metadata() != null) {
             Object dryRun = request.metadata().get("dryRun");
             if (dryRun instanceof Boolean b && b) {
@@ -953,7 +1099,9 @@ public class AiOrchestrator {
             return false;
         }
         String lower = message.toLowerCase();
-        return lower.contains("dry run") || lower.contains("xem trước") || lower.contains("preview");
+        return lower.contains("dry run")
+            || lower.contains("xem truoc")
+            || lower.contains("preview");
     }
 
     /**
@@ -980,11 +1128,13 @@ public class AiOrchestrator {
             return AiAgentType.TUTOR;
         }
         return switch (agent) {
-            case TOEIC_READING, TOEIC_LISTENING, TOEIC_GRAMMAR, TOEIC_VOCABULARY,
-                 IELTS_READING, IELTS_LISTENING, IELTS_WRITING, IELTS_SPEAKING,
-                 GRAMMAR, VOCABULARY, PRONUNCIATION, CONVERSATION,
-                 EXAM_STRATEGY, MISTAKE_ANALYZER, PROGRESS_TRACKER,
-                 PLATFORM_LEARNING, PLATFORM_COURSE_OPS, PLATFORM_EXAM_OPS ->
+            case TOEIC_READING, TOEIC_LISTENING, TOEIC_GRAMMAR,
+                 TOEIC_VOCABULARY, IELTS_READING, IELTS_LISTENING,
+                 IELTS_WRITING, IELTS_SPEAKING, GRAMMAR, VOCABULARY,
+                 PRONUNCIATION, CONVERSATION, EXAM_STRATEGY,
+                 MISTAKE_ANALYZER, PROGRESS_TRACKER,
+                 PLATFORM_LEARNING, PLATFORM_COURSE_OPS,
+                 PLATFORM_EXAM_OPS ->
                 AiAgentType.LEARNING;
         };
     }

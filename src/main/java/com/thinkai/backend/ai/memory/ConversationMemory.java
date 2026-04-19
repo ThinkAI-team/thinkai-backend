@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@SuppressWarnings("checkstyle:ConstantName")
 @Service
 public class ConversationMemory {
 
@@ -20,7 +21,7 @@ public class ConversationMemory {
     }
 
     public void saveMessage(Long userId, String conversationId, String message, String response, int tokens, int latencyMs) {
-        log.debug("Saving chat: userId={}, convId={}, msg={}", userId, conversationId, 
+        log.debug("Saving chat: userId={}, convId={}, msg={}", userId, conversationId,
             message != null ? message.substring(0, Math.min(20, message.length())) : "");
     }
 

@@ -1,7 +1,15 @@
 package com.thinkai.backend.service.aitutor;
 
-import com.thinkai.backend.entity.*;
-import com.thinkai.backend.repository.*;
+import com.thinkai.backend.entity.Course;
+import com.thinkai.backend.entity.Enrollment;
+import com.thinkai.backend.entity.Exam;
+import com.thinkai.backend.entity.Lesson;
+import com.thinkai.backend.entity.User;
+import com.thinkai.backend.repository.CourseRepository;
+import com.thinkai.backend.repository.EnrollmentRepository;
+import com.thinkai.backend.repository.ExamRepository;
+import com.thinkai.backend.repository.LessonRepository;
+import com.thinkai.backend.repository.UserRepository;
 import com.thinkai.backend.service.CourseService;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
@@ -185,7 +193,9 @@ public class AiToolExecutorService {
         }
 
         String description = extractText(args, "description");
-        if (description == null) description = "";
+        if (description == null) {
+            description = "";
+        }
 
         java.math.BigDecimal price = java.math.BigDecimal.ZERO;
         if (args.has("price") && !args.get("price").isNull()) {

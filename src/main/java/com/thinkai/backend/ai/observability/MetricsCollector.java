@@ -2,7 +2,8 @@ package com.thinkai.backend.ai.observability;
 
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -51,38 +52,38 @@ public class MetricsCollector {
 
     public Map<String, Object> getMetrics() {
         Map<String, Object> metrics = new HashMap<>();
-        
+
         long total = totalRequests.get();
         long success = successfulRequests.get();
         long failed = failedRequests.get();
-        
+
         metrics.put("totalRequests", total);
         metrics.put("successfulRequests", success);
         metrics.put("failedRequests", failed);
         metrics.put("successRate", total > 0 ? (double) success / total * 100 : 0);
-        
+
         metrics.put("totalTokens", totalTokens.get());
         metrics.put("totalLatencyMs", totalLatencyMs.get());
         metrics.put("avgLatencyMs", total > 0 ? totalLatencyMs.get() / total : 0);
-        
+
         long cacheTotal = cacheHits.get() + cacheMisses.get();
         double cacheHitRate = cacheTotal > 0 ? (double) cacheHits.get() / cacheTotal * 100 : 0;
         metrics.put("cacheHits", cacheHits.get());
         metrics.put("cacheMisses", cacheMisses.get());
         metrics.put("cacheHitRate", cacheHitRate);
-        
+
         Map<String, Long> agentUsageMap = new HashMap<>();
         agentUsage.forEach((k, v) -> agentUsageMap.put(k, v.get()));
         metrics.put("agentUsage", agentUsageMap);
-        
+
         Map<String, Long> errorTypes = new HashMap<>();
         agentErrors.forEach((k, v) -> errorTypes.put(k, v.get()));
         metrics.put("errorTypes", errorTypes);
-        
+
         Map<Integer, Long> statusDist = new HashMap<>();
         statusDistribution.forEach((k, v) -> statusDist.put(k, v.get()));
         metrics.put("statusDistribution", statusDist);
-        
+
         return metrics;
     }
 

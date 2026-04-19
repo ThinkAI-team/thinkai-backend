@@ -1,6 +1,5 @@
 package com.thinkai.backend.ai.orchestrator.impl;
 
-import com.thinkai.backend.ai.cache.CacheMetrics;
 import com.thinkai.backend.ai.cache.SemanticCacheService;
 import com.thinkai.backend.ai.config.AgentType;
 import com.thinkai.backend.ai.orchestrator.OrchestratorCache;
@@ -27,11 +26,11 @@ public class OrchestratorCacheImpl implements OrchestratorCache {
         Long userId = request.userId();
         String message = request.message();
         String cacheQuery = buildCacheQuery(message, request.metadata());
-        
+
         if (userId == null || cacheQuery == null || cacheQuery.isBlank()) {
             return Optional.empty();
         }
-        
+
         return semanticCacheService.get(cacheQuery, agent, userId)
             .map(cached -> new CachedEntry(
                 cached.response(),
@@ -47,7 +46,7 @@ public class OrchestratorCacheImpl implements OrchestratorCache {
         String message = request.message();
         String responseContent = response.content();
         String cacheQuery = buildCacheQuery(message, request.metadata());
-        
+
         if (userId != null && cacheQuery != null && responseContent != null) {
             semanticCacheService.put(cacheQuery, responseContent, agent, userId);
         }

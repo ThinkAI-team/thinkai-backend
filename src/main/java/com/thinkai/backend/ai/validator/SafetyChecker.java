@@ -1,6 +1,5 @@
 package com.thinkai.backend.ai.validator;
 
-import com.thinkai.backend.ai.config.AgentType;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -26,7 +25,7 @@ public class SafetyChecker {
 
     public SafetyResult check(String content) {
         List<String> issues = new ArrayList<>();
-        
+
         if (content == null || content.isBlank()) {
             issues.add("Content is empty");
             return new SafetyResult(false, issues);

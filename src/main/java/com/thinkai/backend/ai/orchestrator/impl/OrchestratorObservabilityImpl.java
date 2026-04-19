@@ -15,15 +15,16 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Phase 9: Observability Implementation
- * Tracing với Langfuse
- * Tạm thời dùng SLF4J logging
+ * Tracing voi Langfuse
+ * Tam thoi dung SLF4J logging
  */
+@SuppressWarnings("checkstyle:ConstantName")
 @Service
 public class OrchestratorObservabilityImpl implements OrchestratorObservability {
 
     private static final Logger logger = LoggerFactory.getLogger(OrchestratorObservabilityImpl.class);
 
-    // In-memory trace storage (sẽ thay bằng Langfuse ở Phase 9)
+    // In-memory trace storage (se thay bang Langfuse o Phase 9)
     private final Map<String, TraceData> traces = new ConcurrentHashMap<>();
 
     @Override
@@ -62,7 +63,8 @@ public class OrchestratorObservabilityImpl implements OrchestratorObservability 
     }
 
     @Override
-    public void endTrace(String traceId, AiState finalState, List<AiStateTransition> transitions, AiHarnessResponse response) {
+    public void endTrace(String traceId, AiState finalState, List<AiStateTransition> transitions,
+            AiHarnessResponse response) {
         TraceData trace = traces.get(traceId);
         if (trace != null) {
             long duration = System.currentTimeMillis() - trace.startTime;
@@ -85,7 +87,9 @@ public class OrchestratorObservabilityImpl implements OrchestratorObservability 
             true,  // validation passed
             false, // critic reviewed
             null,  // final agent
-            trace.transitions.isEmpty() ? AiState.START : trace.transitions.get(trace.transitions.size() - 1).toState()
+            trace.transitions.isEmpty()
+                ? AiState.START
+                : trace.transitions.get(trace.transitions.size() - 1).toState()
         );
     }
 

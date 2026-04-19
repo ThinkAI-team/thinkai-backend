@@ -5,7 +5,6 @@ import com.thinkai.backend.repository.AiChatLogRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -46,7 +45,7 @@ public class ConversationContextLoader {
             for (AiChatLog log : recentLogs) {
                 String userMsg = log.getUserMessage() != null ? log.getUserMessage() : "";
                 String aiMsg = log.getAiResponse() != null ? log.getAiResponse() : "";
-                
+
                 if (!userMsg.isBlank()) {
                     context.append("User: ");
                     context.append(userMsg);

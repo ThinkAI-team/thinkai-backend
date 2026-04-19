@@ -17,6 +17,7 @@ import java.util.Locale;
  * Chuyển đổi giữa AgentType (new) và AiAgentType (legacy)
  */
 @Service
+@SuppressWarnings("checkstyle:ConstantName")
 public class RouterIntegrationService {
 
     private static final Logger logger = LoggerFactory.getLogger(RouterIntegrationService.class);

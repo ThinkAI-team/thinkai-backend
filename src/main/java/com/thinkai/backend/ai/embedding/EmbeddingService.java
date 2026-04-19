@@ -12,8 +12,9 @@ import java.util.Map;
 
 /**
  * Embedding Service cho semantic similarity
- * Sử dụng OpenRouter API hoặc local embedding model
+ * Su dung OpenRouter API hoac local embedding model
  */
+@SuppressWarnings("checkstyle:ConstantName")
 @Service
 public class EmbeddingService {
 
@@ -30,7 +31,7 @@ public class EmbeddingService {
     @Value("${ai.embedding.model:text-embedding-3-small}")
     private String embeddingModel;
 
-    // Cache để tránh duplicate calls
+    // Cache de tranh duplicate calls
     private final Map<String, List<Double>> embeddingCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     public EmbeddingService(RestClient.Builder restClientBuilder) {
@@ -108,7 +109,7 @@ public class EmbeddingService {
      * Generate deterministic embedding based on text hash (fallback)
      */
     private List<Double> generateHashBasedEmbedding(String text) {
-        // Tạo pseudo-random embedding dựa trên hash của text
+        // Tao pseudo-random embedding dua tren hash cua text
         int size = 128;
         List<Double> embedding = new ArrayList<>(size);
 
@@ -136,7 +137,7 @@ public class EmbeddingService {
     }
 
     /**
-     * Calculate cosine similarity giữa 2 embeddings
+     * Calculate cosine similarity giua 2 embeddings
      */
     public double cosineSimilarity(List<Double> a, List<Double> b) {
         if (a == null || b == null || a.isEmpty() || b.isEmpty()) {

@@ -74,8 +74,12 @@ public enum AgentType {
      * Lấy exam type tương ứng
      */
     public String getExamType() {
-        if (isToeicAgent()) return "TOEIC";
-        if (isIeltsAgent()) return "IELTS";
+        if (isToeicAgent()) {
+            return "TOEIC";
+        }
+        if (isIeltsAgent()) {
+            return "IELTS";
+        }
         return null;
     }
 }

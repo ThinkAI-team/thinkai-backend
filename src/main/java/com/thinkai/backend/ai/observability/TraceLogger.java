@@ -1,20 +1,24 @@
 package com.thinkai.backend.ai.observability;
 
-import com.thinkai.backend.ai.state.AiState;
-import com.thinkai.backend.ai.state.AiStateTransition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+@SuppressWarnings("checkstyle:ConstantName")
 @Component
 public class TraceLogger {
 
     private static final Logger log = LoggerFactory.getLogger(TraceLogger.class);
-    
+
     private final Map<String, TraceData> activeTraces = new ConcurrentHashMap<>();
     private final List<TraceData> completedTraces = Collections.synchronizedList(new ArrayList<>());
     private static final int MAX_COMPLETED_TRACES = 1000;
@@ -29,7 +33,7 @@ public class TraceLogger {
             new HashMap<>()
         );
         activeTraces.put(traceId, data);
-        log.info("[TRACE] Started: traceId={}, userId={}, message={}", 
+        log.info("[TRACE] Started: traceId={}, userId={}, message={}",
             traceId, userId, message != null ? message.substring(0, Math.min(50, message.length())) : "");
     }
 
@@ -47,7 +51,7 @@ public class TraceLogger {
             data.metrics().put("llm_agent", agent);
             data.metrics().put("llm_tokens", tokens);
             data.metrics().put("llm_latency_ms", latency);
-            log.info("[TRACE] LLM call: traceId={}, agent={}, tokens={}, latency={}ms", 
+            log.info("[TRACE] LLM call: traceId={}, agent={}, tokens={}, latency={}ms",
                 traceId, agent, tokens, latency);
         }
     }
@@ -82,7 +86,7 @@ public class TraceLogger {
     public void logTool(String traceId, String toolName, boolean success, long duration) {
         TraceData data = activeTraces.get(traceId);
         if (data != null) {
-            log.info("[TRACE] Tool: traceId={}, tool={}, success={}, duration={}ms", 
+            log.info("[TRACE] Tool: traceId={}, tool={}, success={}, duration={}ms",
                 traceId, toolName, success, duration);
         }
     }
@@ -102,13 +106,13 @@ public class TraceLogger {
             data.setFinalAgent(finalAgent);
             data.setEndTime(Instant.now().toEpochMilli());
             data.setTotalLatencyMs(totalLatency);
-            
+
             completedTraces.add(data);
             if (completedTraces.size() > MAX_COMPLETED_TRACES) {
                 completedTraces.remove(0);
             }
-            
-            log.info("[TRACE] Ended: traceId={}, state={}, agent={}, latency={}ms", 
+
+            log.info("[TRACE] Ended: traceId={}, state={}, agent={}, latency={}ms",
                 traceId, finalState, finalAgent, totalLatency);
         }
     }

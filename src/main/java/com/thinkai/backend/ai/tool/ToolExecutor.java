@@ -1,15 +1,42 @@
 package com.thinkai.backend.ai.tool;
 
-import com.thinkai.backend.entity.*;
-import com.thinkai.backend.repository.*;
+import com.thinkai.backend.entity.AiSettings;
+import com.thinkai.backend.entity.Cart;
+import com.thinkai.backend.entity.Course;
+import com.thinkai.backend.entity.Enrollment;
+import com.thinkai.backend.entity.Exam;
+import com.thinkai.backend.entity.ExamAttempt;
+import com.thinkai.backend.entity.Lesson;
+import com.thinkai.backend.entity.LessonProgress;
+import com.thinkai.backend.entity.Payment;
+import com.thinkai.backend.entity.Question;
+import com.thinkai.backend.entity.User;
+import com.thinkai.backend.repository.AiSettingsRepository;
+import com.thinkai.backend.repository.CartRepository;
+import com.thinkai.backend.repository.CourseRepository;
+import com.thinkai.backend.repository.EnrollmentRepository;
+import com.thinkai.backend.repository.ExamAttemptRepository;
+import com.thinkai.backend.repository.ExamRepository;
+import com.thinkai.backend.repository.LessonProgressRepository;
+import com.thinkai.backend.repository.LessonRepository;
+import com.thinkai.backend.repository.PaymentRepository;
+import com.thinkai.backend.repository.QuestionRepository;
+import com.thinkai.backend.repository.UserMemoryRepository;
+import com.thinkai.backend.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
+@SuppressWarnings("checkstyle:ConstantName")
 public class ToolExecutor {
 
     private static final Logger log = LoggerFactory.getLogger(ToolExecutor.class);
@@ -166,7 +193,9 @@ public class ToolExecutor {
                 case "get_lesson_detail" -> getLessonDetail(getLongArg(args, "lessonId"));
                 case "get_course_detail" -> getCourseDetail(userId, getLongArg(args, "courseId"));
                 case "list_course_lessons" -> listCourseLessons(userId, getLongArg(args, "courseId"));
-                case "search_lessons" -> searchLessons(firstNonBlank(getStringArg(args, "query"), getStringArg(args, "keyword")), getLongArg(args, "courseId"));
+                case "search_lessons" -> searchLessons(
+                    firstNonBlank(getStringArg(args, "query"), getStringArg(args, "keyword")),
+                    getLongArg(args, "courseId"));
                 case "search_courses", "search_shop_courses" -> searchCourses(getStringArg(args, "query"), getIntArg(args, "limit", 8));
                 
                 // Grammar & Vocab
@@ -239,14 +268,18 @@ public class ToolExecutor {
     }
 
     private User.Role getUserRole(Long userId) {
-        if (userId == null) return User.Role.STUDENT;
+        if (userId == null) {
+            return User.Role.STUDENT;
+        }
         return userRepository.findById(userId)
             .map(u -> u.getRole() != null ? u.getRole() : User.Role.STUDENT)
             .orElse(User.Role.STUDENT);
     }
 
     private Set<String> getAllowedTools(User.Role role) {
-        if (role == null) return STUDENT_TOOLS;
+        if (role == null) {
+            return STUDENT_TOOLS;
+        }
         return switch (role) {
             case ADMIN -> ADMIN_TOOLS;
             case TEACHER -> TEACHER_TOOLS;
@@ -257,7 +290,9 @@ public class ToolExecutor {
     // ========== SYSTEM TOOL QUERY DETECTION ==========
 
     private boolean isSystemToolQuery(String message) {
-        if (message == null || message.isBlank()) return false;
+        if (message == null || message.isBlank()) {
+            return false;
+        }
         String lower = message.toLowerCase();
         return lower.contains("tool") || 
                lower.contains("công cụ") ||
@@ -310,8 +345,12 @@ public class ToolExecutor {
                 
                 Map<String, Object> data = new HashMap<>();
                 data.put("level", level);
-                if (targetExam != null) data.put("targetExam", targetExam);
-                if (targetScore != null) data.put("targetScore", targetScore);
+                if (targetExam != null) {
+                    data.put("targetExam", targetExam);
+                }
+                if (targetScore != null) {
+                    data.put("targetScore", targetScore);
+                }
                 
                 return ToolResult.success("get_user_level", "Level: " + level, data);
             })
@@ -319,7 +358,9 @@ public class ToolExecutor {
     }
 
     private ToolResult getUserProgress(Long userId) {
-        if (userId == null) return ToolResult.success("get_user_progress", "Not logged in", Map.of());
+        if (userId == null) {
+            return ToolResult.success("get_user_progress", "Not logged in", Map.of());
+        }
         
         try {
             List<LessonProgress> completed = lessonProgressRepository.findByUserIdAndIsCompletedTrue(userId);
@@ -343,7 +384,9 @@ public class ToolExecutor {
     }
 
     private ToolResult getUserExamHistory(Long userId) {
-        if (userId == null) return ToolResult.success("get_user_exam_history", "Not logged in", Map.of("exams", List.of()));
+        if (userId == null) {
+            return ToolResult.success("get_user_exam_history", "Not logged in", Map.of("exams", List.of()));
+        }
         
         try {
             List<ExamAttempt> attempts = examAttemptRepository.findByUserId(userId);
@@ -392,7 +435,9 @@ public class ToolExecutor {
     }
 
     private ToolResult getCourseInfo(Long courseId) {
-        if (courseId == null) return ToolResult.error("get_course_info", "Course ID required");
+        if (courseId == null) {
+            return ToolResult.error("get_course_info", "Course ID required");
+        }
         
         return courseRepository.findById(courseId)
             .map(c -> ToolResult.success("get_course_info", c.getTitle(), 
@@ -402,7 +447,9 @@ public class ToolExecutor {
     }
 
     private ToolResult getExamInfo(Long examId) {
-        if (examId == null) return ToolResult.error("get_exam_info", "Exam ID required");
+        if (examId == null) {
+            return ToolResult.error("get_exam_info", "Exam ID required");
+        }
         
         return examRepository.findById(examId)
             .map(e -> ToolResult.success("get_exam_info", e.getTitle(),
@@ -434,8 +481,12 @@ public class ToolExecutor {
     }
 
     private ToolResult startLesson(Long userId, Long lessonId) {
-        if (userId == null) return ToolResult.error("start_lesson", "User not logged in");
-        if (lessonId == null) return ToolResult.error("start_lesson", "Lesson ID required");
+        if (userId == null) {
+            return ToolResult.error("start_lesson", "User not logged in");
+        }
+        if (lessonId == null) {
+            return ToolResult.error("start_lesson", "Lesson ID required");
+        }
         
         try {
             if (lessonProgressRepository.findByUserIdAndLessonId(userId, lessonId).isPresent()) {
@@ -454,8 +505,12 @@ public class ToolExecutor {
     }
 
     private ToolResult completeLesson(Long userId, Long lessonId) {
-        if (userId == null) return ToolResult.error("complete_lesson", "User not logged in");
-        if (lessonId == null) return ToolResult.error("complete_lesson", "Lesson ID required");
+        if (userId == null) {
+            return ToolResult.error("complete_lesson", "User not logged in");
+        }
+        if (lessonId == null) {
+            return ToolResult.error("complete_lesson", "Lesson ID required");
+        }
         
         return lessonProgressRepository.findByUserIdAndLessonId(userId, lessonId)
             .map(lp -> {
@@ -469,7 +524,9 @@ public class ToolExecutor {
     }
 
     private ToolResult getEnrolledCourses(Long userId) {
-        if (userId == null) return ToolResult.success("get_enrolled_courses", "Not logged in", Map.of("courses", List.of()));
+        if (userId == null) {
+            return ToolResult.success("get_enrolled_courses", "Not logged in", Map.of("courses", List.of()));
+        }
         
         List<Enrollment> enrollments = enrollmentRepository.findByUserId(userId);
         if (enrollments.isEmpty()) {
@@ -513,7 +570,9 @@ public class ToolExecutor {
     }
 
     private ToolResult getLessonDetail(Long lessonId) {
-        if (lessonId == null) return ToolResult.error("get_lesson_detail", "Lesson ID required");
+        if (lessonId == null) {
+            return ToolResult.error("get_lesson_detail", "Lesson ID required");
+        }
         
         return lessonRepository.findById(lessonId)
             .map(l -> ToolResult.success("get_lesson_detail", l.getTitle(),
@@ -525,7 +584,9 @@ public class ToolExecutor {
     // ========== TEACHER TOOLS ==========
 
     private ToolResult getStudentsInCourse(Long courseId) {
-        if (courseId == null) return ToolResult.error("get_students_in_course", "Course ID required");
+        if (courseId == null) {
+            return ToolResult.error("get_students_in_course", "Course ID required");
+        }
         
         List<Enrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
         List<Map<String, Object>> students = enrollments.stream().map(e -> {
@@ -541,7 +602,9 @@ public class ToolExecutor {
     }
 
     private ToolResult getCourseAnalytics(Long courseId) {
-        if (courseId == null) return ToolResult.error("get_course_analytics", "Course ID required");
+        if (courseId == null) {
+            return ToolResult.error("get_course_analytics", "Course ID required");
+        }
         
         List<Enrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
         long completed = enrollments.stream().filter(e -> e.getProgressPercent() != null && e.getProgressPercent() >= 100).count();
@@ -571,7 +634,9 @@ public class ToolExecutor {
     }
 
     private ToolResult getAllLessons(Long courseId) {
-        if (courseId == null) return ToolResult.error("get_all_lessons", "Course ID required");
+        if (courseId == null) {
+            return ToolResult.error("get_all_lessons", "Course ID required");
+        }
         
         List<Lesson> lessons = lessonRepository.findByCourseId(courseId);
         List<Map<String, Object>> list = lessons.stream().map(l -> {
@@ -586,7 +651,9 @@ public class ToolExecutor {
     }
 
     private ToolResult getStudentProgress(Long userId, Long courseId) {
-        if (userId == null || courseId == null) return ToolResult.error("get_student_progress", "userId and courseId required");
+        if (userId == null || courseId == null) {
+            return ToolResult.error("get_student_progress", "userId and courseId required");
+        }
         
         List<LessonProgress> progress = lessonProgressRepository.findByUserIdAndLessonIdIn(userId, 
             lessonRepository.findByCourseId(courseId).stream().map(Lesson::getId).toList());
@@ -635,7 +702,9 @@ public class ToolExecutor {
     }
 
     private ToolResult manageUser(Long targetUserId, String action) {
-        if (targetUserId == null || action == null) return ToolResult.error("manage_user", "targetUserId and action required");
+        if (targetUserId == null || action == null) {
+            return ToolResult.error("manage_user", "targetUserId and action required");
+        }
         
         return userRepository.findById(targetUserId)
             .map(user -> {
@@ -656,8 +725,10 @@ public class ToolExecutor {
         String title = getStringArg(args, "title");
         String description = getStringArg(args, "description");
         
-        if (title == null) return ToolResult.error("create_course", "Title required");
-        
+        if (title == null) {
+            return ToolResult.error("create_course", "Title required");
+        }
+
         Course course = Course.builder()
             .title(title)
             .description(description != null ? description : "")
@@ -665,19 +736,25 @@ public class ToolExecutor {
             .price(java.math.BigDecimal.ZERO)
             .build();
         course = courseRepository.save(course);
-        
+
         return ToolResult.success("create_course", "Course created: " + title, Map.of("courseId", course.getId()));
     }
 
     private ToolResult updateCourse(Long courseId, Map<String, Object> args) {
-        if (courseId == null) return ToolResult.error("update_course", "courseId required");
+        if (courseId == null) {
+            return ToolResult.error("update_course", "courseId required");
+        }
         
         return courseRepository.findById(courseId)
             .map(course -> {
                 String title = getStringArg(args, "title");
                 String description = getStringArg(args, "description");
-                if (title != null) course.setTitle(title);
-                if (description != null) course.setDescription(description);
+                if (title != null) {
+                    course.setTitle(title);
+                }
+                if (description != null) {
+                    course.setDescription(description);
+                }
                 courseRepository.save(course);
                 return ToolResult.success("update_course", "Course updated", Map.of("courseId", courseId));
             })
@@ -685,7 +762,9 @@ public class ToolExecutor {
     }
 
     private ToolResult deleteCourse(Long courseId) {
-        if (courseId == null) return ToolResult.error("delete_course", "courseId required");
+        if (courseId == null) {
+            return ToolResult.error("delete_course", "courseId required");
+        }
         
         courseRepository.deleteById(courseId);
         return ToolResult.success("delete_course", "Course deleted", Map.of("courseId", courseId));
@@ -695,7 +774,9 @@ public class ToolExecutor {
         String title = getStringArg(args, "title");
         Long courseId = getLongArg(args, "courseId");
         
-        if (title == null) return ToolResult.error("create_exam", "Title required");
+        if (title == null) {
+            return ToolResult.error("create_exam", "Title required");
+        }
         
         Exam exam = Exam.builder()
             .title(title)
@@ -710,14 +791,20 @@ public class ToolExecutor {
     }
 
     private ToolResult updateExam(Long examId, Map<String, Object> args) {
-        if (examId == null) return ToolResult.error("update_exam", "examId required");
-        
+        if (examId == null) {
+            return ToolResult.error("update_exam", "examId required");
+        }
+
         return examRepository.findById(examId)
             .map(exam -> {
                 String title = getStringArg(args, "title");
                 Integer duration = getIntArg(args, "duration");
-                if (title != null) exam.setTitle(title);
-                if (duration != null) exam.setDuration(duration);
+                if (title != null) {
+                    exam.setTitle(title);
+                }
+                if (duration != null) {
+                    exam.setDuration(duration);
+                }
                 examRepository.save(exam);
                 return ToolResult.success("update_exam", "Exam updated", Map.of("examId", examId));
             })
@@ -725,7 +812,9 @@ public class ToolExecutor {
     }
 
     private ToolResult deleteExam(Long examId) {
-        if (examId == null) return ToolResult.error("delete_exam", "examId required");
+        if (examId == null) {
+            return ToolResult.error("delete_exam", "examId required");
+        }
         
         examRepository.deleteById(examId);
         return ToolResult.success("delete_exam", "Exam deleted", Map.of("examId", examId));
@@ -925,9 +1014,17 @@ public class ToolExecutor {
 
     private Long getLongArg(Map<String, Object> args, String key) {
         Object value = args.get(key);
-        if (value == null) return null;
-        if (value instanceof Number) return ((Number) value).longValue();
-        try { return Long.parseLong(value.toString()); } catch (NumberFormatException e) { return null; }
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        try {
+            return Long.parseLong(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private String getStringArg(Map<String, Object> args, String key) {
@@ -937,9 +1034,17 @@ public class ToolExecutor {
 
     private Integer getIntArg(Map<String, Object> args, String key) {
         Object value = args.get(key);
-        if (value == null) return null;
-        if (value instanceof Number) return ((Number) value).intValue();
-        try { return Integer.parseInt(value.toString()); } catch (NumberFormatException e) { return null; }
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        try {
+            return Integer.parseInt(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
     
     private Integer getIntArg(Map<String, Object> args, String key, int defaultValue) {
@@ -1018,7 +1123,9 @@ public class ToolExecutor {
     }
     
     private ToolResult getCourseDetail(Long userId, Long courseId) {
-        if (courseId == null) return ToolResult.error("get_course_detail", "courseId required");
+        if (courseId == null) {
+            return ToolResult.error("get_course_detail", "courseId required");
+        }
         
         return courseRepository.findById(courseId)
             .map(course -> {
@@ -1048,10 +1155,14 @@ public class ToolExecutor {
     }
     
     private ToolResult listCourseLessons(Long userId, Long courseId) {
-        if (courseId == null) return ToolResult.error("list_course_lessons", "courseId required");
-        
+        if (courseId == null) {
+            return ToolResult.error("list_course_lessons", "courseId required");
+        }
+
         Course course = courseRepository.findById(courseId).orElse(null);
-        if (course == null) return ToolResult.error("list_course_lessons", "Course not found");
+        if (course == null) {
+            return ToolResult.error("list_course_lessons", "Course not found");
+        }
         
         List<Lesson> lessons = lessonRepository.findByCourseIdOrderByOrderIndexAsc(courseId);
         List<Map<String, Object>> list = lessons.stream().map(l -> {
@@ -1075,11 +1186,17 @@ public class ToolExecutor {
     }
     
     private ToolResult enrollCourse(Long userId, Long courseId) {
-        if (userId == null) return ToolResult.error("enroll_course", "User not logged in");
-        if (courseId == null) return ToolResult.error("enroll_course", "courseId required");
-        
+        if (userId == null) {
+            return ToolResult.error("enroll_course", "User not logged in");
+        }
+        if (courseId == null) {
+            return ToolResult.error("enroll_course", "courseId required");
+        }
+
         Course course = courseRepository.findById(courseId).orElse(null);
-        if (course == null) return ToolResult.error("enroll_course", "Course not found");
+        if (course == null) {
+            return ToolResult.error("enroll_course", "Course not found");
+        }
         if (course.getStatus() == Course.Status.BLOCKED) {
             return ToolResult.error("enroll_course", "Course is blocked by admin");
         }
@@ -1107,17 +1224,23 @@ public class ToolExecutor {
     }
     
     private ToolResult listMyCourses(Long userId, int limit) {
-        if (userId == null) return ToolResult.success("list_my_courses", "Not logged in", Map.of("courses", List.of()));
+        if (userId == null) {
+            return ToolResult.success("list_my_courses", "Not logged in", Map.of("courses", List.of()));
+        }
         return getEnrolledCourses(userId); // Reuse existing implementation
     }
-    
+
     private ToolResult listMyProgress(Long userId, int limit) {
-        if (userId == null) return ToolResult.success("list_my_progress", "Not logged in", Map.of("courses", List.of()));
+        if (userId == null) {
+            return ToolResult.success("list_my_progress", "Not logged in", Map.of("courses", List.of()));
+        }
         return getUserProgress(userId); // Reuse existing implementation
     }
-    
+
     private ToolResult listMyExams(Long userId, int limit) {
-        if (userId == null) return ToolResult.success("list_my_exams", "Not logged in", Map.of("exams", List.of()));
+        if (userId == null) {
+            return ToolResult.success("list_my_exams", "Not logged in", Map.of("exams", List.of()));
+        }
         
         List<Enrollment> enrollments = enrollmentRepository.findByUserId(userId);
         List<Map<String, Object>> examList = new ArrayList<>();
@@ -1125,7 +1248,9 @@ public class ToolExecutor {
         for (Enrollment e : enrollments) {
             List<Exam> exams = examRepository.findByCourseId(e.getCourseId());
             for (Exam exam : exams) {
-                if (examList.size() >= limit) break;
+                if (examList.size() >= limit) {
+                    break;
+                }
                 Map<String, Object> m = new HashMap<>();
                 m.put("id", exam.getId());
                 m.put("title", exam.getTitle());
@@ -1143,7 +1268,9 @@ public class ToolExecutor {
     // ========== ADDITIONAL TOOLS ==========
     
     private ToolResult getUserProfile(Long userId) {
-        if (userId == null) return ToolResult.success("get_user_profile", "Not logged in", Map.of());
+        if (userId == null) {
+            return ToolResult.success("get_user_profile", "Not logged in", Map.of());
+        }
         
         return userRepository.findById(userId)
             .map(user -> {
@@ -1168,7 +1295,9 @@ public class ToolExecutor {
     }
     
     private ToolResult getUserSettings(Long userId) {
-        if (userId == null) return ToolResult.success("get_user_settings", "Not logged in", Map.of());
+        if (userId == null) {
+            return ToolResult.success("get_user_settings", "Not logged in", Map.of());
+        }
         
         List<AiSettings> settings = aiSettingsRepository.findByUserId(userId);
         Map<String, Object> settingsMap = new HashMap<>();
@@ -1182,7 +1311,9 @@ public class ToolExecutor {
     }
     
     private ToolResult searchCourses(String query, int limit) {
-        if (query == null || query.isBlank()) return listShopCourses(limit);
+        if (query == null || query.isBlank()) {
+            return listShopCourses(limit);
+        }
         
         try {
             List<Course> courses = courseRepository.findAll().stream()
@@ -1208,7 +1339,9 @@ public class ToolExecutor {
     }
     
     private ToolResult getMyExams(Long userId) {
-        if (userId == null) return ToolResult.success("get_my_exams", "Not logged in", Map.of("exams", List.of()));
+        if (userId == null) {
+            return ToolResult.success("get_my_exams", "Not logged in", Map.of("exams", List.of()));
+        }
         return listMyExams(userId, 20);
     }
     
@@ -1219,12 +1352,17 @@ public class ToolExecutor {
     }
     
     private ToolResult getDailyStreak(Long userId) {
-        if (userId == null) return ToolResult.success("get_daily_streak", "Not logged in", Map.of());
-        
+        if (userId == null) {
+            return ToolResult.success("get_daily_streak", "Not logged in", Map.of());
+        }
+
         int streak = aiSettingsRepository.findByUserIdAndSettingKey(userId, "daily_streak")
             .map(s -> {
-                try { return Integer.parseInt(s.getSettingValue()); }
-                catch (NumberFormatException e) { return 0; }
+                try {
+                    return Integer.parseInt(s.getSettingValue());
+                } catch (NumberFormatException e) {
+                    return 0;
+                }
             })
             .orElse(0);
         
@@ -1234,8 +1372,12 @@ public class ToolExecutor {
     }
     
     private ToolResult unenrollCourse(Long userId, Long courseId) {
-        if (userId == null) return ToolResult.error("unenroll_course", "User not logged in");
-        if (courseId == null) return ToolResult.error("unenroll_course", "courseId required");
+        if (userId == null) {
+            return ToolResult.error("unenroll_course", "User not logged in");
+        }
+        if (courseId == null) {
+            return ToolResult.error("unenroll_course", "courseId required");
+        }
         
         return enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
             .map(enrollment -> {
@@ -1246,8 +1388,12 @@ public class ToolExecutor {
     }
     
     private ToolResult addToCart(Long userId, Long courseId) {
-        if (userId == null) return ToolResult.error("add_to_cart", "User not logged in");
-        if (courseId == null) return ToolResult.error("add_to_cart", "courseId required");
+        if (userId == null) {
+            return ToolResult.error("add_to_cart", "User not logged in");
+        }
+        if (courseId == null) {
+            return ToolResult.error("add_to_cart", "courseId required");
+        }
         
         Cart cart = cartRepository.findByUserId(userId).orElse(null);
         if (cart == null) {
@@ -1264,19 +1410,25 @@ public class ToolExecutor {
     }
     
     private ToolResult viewCart(Long userId) {
-        if (userId == null) return ToolResult.success("view_cart", "Not logged in", Map.of("items", List.of()));
+        if (userId == null) {
+            return ToolResult.success("view_cart", "Not logged in", Map.of("items", List.of()));
+        }
         
         Cart cart = cartRepository.findByUserId(userId).orElse(null);
         return ToolResult.success("view_cart", "Cart is empty", Map.of("items", List.of()));
     }
     
     private ToolResult checkout(Long userId) {
-        if (userId == null) return ToolResult.error("checkout", "User not logged in");
+        if (userId == null) {
+            return ToolResult.error("checkout", "User not logged in");
+        }
         return ToolResult.success("checkout", "Checkout feature coming soon!", Map.of());
     }
-    
+
     private ToolResult getMyTeachingCourses(Long userId) {
-        if (userId == null) return ToolResult.success("get_my_courses", "Not logged in", Map.of("courses", List.of()));
+        if (userId == null) {
+            return ToolResult.success("get_my_courses", "Not logged in", Map.of("courses", List.of()));
+        }
         
         List<Course> courses = courseRepository.findAll().stream()
             .filter(c -> c.getInstructorId() != null && c.getInstructorId().equals(userId))
@@ -1296,7 +1448,9 @@ public class ToolExecutor {
     }
     
     private ToolResult publishCourse(Long courseId) {
-        if (courseId == null) return ToolResult.error("publish_course", "courseId required");
+        if (courseId == null) {
+            return ToolResult.error("publish_course", "courseId required");
+        }
         
         return courseRepository.findById(courseId)
             .map(course -> {
@@ -1311,7 +1465,9 @@ public class ToolExecutor {
     private ToolResult createLesson(Map<String, Object> args) {
         String title = getStringArg(args, "title");
         Long courseId = getLongArg(args, "courseId");
-        if (title == null || courseId == null) return ToolResult.error("create_lesson", "title and courseId required");
+        if (title == null || courseId == null) {
+            return ToolResult.error("create_lesson", "title and courseId required");
+        }
         
         Lesson lesson = Lesson.builder()
             .title(title)
@@ -1329,13 +1485,21 @@ public class ToolExecutor {
     }
     
     private ToolResult updateLesson(Long lessonId, Map<String, Object> args) {
-        if (lessonId == null) return ToolResult.error("update_lesson", "lessonId required");
-        
+        if (lessonId == null) {
+            return ToolResult.error("update_lesson", "lessonId required");
+        }
+
         return lessonRepository.findById(lessonId)
             .map(lesson -> {
-                if (getStringArg(args, "title") != null) lesson.setTitle(getStringArg(args, "title"));
-                if (getStringArg(args, "description") != null) lesson.setDescription(getStringArg(args, "description"));
-                if (getStringArg(args, "contentUrl") != null) lesson.setContentUrl(getStringArg(args, "contentUrl"));
+                if (getStringArg(args, "title") != null) {
+                    lesson.setTitle(getStringArg(args, "title"));
+                }
+                if (getStringArg(args, "description") != null) {
+                    lesson.setDescription(getStringArg(args, "description"));
+                }
+                if (getStringArg(args, "contentUrl") != null) {
+                    lesson.setContentUrl(getStringArg(args, "contentUrl"));
+                }
                 lessonRepository.save(lesson);
                 return ToolResult.success("update_lesson", "Lesson updated", Map.of("lessonId", lessonId));
             })
@@ -1343,13 +1507,17 @@ public class ToolExecutor {
     }
     
     private ToolResult deleteLesson(Long lessonId) {
-        if (lessonId == null) return ToolResult.error("delete_lesson", "lessonId required");
+        if (lessonId == null) {
+            return ToolResult.error("delete_lesson", "lessonId required");
+        }
         lessonRepository.deleteById(lessonId);
         return ToolResult.success("delete_lesson", "Lesson deleted", Map.of("lessonId", lessonId));
     }
     
     private ToolResult publishExam(Long examId) {
-        if (examId == null) return ToolResult.error("publish_exam", "examId required");
+        if (examId == null) {
+            return ToolResult.error("publish_exam", "examId required");
+        }
         
         return examRepository.findById(examId)
             .map(exam -> {
@@ -1361,7 +1529,9 @@ public class ToolExecutor {
     }
     
     private ToolResult getUserDetail(Long targetUserId) {
-        if (targetUserId == null) return ToolResult.error("get_user_detail", "userId required");
+        if (targetUserId == null) {
+            return ToolResult.error("get_user_detail", "userId required");
+        }
         
         return userRepository.findById(targetUserId)
             .map(user -> {
@@ -1383,14 +1553,18 @@ public class ToolExecutor {
     }
     
     private ToolResult deleteUser(Long targetUserId) {
-        if (targetUserId == null) return ToolResult.error("delete_user", "userId required");
+        if (targetUserId == null) {
+            return ToolResult.error("delete_user", "userId required");
+        }
         
         userRepository.deleteById(targetUserId);
         return ToolResult.success("delete_user", "User deleted", Map.of("userId", targetUserId));
     }
     
     private ToolResult getCourseStats(Long courseId) {
-        if (courseId == null) return ToolResult.error("get_course_stats", "courseId required");
+        if (courseId == null) {
+            return ToolResult.error("get_course_stats", "courseId required");
+        }
         
         long enrolled = enrollmentRepository.countByCourseId(courseId);
         List<Lesson> lessons = lessonRepository.findByCourseId(courseId);
@@ -1435,7 +1609,9 @@ public class ToolExecutor {
     }
     
     private ToolResult getExamAttempts(Long examId) {
-        if (examId == null) return ToolResult.error("get_exam_attempts", "examId required");
+        if (examId == null) {
+            return ToolResult.error("get_exam_attempts", "examId required");
+        }
         
         List<ExamAttempt> attempts = examAttemptRepository.findAll().stream()
             .filter(a -> a.getExamId() != null && a.getExamId().equals(examId))
@@ -1455,7 +1631,9 @@ public class ToolExecutor {
     }
     
     private ToolResult getQuestionBank(Long courseId) {
-        if (courseId == null) return ToolResult.error("get_question_bank", "courseId required");
+        if (courseId == null) {
+            return ToolResult.error("get_question_bank", "courseId required");
+        }
         
         return ToolResult.success("get_question_bank", 
             "Question bank feature coming soon", 

@@ -5,7 +5,12 @@ import com.thinkai.backend.dto.AdminAiRuntimeSettingsDto;
 import com.thinkai.backend.service.AiRuntimeSettingsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
@@ -332,39 +337,63 @@ public class OpenRouterService implements LLMService {
     private String getSystemPrompt(AgentType agent) {
         return switch (agent) {
             case TOEIC_READING ->
-                "You are a TOEIC Reading specialist. Focus on Part 5 (grammar), Part 6 (text completion), and Part 7 (reading comprehension). Always explain WHY an answer is correct and WHY others are wrong. Target: 450+ Reading score.";
+                "You are a TOEIC Reading specialist. Focus on Part 5 (grammar), " +
+                "Part 6 (text completion), and Part 7 (reading comprehension). " +
+                "Always explain WHY an answer is correct and WHY others are wrong. " +
+                "Target: 450+ Reading score.";
             case TOEIC_LISTENING ->
-                "You are a TOEIC Listening specialist. Cover Part 1 (photographs), Part 2 (question-response), Part 3 (conversations), and Part 4 (talks). Teach note-taking strategies. Target: 450+ Listening score.";
+                "You are a TOEIC Listening specialist. Cover Part 1 (photographs), " +
+                "Part 2 (question-response), Part 3 (conversations), and Part 4 (talks). " +
+                "Teach note-taking strategies. Target: 450+ Listening score.";
             case TOEIC_GRAMMAR ->
-                "You are a TOEIC grammar specialist. Focus on high-frequency patterns: S-V agreement, tenses, prepositions, articles, and conjunctions. Provide clear rules with examples.";
+                "You are a TOEIC grammar specialist. Focus on high-frequency patterns: " +
+                "S-V agreement, tenses, prepositions, articles, and conjunctions. " +
+                "Provide clear rules with examples.";
             case TOEIC_VOCABULARY ->
-                "You are a TOEIC vocabulary specialist. Focus on business vocabulary: meetings, emails, travel, finance, and marketing. Teach word usage in context.";
+                "You are a TOEIC vocabulary specialist. Focus on business vocabulary: " +
+                "meetings, emails, travel, finance, and marketing. " +
+                "Teach word usage in context.";
             case IELTS_READING ->
-                "You are an IELTS Reading specialist. Teach skimming and scanning techniques. Cover Academic and General Training Reading. Target: Band 7.0+.";
+                "You are an IELTS Reading specialist. Teach skimming and scanning techniques. " +
+                "Cover Academic and General Training Reading. Target: Band 7.0+.";
             case IELTS_LISTENING ->
-                "You are an IELTS Listening specialist. Cover all 4 sections with note-taking strategies. Practice form completion, matching, and multiple choice. Target: Band 7.0+.";
+                "You are an IELTS Listening specialist. Cover all 4 sections with " +
+                "note-taking strategies. Practice form completion, matching, and " +
+                "multiple choice. Target: Band 7.0+.";
             case IELTS_WRITING ->
-                "You are an IELTS Writing specialist. Cover Task 1 (150+ words, 20 min) and Task 2 (250+ words, 40 min). Provide band descriptor feedback. Target: Band 7.0+.";
+                "You are an IELTS Writing specialist. Cover Task 1 (150+ words, 20 min) " +
+                "and Task 2 (250+ words, 40 min). Provide band descriptor feedback. " +
+                "Target: Band 7.0+.";
             case IELTS_SPEAKING ->
-                "You are an IELTS Speaking mock examiner. Simulate Part 1 (introduction), Part 2 (2 min talk), and Part 3 (discussion). Give band descriptor feedback. Target: Band 7.0+.";
+                "You are an IELTS Speaking mock examiner. Simulate Part 1 (introduction), " +
+                "Part 2 (2 min talk), and Part 3 (discussion). " +
+                "Give band descriptor feedback. Target: Band 7.0+.";
             case CONVERSATION ->
                 "You are BiliBily - a friendly, lively English tutor like a cool friend. " +
                 "Write naturally with emojis, casual style, short paragraphs. " +
                 "IMPORTANT - You have access to system tools for user-specific data: " +
-                "get_user_level (English level, target exam), get_user_progress (completed lessons, enrolled courses), " +
-                "get_user_exam_history (past exams with scores), get_enrolled_courses (list of enrolled courses), " +
-                "get_lesson_detail, get_course_info, search_lessons, get_grammar_topic, start/complete_lesson. " +
-                "When user asks about 'my courses', 'my progress', 'my level', 'enrolled courses', 'completed lessons', " +
-                "'exam scores' -> answer SPECIFICALLY using this tool information! Give exact numbers and details! " +
+                "get_user_level (English level, target exam), " +
+                "get_user_progress (completed lessons, enrolled courses), " +
+                "get_user_exam_history (past exams with scores), " +
+                "get_enrolled_courses (list of enrolled courses), " +
+                "get_lesson_detail, get_course_info, search_lessons, " +
+                "get_grammar_topic, start/complete_lesson. " +
+                "When user asks about 'my courses', 'my progress', 'my level', " +
+                "'enrolled courses', 'completed lessons', " +
+                "'exam scores' -> answer SPECIFICALLY using this tool information! " +
+                "Give exact numbers and details! " +
                 "Don't be vague or generic!";
             case GRAMMAR ->
-                "You are an English grammar teacher. Explain clearly with examples. Use simple language for lower levels, more technical for advanced.";
+                "You are an English grammar teacher. Explain clearly with examples. " +
+                "Use simple language for lower levels, more technical for advanced.";
             case VOCABULARY ->
-                "You are a vocabulary expansion specialist. Teach words in context, show usage patterns, and provide memorable examples.";
+                "You are a vocabulary expansion specialist. Teach words in context, " +
+                "show usage patterns, and provide memorable examples.";
             case PRONUNCIATION ->
                 "You are a pronunciation coach. Focus on sounds, stress patterns, intonation. Provide audio examples when possible.";
             case EXAM_STRATEGY ->
-                "You are a test-taking strategy specialist for TOEIC/IELTS. Teach time management, question elimination, and guessing strategies.";
+                "You are a test-taking strategy specialist for TOEIC/IELTS. " +
+                "Teach time management, question elimination, and guessing strategies.";
             case MISTAKE_ANALYZER ->
                 "You are a mistake analyzer. Categorize errors (grammar, vocabulary, pronunciation) and provide targeted practice.";
             case PROGRESS_TRACKER ->

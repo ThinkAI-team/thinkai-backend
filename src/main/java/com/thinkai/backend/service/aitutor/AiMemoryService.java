@@ -3,7 +3,12 @@ package com.thinkai.backend.service.aitutor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
@@ -39,7 +44,9 @@ public class AiMemoryService {
 
     public List<ConversationTurn> getRecentTurns(String conversationId, int count) {
         Deque<ConversationTurn> turns = shortTermMemory.get(conversationId);
-        if (turns == null) return List.of();
+        if (turns == null) {
+            return List.of();
+        }
         
         return turns.stream()
                 .skip(Math.max(0, turns.size() - count))
@@ -114,7 +121,9 @@ public class AiMemoryService {
 
     private void generateWorkingSummary(String conversationId) {
         Deque<ConversationTurn> turns = shortTermMemory.get(conversationId);
-        if (turns == null || turns.isEmpty()) return;
+        if (turns == null || turns.isEmpty()) {
+            return;
+        }
         
         StringBuilder summary = new StringBuilder();
         summary.append("Tổng quan cuộc trò chuyện với BiliBily:\n");

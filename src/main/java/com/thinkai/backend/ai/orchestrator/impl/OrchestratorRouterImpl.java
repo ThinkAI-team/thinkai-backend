@@ -10,8 +10,9 @@ import org.springframework.stereotype.Service;
 
 /**
  * Phase 2: Hybrid Router Implementation
- * Sử dụng Hybrid Router với keyword + embedding
+ * Su dung Hybrid Router voi keyword + embedding
  */
+@SuppressWarnings("checkstyle:ConstantName")
 @Service
 public class OrchestratorRouterImpl implements OrchestratorRouter {
 

@@ -6,13 +6,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Keyword-based Router
  * Định tuyến dựa trên keyword matching với TF-IDF scoring
  */
 @Component
+@SuppressWarnings("checkstyle:ConstantName")
 public class KeywordRouter {
 
     private static final Logger logger = LoggerFactory.getLogger(KeywordRouter.class);
@@ -42,7 +45,9 @@ public class KeywordRouter {
 
         for (AgentType agent : agentRegistry.getAllAgents()) {
             Optional<AgentRegistry.AgentMetadata> metadataOpt = agentRegistry.get(agent);
-            if (metadataOpt.isEmpty()) continue;
+            if (metadataOpt.isEmpty()) {
+                continue;
+            }
 
             AgentRegistry.AgentMetadata metadata = metadataOpt.get();
             double score = calculateScore(normalized, metadata);
@@ -108,7 +113,9 @@ public class KeywordRouter {
         }
 
         // Normalize by number of keywords
-        if (metadata.keywords().isEmpty()) return 0.0;
+        if (metadata.keywords().isEmpty()) {
+            return 0.0;
+        }
 
         // Score = (total score / keyword count) * sqrt(match count)
         double normalizedScore = (totalScore / metadata.keywords().size()) * Math.sqrt(matchCount);
