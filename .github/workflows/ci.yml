@@ -162,7 +162,7 @@ jobs:
           name: sbom
       - name: Import Cosign key
         run: |
-          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" > cosign.key
+          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" | base64 -d > cosign.key
       - name: Sign image
         run: COSIGN_PASSWORD="${{ secrets.COSIGN_PASSWORD }}" cosign sign --key cosign.key ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
       - name: Verify
