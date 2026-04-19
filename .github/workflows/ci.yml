@@ -171,7 +171,7 @@ jobs:
       - name: Sign image
         run: COSIGN_PASSWORD="${{ secrets.COSIGN_PASSWORD }}" cosign sign --key cosign.key ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -y
       - name: Verify
-        run: cosign verify ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        run: cosign verify --key cosign.key ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
   push:
     needs: sign
