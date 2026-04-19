@@ -1,6 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
-metadata: 
+metadata:
   name: thinkai-backend
   namespace: thinkai
 spec:
@@ -8,13 +8,13 @@ spec:
   selector:
     matchLabels:
       app: thinkai-backend
-    template:
-      metadata:
-        labels:
-          app: thinkai-backend
-      spec:
-        containers:
-          - name: thinkai-backend
-            image: minhtuyetvoi/thinkai-backend:latest
-            ports:
-              - containerPort: 8081
+  template:
+    metadata:
+      labels:
+        app: thinkai-backend
+    spec:
+      containers:
+      - name: backend
+        image: minhtuyetvoi/thinkai-backend:latest
+        ports:
+        - containerPort: 8081
