@@ -13,90 +13,75 @@ env:
   JAVA_VERSION: '21'
   REGISTRY: docker.io
   IMAGE_NAME: minhtuyetvoi/thinkai-backend
-  JWT_SECRET: ci-test-secret-key-must-be-at-least-256-bits-long-for-hs256
-  MAIL_USERNAME: test@test.com
-  MAIL_PASSWORD: test-password
   SONAR_ORG: ThinkAI-team
+  JWT_SECRET: ci-test-secret-key-must-be-at-least-256-bits-long-for-hs256
 
 jobs:
-  # ── Job 1: Quét secret trong code ─────────────────────────────────────────
+  # ── Job 1: Secret Detection ─────────────────────────────────────────
   secret-scan:
-    name:  Secret Detection
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Run TruffleHog
         uses: trufflesecurity/trufflehog@main
         with:
           extra_args: --only-verified
 
-  # ── Job 2: Kiểm tra code convention ───────────────────────────────────────
+  # ── Job 2: Code Quality ───────────────────────────────────────────────
   code-quality:
-    name:  Code Quality
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: maven
-
       - name: Checkstyle
         run: mvn checkstyle:check
 
-  # ── Job 3: Scan thư viện có lỗ hổng CVE ─────────────────────────────
+  # ── Job 3: Dependency Security ─────────────────────────────
   dependency-check:
-    name:  Dependency Security
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: maven
-
-      - name: OSS Index (Sonatype)
+      - name: OSS Index
         run: mvn org.sonatype.ossindex.maven:ossindex-maven-plugin:audit
         continue-on-error: true
 
-  # ── Job 4: SonarCloud Scan ───────────────────────────────────────────────
+  # ── Job 4: SonarCloud Scan ─────────────────────────────────────
   sonar:
-    name: SonarCloud Scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: maven
-
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         with:
           organization: ${{ secrets.SONAR_ORG }}
           token: ${{ secrets.SONAR_TOKEN }}
 
-  # ── Job 5: Build + Test ─────────────────────────────────────────────────────
+  # ── Job 5: Build & Test ───────────────────────────────────────
   build-and-test:
-    name: 🔨 Build & Test
     runs-on: ubuntu-latest
-
     services:
       mysql:
         image: mysql:8.0
@@ -110,24 +95,19 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: maven
-
       - name: Build
         run: mvn compile -q
-
       - name: Test
         run: mvn test
-
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -136,49 +116,17 @@ jobs:
           path: target/surefire-reports/
           retention-days: 7
 
-  # ── Job 6: Build Docker + Scan + SBOM ────────────────────────────────────────
+  # ── Job 6: Build Docker + Scan + SBOM ─────────────────────────────
   build-scan:
     needs: [secret-scan, code-quality, dependency-check, sonar, build-and-test]
-
-  # ── Job 7: Sign Image ─────────────────────────────────────────────────
-  sign:
-    needs: build-scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@latest
-
-      - name: Download SBOM
-        uses: actions/download-artifact@v4
-        with:
-          name: sbom
-
-      - name: Import Cosign key
-        run: |
-          echo "${{ secrets.COSIGN_PRIVATE_KEY }}" | base64 -d > cosign.key
-
-      - name: Sign image
-        run: |
-          COSIGN_PASSWORD="${{ secrets.COSIGN_PASSWORD }}" \
-          cosign sign --key cosign.key ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-
-      - name: Verify
-        run: |
-          cosign verify ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
     runs-on: ubuntu-latest
     permissions:
       security-events: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -188,63 +136,72 @@ jobs:
             type=ref,event=branch
             type=sha,prefix=
             type=raw,value=latest,enable={{ is_default_branch }}
-
       - name: Build image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: false
           load: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy scanner
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           format: sarif
           output: trivy-results.sarif
-
-      - name: Upload Trivy results to GitHub Security
+      - name: Upload Trivy results
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-results.sarif
-
       - name: Generate SBOM
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           format: spdx-json
           output: sbom.json
-
       - name: Upload SBOM
         uses: actions/upload-artifact@v4
         with:
           name: sbom
           path: sbom.json
 
-  # ── Job 8: Push to Registry ────────────────────────────────────────────
+  # ── Job 7: Sign Image ───────────────────────────────────────
+  sign:
+    needs: build-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@latest
+      - name: Download SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom
+      - name: Import Cosign key
+        run: echo "${{ secrets.COSIGN_PRIVATE_KEY }}" | base64 -d > cosign.key
+      - name: Sign image
+        run: COSIGN_PASSWORD="${{ secrets.COSIGN_PASSWORD }}" cosign sign --key cosign.key ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+      - name: Verify
+        run: cosign verify ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  # ── Job 8: Push to Registry ───────────────────────────────
   push:
     needs: sign
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -254,15 +211,12 @@ jobs:
             type=ref,event=branch
             type=sha,prefix=
             type=raw,value=latest,enable={{ is_default_branch }}
-
       - name: Build and Push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
