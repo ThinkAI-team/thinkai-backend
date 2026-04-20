@@ -1,5 +1,8 @@
 package com.thinkai.backend.controller;
 
+import com.thinkai.backend.repository.CourseRepository;
+import com.thinkai.backend.repository.EnrollmentRepository;
+import com.thinkai.backend.repository.UserRepository;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import lombok.RequiredArgsConstructor;
