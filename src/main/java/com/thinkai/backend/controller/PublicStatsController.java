@@ -63,7 +63,7 @@ public class PublicStatsController {
     public ResponseEntity<List<Map<String, Object>>> getPods() {
         try (KubernetesClient client = new KubernetesClientBuilder().build()) {
             return ResponseEntity.ok(client.pods().inNamespace("thinkai").list().getItems().stream()
-                    .map(pod -> Map.of(
+                    .map(pod -> Map.<String, Object>of(
                             "id", pod.getMetadata().getName(),
                             "status", pod.getStatus().getPhase().toLowerCase(),
                             "cpu", 0,

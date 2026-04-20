@@ -18,6 +18,13 @@ spring:
     password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  # === Redis ===
+  data:
+    redis:
+      host: ${REDIS_HOST:thinkai-redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
   # === JPA / Hibernate ===
   jpa:
     hibernate:
