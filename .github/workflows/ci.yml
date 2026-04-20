@@ -4,7 +4,8 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - "thinkai-backend/**"
+      - "src/**"
+      - "pom.xml"
       - ".github/workflows/ci.yml"
   pull_request:
     branches: [develop, main]
