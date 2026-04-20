@@ -6,6 +6,7 @@ on:
     paths:
       - "src/**"
       - "pom.xml"
+      - "k8s/**"
       - ".github/workflows/ci.yml"
   pull_request:
     branches: [develop, main]
