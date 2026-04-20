@@ -80,7 +80,7 @@ app:
   security:
     content-security-policy: ${CONTENT_SECURITY_POLICY:default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'}
   cors:
-    allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:8081,http://localhost:8082}
+    allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:8081,http://localhost:8082,https://binhminh.dev,https://portfolio.binhminh.dev}
 
 # === Google OAuth ===
 google:
@@ -96,12 +96,12 @@ payos:
   cancel-url: ${PAYOS_CANCEL_URL:http://localhost:3000/payment/cancel}
   base-url: https://api-merchant.payos.vn
 
-# === Actuator (Health Check) ===
+# === Actuator (Observability) ===
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: when_authorized
@@ -112,3 +112,18 @@ management:
       enabled: true
     readinessState:
       enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name:thinkai-backend}
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+    logging:
+      export:
+        otlp:
+          endpoint: ${OTLP_LOGS_ENDPOINT:http://localhost:4318/v1/logs}
+  loki:
+    url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}

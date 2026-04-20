@@ -78,7 +78,10 @@ public class GlobalSecurityConfig {
                     "/notifications/stream",
                     "/api/files/**",
                     "/api/v1/payments/webhook",
-                    "/api/v1/payments/webhook-test"
+                    "/api/v1/payments/webhook-test",
+                    "/api/public/**",
+                    "/actuator/prometheus",
+                    "/actuator/health"
                 ).permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/courses", "/courses/**").permitAll()
                 .anyRequest().authenticated()
