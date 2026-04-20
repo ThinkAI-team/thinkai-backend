@@ -127,10 +127,10 @@ management:
       probability: 1.0
   otlp:
     tracing:
-      endpoint: ${OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+      endpoint: ${OTLP_ENDPOINT:http://tempo.monitoring.svc.cluster.local:4318/v1/traces}
     logging:
       export:
         otlp:
-          endpoint: ${OTLP_LOGS_ENDPOINT:http://localhost:4318/v1/logs}
+          endpoint: ${OTLP_LOGS_ENDPOINT:http://tempo.monitoring.svc.cluster.local:4318/v1/logs}
   loki:
-    url: ${LOKI_URL:http://localhost:3100/loki/api/v1/push}
+    url: ${LOKI_URL:http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push}
